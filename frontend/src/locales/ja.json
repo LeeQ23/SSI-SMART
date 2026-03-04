@@ -1,0 +1,84 @@
+{
+    "nav": {
+        "overview": "概要",
+        "detail_view": "詳細表示",
+        "dashboard": "ダッシュボード",
+        "history": "履歴",
+        "analytics": "分析",
+        "targets": "目標",
+        "shifts": "シフト",
+        "users": "ユーザー",
+        "logout": "ログアウト"
+    },
+    "dashboard": {
+        "good": "良品数",
+        "ng": "不良品数 (NG)",
+        "cycle_time": "平均サイクルタイム",
+        "target": "目標",
+        "current": "電流",
+        "threshold": "しきい値",
+        "oee": "OEE指標",
+        "efficiency": "効率",
+        "availability": "稼働率",
+        "performance": "性能",
+        "quality": "品質",
+        "status": "機械ステータスのタイムライン",
+        "running": "稼働時間",
+        "downtime": "停止時間",
+        "machine": "機械",
+        "all_machines": "全機械"
+    },
+    "login": {
+        "welcome": "おかえりなさい",
+        "subtitle": "ダッシュボードにアクセスするにはサインインしてください",
+        "username": "ユーザー名",
+        "password": "パスワード",
+        "signin": "サインイン"
+    },
+    "targets": {
+        "title": "生産目標",
+        "set_daily": "日次目標を設定",
+        "date": "日付",
+        "order_name": "注文名 / ID",
+        "quantity": "目標数量",
+        "save": "目標を保存",
+        "recent": "最近の目標",
+        "table": {
+            "date": "日付",
+            "order": "注文",
+            "target": "目標",
+            "actions": "操作"
+        },
+        "delete": "削除",
+        "success": "目標が正常に更新されました！",
+        "error": "目標の更新エラー。",
+        "confirm": "よろしいですか？"
+    },
+    "users": {
+        "title": "ユーザー管理",
+        "add_new": "新規ユーザー追加",
+        "username": "ユーザー名",
+        "password": "パスワード",
+        "role": "役割",
+        "create": "ユーザーを作成",
+        "operator": "オペレーター",
+        "manager": "マネージャー",
+        "table": {
+            "username": "ユーザー名",
+            "role": "役割",
+            "created_at": "作成日",
+            "actions": "操作"
+        },
+        "success": "ユーザーが正常に追加されました！",
+        "error": "ユーザーの追加エラー"
+    },
+    "shifts": {
+        "title": "シフト構成",
+        "loading": "シフトを読み込み中...",
+        "start_time": "開始時間",
+        "end_time": "終了時間",
+        "save": "変更を保存",
+        "success": "シフトが正常に更新されました",
+        "error": "シフトの更新エラー"
+    }
+}

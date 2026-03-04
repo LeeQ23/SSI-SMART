@@ -1,0 +1,84 @@
+{
+    "nav": {
+        "overview": "Overview",
+        "detail_view": "Detail View",
+        "dashboard": "Dashboard",
+        "history": "History",
+        "analytics": "Analytics",
+        "targets": "Targets",
+        "shifts": "Shifts",
+        "users": "Users",
+        "logout": "Logout"
+    },
+    "dashboard": {
+        "good": "Good Produced",
+        "ng": "No Good (NG)",
+        "cycle_time": "Avg Cycle Time",
+        "target": "Target",
+        "current": "Current",
+        "threshold": "Threshold",
+        "oee": "OEE Metric",
+        "efficiency": "Efficiency",
+        "availability": "Availability",
+        "performance": "Performance",
+        "quality": "Quality",
+        "status": "Machine Status Timeline",
+        "running": "Running Time",
+        "downtime": "Downtime",
+        "machine": "Machine",
+        "all_machines": "All Machines"
+    },
+    "login": {
+        "welcome": "Welcome Back",
+        "subtitle": "Sign in to access the dashboard",
+        "username": "Username",
+        "password": "Password",
+        "signin": "Sign In"
+    },
+    "targets": {
+        "title": "Production Targets",
+        "set_daily": "Set Daily Target",
+        "date": "Date",
+        "order_name": "Order Name / ID",
+        "quantity": "Target Quantity",
+        "save": "Save Target",
+        "recent": "Recent Targets",
+        "table": {
+            "date": "Date",
+            "order": "Order",
+            "target": "Target",
+            "actions": "Actions"
+        },
+        "delete": "Delete",
+        "success": "Target updated successfully!",
+        "error": "Error updating target.",
+        "confirm": "Are you sure?"
+    },
+    "users": {
+        "title": "User Management",
+        "add_new": "Add New User",
+        "username": "Username",
+        "password": "Password",
+        "role": "Role",
+        "create": "Create User",
+        "operator": "Operator",
+        "manager": "Manager",
+        "table": {
+            "username": "Username",
+            "role": "Role",
+            "created_at": "Created At",
+            "actions": "Actions"
+        },
+        "success": "User added successfully!",
+        "error": "Error adding user"
+    },
+    "shifts": {
+        "title": "Shift Configuration",
+        "loading": "Loading Shifts...",
+        "start_time": "Start Time",
+        "end_time": "End Time",
+        "save": "Save Changes",
+        "success": "Shift updated successfully",
+        "error": "Error updating shift"
+    }
+}
