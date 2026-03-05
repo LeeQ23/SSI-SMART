@@ -11,11 +11,16 @@ const Layout = ({ children }) => {
     const location = useLocation();
     const { t } = useTranslation();
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key.toLowerCase() === 'f' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                 toggleFullscreen();
+            }
+            if (e.key.toLowerCase() === 'b' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                setIsCollapsed(prev => !prev);
             }
         };
 
@@ -52,68 +57,90 @@ const Layout = ({ children }) => {
     return (
         <div className="flex h-screen overflow-hidden bg-gradient-to-br from-primary to-black text-white">
             {/* Sidebar */}
-            <aside className="w-64 glass-panel m-4 flex flex-col">
-                <div className="p-6 flex items-center justify-between border-b border-white/10">
-                    <div className="flex items-center gap-3">
-                        <img src="/logo.png" alt="SSI Logo" className="h-10 w-auto object-contain" />
-                        <div className="font-bold text-lg tracking-wider">SSI SMART</div>
+            <aside className={`${isCollapsed ? 'w-20' : 'w-64'} transition-all duration-300 ease-in-out glass-panel m-4 flex flex-col relative`}>
+                <div className={`p-4 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} border-b border-white/10`}>
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <img src="/logo.png" alt="SSI Logo" className="h-8 w-auto min-w-[32px] object-contain" />
+                        {!isCollapsed && <div className="font-bold text-lg tracking-wider whitespace-nowrap">SSI SMART</div>}
                     </div>
-                    <button
-                        onClick={toggleFullscreen}
-                        className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
-                        title={isFullscreen ? "Exit Fullscreen (f)" : "Enter Fullscreen (f)"}
-                    >
-                        {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-                    </button>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-2">
-                    <Link to="/" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive('/') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'}`}>
-                        <LayoutGrid size={20} />
-                        <span>{t('nav.overview')}</span>
+                <button
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="absolute -right-3 top-20 bg-accent p-1.5 rounded-full shadow-lg hover:scale-110 transition-transform z-10"
+                    title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                >
+                    <LayoutGrid size={14} className={`transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
+                </button>
+
+                <nav className="flex-1 p-3 space-y-2 overflow-y-auto overflow-x-hidden">
+                    <Link to="/" className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all ${isActive('/') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'} ${isCollapsed ? 'justify-center' : ''}`} title={t('nav.overview')}>
+                        <LayoutGrid size={22} className="min-w-[22px]" />
+                        {!isCollapsed && <span className="whitespace-nowrap">{t('nav.overview')}</span>}
                     </Link>
 
-                    <Link to="/dashboard/1" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${location.pathname.startsWith('/dashboard') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'}`}>
-                        <LayoutDashboard size={20} />
-                        <span>{t('nav.detail_view')}</span>
+                    <Link to="/dashboard/1" className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all ${location.pathname.startsWith('/dashboard') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'} ${isCollapsed ? 'justify-center' : ''}`} title={t('nav.detail_view')}>
+                        <LayoutDashboard size={22} className="min-w-[22px]" />
+                        {!isCollapsed && <span className="whitespace-nowrap">{t('nav.detail_view')}</span>}
                     </Link>
 
                     {user?.role === 'manager' && (
                         <>
-                            <NavLink to="/history" className={({ isActive }) => `flex items-center space-x-3 p-3 rounded-lg transition-all ${isActive ? 'bg-accent text-white shadow-lg shadow-blue-500/30' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
-                                <History size={20} />
-                                <span>{t('nav.history')}</span>
+                            <div className={`my-4 border-t border-white/5 ${isCollapsed ? 'mx-2' : ''}`} />
+                            <NavLink to="/history" className={({ isActive }) => `flex items-center gap-4 p-3 rounded-lg transition-all ${isActive ? 'bg-accent text-white shadow-lg shadow-blue-500/30' : 'text-gray-400 hover:bg-white/5 hover:text-white'} ${isCollapsed ? 'justify-center' : ''}`} title={t('nav.history')}>
+                                <History size={22} className="min-w-[22px]" />
+                                {!isCollapsed && <span className="whitespace-nowrap">{t('nav.history')}</span>}
                             </NavLink>
-                            <NavLink to="/analytics" className={({ isActive }) => `flex items-center space-x-3 p-3 rounded-lg transition-all ${isActive ? 'bg-accent text-white shadow-lg shadow-blue-500/30' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
-                                <LineChart size={20} />
-                                <span>{t('nav.analytics')}</span>
+                            <NavLink to="/analytics" className={({ isActive }) => `flex items-center gap-4 p-3 rounded-lg transition-all ${isActive ? 'bg-accent text-white shadow-lg shadow-blue-500/30' : 'text-gray-400 hover:bg-white/5 hover:text-white'} ${isCollapsed ? 'justify-center' : ''}`} title={t('nav.analytics')}>
+                                <LineChart size={22} className="min-w-[22px]" />
+                                {!isCollapsed && <span className="whitespace-nowrap">{t('nav.analytics')}</span>}
                             </NavLink>
-                            <Link to="/targets" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive('/targets') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'}`}>
-                                <Target size={20} />
-                                <span>{t('nav.targets')}</span>
+                            <Link to="/targets" className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all ${isActive('/targets') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'} ${isCollapsed ? 'justify-center' : ''}`} title={t('nav.targets')}>
+                                <Target size={22} className="min-w-[22px]" />
+                                {!isCollapsed && <span className="whitespace-nowrap">{t('nav.targets')}</span>}
                             </Link>
-                            <Link to="/shifts" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive('/shifts') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'}`}>
-                                <Clock size={20} />
-                                <span>{t('nav.shifts')}</span>
+                            <Link to="/shifts" className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all ${isActive('/shifts') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'} ${isCollapsed ? 'justify-center' : ''}`} title={t('nav.shifts')}>
+                                <Clock size={22} className="min-w-[22px]" />
+                                {!isCollapsed && <span className="whitespace-nowrap">{t('nav.shifts')}</span>}
                             </Link>
-                            <Link to="/users" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive('/users') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'}`}>
-                                <Users size={20} />
-                                <span>{t('nav.users')}</span>
+                            <Link to="/users" className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all ${isActive('/users') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'} ${isCollapsed ? 'justify-center' : ''}`} title={t('nav.users')}>
+                                <Users size={22} className="min-w-[22px]" />
+                                {!isCollapsed && <span className="whitespace-nowrap">{t('nav.users')}</span>}
                             </Link>
                         </>
                     )}
                 </nav>
 
-                <div className="p-4 border-t border-white/10 space-y-4">
-                    <LanguageSwitcher />
-
-                    <div className="px-4 text-sm text-gray-400">
-                        Logged in as <span className="text-white font-semibold">{user?.username}</span>
+                <div className="p-3 border-t border-white/10 space-y-4">
+                    <div className={`flex ${isCollapsed ? 'justify-center' : 'px-1'}`}>
+                        <LanguageSwitcher mini={isCollapsed} />
                     </div>
-                    <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors">
-                        <LogOut size={18} />
-                        <span>{t('nav.logout')}</span>
+
+                    {!isCollapsed && (
+                        <div className="px-3 text-xs text-gray-400">
+                            {t('nav.logged_in') || 'Logged in as'} <span className="text-white font-semibold block truncate">{user?.username}</span>
+                        </div>
+                    )}
+
+                    <button
+                        onClick={handleLogout}
+                        className={`w-full flex items-center gap-4 px-3 py-3 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors ${isCollapsed ? 'justify-center' : ''}`}
+                        title={t('nav.logout')}
+                    >
+                        <LogOut size={22} className="min-w-[22px]" />
+                        {!isCollapsed && <span className="whitespace-nowrap">{t('nav.logout')}</span>}
                     </button>
+
+                    {!isCollapsed && (
+                        <button
+                            onClick={toggleFullscreen}
+                            className="w-full flex items-center justify-center gap-2 p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white border border-white/5"
+                            title={isFullscreen ? "Exit Fullscreen (f)" : "Enter Fullscreen (f)"}
+                        >
+                            {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                            <span className="text-xs uppercase tracking-widest">{isFullscreen ? 'Windowed' : 'Fullscreen'}</span>
+                        </button>
+                    )}
                 </div>
             </aside>
 
