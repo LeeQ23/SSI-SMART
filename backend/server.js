@@ -22,7 +22,7 @@ app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'YOUR_API_KEY';
 const CURRENT_THRESHOLD = 0.5; // Amps
-const IDEAL_CYCLE_TIME = 2; // Seconds
+const IDEAL_CYCLE_TIME = 12; // Seconds
 
 // In-memory state for real-time calculation (persisted to DB periodically)
 let machinesState = {};

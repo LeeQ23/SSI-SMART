@@ -210,7 +210,7 @@ const Dashboard = () => {
                             <div className="text-3xl font-bold text-warning">
                                 {Number(data.avgCycleTime).toFixed(1)}s
                             </div>
-                            <div className="text-[10px] text-gray-500 mt-1 uppercase">Target: 2.0s</div>
+                            <div className="text-[10px] text-gray-500 mt-1 uppercase">Target: 12.0s</div>
                         </div>
                     </div>
                     {/* A/P/Q percentages row */}
