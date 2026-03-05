@@ -80,5 +80,10 @@
         "save": "Simpan Perubahan",
         "success": "Shift berhasil diperbarui",
         "error": "Gagal memperbarui shift"
+    },
+    "common": {
+        "error_title": "Kesalahan Sistem",
+        "error_message": "Terjadi kesalahan saat mengambil data. Silakan periksa koneksi Anda.",
+        "retry": "Coba Lagi"
     }
 }

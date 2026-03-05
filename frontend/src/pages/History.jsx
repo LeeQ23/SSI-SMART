@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Download, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import MachineSelector from '../components/MachineSelector';
+import ErrorToast from '../components/ErrorToast';
 
 const History = () => {
   const { t } = useTranslation();
@@ -11,10 +12,19 @@ const History = () => {
   const [editingComment, setEditingComment] = useState(null);
   const [commentText, setCommentText] = useState('');
   const [selectedMachine, setSelectedMachine] = useState('');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchHistory();
-  }, [selectedMachine]);
+
+    const retryInterval = setInterval(() => {
+      if (error) {
+        fetchHistory();
+      }
+    }, 10000);
+
+    return () => clearInterval(retryInterval);
+  }, [selectedMachine, error]);
 
   const fetchHistory = async () => {
     try {
@@ -22,8 +32,10 @@ const History = () => {
       const res = await axios.get(`/api/history${selectedMachine ? `?machine_id=${selectedMachine}` : ''}`);
       setHistory(res.data);
       setLoading(false);
+      setError(null);
     } catch (error) {
       console.error("Error fetching history", error);
+      setError("Sync error");
       setLoading(false);
     }
   };
@@ -85,7 +97,7 @@ const History = () => {
     }
   };
 
-  if (loading) return <div>Loading History...</div>;
+  if (loading && history.length === 0) return <div className="text-white text-center p-10">Loading History...</div>;
 
   return (
     <div className="space-y-6 relative">
@@ -191,6 +203,8 @@ const History = () => {
           <div className="p-8 text-center text-gray-500">No history data available.</div>
         )}
       </div>
+
+      {error && <ErrorToast />}
     </div>
   );
 };

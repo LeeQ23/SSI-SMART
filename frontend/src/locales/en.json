@@ -80,5 +80,10 @@
         "save": "Save Changes",
         "success": "Shift updated successfully",
         "error": "Error updating shift"
+    },
+    "common": {
+        "error_title": "System Error",
+        "error_message": "Something went wrong while fetching data. Please check your connection.",
+        "retry": "Try Again"
     }
 }

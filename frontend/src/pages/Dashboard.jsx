@@ -8,6 +8,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import MachineSelector from '../components/MachineSelector';
 import StatusTimelineChart from '../components/StatusTimelineChart';
 import AnimatedNumber from '../components/AnimatedNumber';
+import ErrorToast from '../components/ErrorToast';
 
 const Dashboard = () => {
     const [data, setData] = useState(null);
@@ -26,8 +27,9 @@ const Dashboard = () => {
             setError(null);
         } catch (error) {
             console.error("Error fetching dashboard data", error);
+            // Don't set loading back to true here so UI stays visible
             setLoading(false);
-            setError("Failed to connect to machine backend. Please check connection.");
+            setError("Sync error");
         }
     };
 
@@ -53,14 +55,21 @@ const Dashboard = () => {
             }
         });
 
+        const retryInterval = setInterval(() => {
+            if (error) {
+                fetchData();
+            }
+        }, 10000); // Auto retry every 10 seconds on error
+
         return () => {
             newSocket.close();
+            clearInterval(retryInterval);
         };
     }, [machineId]); // Re-run when machineId changes
 
 
-    if (loading) return <div className="text-white text-center p-10">Loading Dashboard...</div>;
-    if (error) return <div className="text-red-500 text-center p-10 font-bold">{error}</div>;
+    if (loading && !data) return <div className="text-white text-center p-10">Loading Dashboard...</div>;
+    // Removed error early return - let the UI render with old data
     if (!data) return <div className="text-white text-center p-10">No data available.</div>;
 
 
@@ -225,6 +234,8 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {error && <ErrorToast />}
         </div>
     );
 };

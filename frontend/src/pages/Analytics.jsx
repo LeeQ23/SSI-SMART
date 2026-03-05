@@ -8,6 +8,7 @@ import { AlertCircle, Search } from 'lucide-react';
 import MachineSelector from '../components/MachineSelector';
 import StatusTimelineChart from '../components/StatusTimelineChart';
 import AnimatedNumber from '../components/AnimatedNumber';
+import ErrorToast from '../components/ErrorToast';
 
 const Analytics = () => {
     const { t } = useTranslation();
@@ -147,12 +148,7 @@ const Analytics = () => {
                 </button>
             </form>
 
-            {error && (
-                <div className="bg-red-500/10 border border-red-500/50 text-red-200 p-4 rounded-lg flex items-center gap-3">
-                    <AlertCircle size={24} />
-                    {error}
-                </div>
-            )}
+            {error && <ErrorToast />}
 
             {data && (
                 <motion.div

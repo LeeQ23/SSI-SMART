@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Activity, CheckCircle, XCircle, Zap, LayoutGrid } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import AnimatedNumber from '../components/AnimatedNumber';
+import ErrorToast from '../components/ErrorToast';
 
 const Overview = () => {
     const [machines, setMachines] = useState([]);
@@ -18,9 +19,10 @@ const Overview = () => {
             const res = await axios.get('/api/dashboard/all');
             setMachines(res.data);
             setLoading(false);
+            setError(null);
         } catch (err) {
             console.error("Error fetching machines overview", err);
-            setError("Failed to load machine overview.");
+            setError("Sync error");
             setLoading(false);
         }
     };
@@ -53,11 +55,20 @@ const Overview = () => {
             fetchMachines();
         });
 
-        return () => socket.close();
-    }, []);
+        const retryInterval = setInterval(() => {
+            if (error) {
+                fetchMachines();
+            }
+        }, 10000);
 
-    if (loading) return <div className="text-white text-center p-10">Loading Overview...</div>;
-    if (error) return <div className="text-red-500 text-center p-10 font-bold">{error}</div>;
+        return () => {
+            socket.close();
+            clearInterval(retryInterval);
+        };
+    }, [error]);
+
+    if (loading && machines.length === 0) return <div className="text-white text-center p-10">Loading Overview...</div>;
+    // Removed early error return
 
     return (
         <div className="space-y-6">
@@ -122,6 +133,8 @@ const Overview = () => {
                     </div>
                 ))}
             </div>
+
+            {error && <ErrorToast />}
         </div>
     );
 };
