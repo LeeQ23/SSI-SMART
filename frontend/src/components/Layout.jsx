@@ -32,8 +32,6 @@ const Layout = ({ children }) => {
                     case '3': if (user?.role === 'manager') navigate('/history'); break;
                     case '4': if (user?.role === 'manager') navigate('/analytics'); break;
                     case '5': if (user?.role === 'manager') navigate('/targets'); break;
-                    case '6': if (user?.role === 'manager') navigate('/shifts'); break;
-                    case '7': if (user?.role === 'manager') navigate('/users'); break;
                     case 'l': case 'L': handleLogout(); break;
                     default: break;
                 }
@@ -105,8 +103,6 @@ const Layout = ({ children }) => {
                             <NavItem to="/history" icon={History} label={t('nav.history')} shortcut="3" />
                             <NavItem to="/analytics" icon={LineChart} label={t('nav.analytics')} shortcut="4" />
                             <NavItem to="/targets" icon={Target} label={t('nav.targets')} shortcut="5" />
-                            <NavItem to="/shifts" icon={Clock} label={t('nav.shifts')} shortcut="6" />
-                            <NavItem to="/users" icon={Users} label={t('nav.users')} shortcut="7" />
                         </>
                     )}
                 </nav>

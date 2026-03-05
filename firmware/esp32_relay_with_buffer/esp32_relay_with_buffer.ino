@@ -4,7 +4,7 @@
 // --- USER CONFIGURATION ---
 const char* ssid = "YOUR_WIFI_SSID";          // WiFi Name
 const char* password = "YOUR_WIFI_PASSWORD";          // WiFi Password
-const char* serverUrl = "http://YOUR_VNC_IP:5003/api/signal"; // Signal Endpoint
+const char* serverUrl = "http://YOUR_SERVER_IP:5003/api/signal"; // Signal Endpoint
 const int machineId = 7; // Machine 200A1
 
 // --- PIN DEFINITIONS ---

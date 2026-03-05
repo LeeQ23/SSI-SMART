@@ -5,7 +5,7 @@
 // --- USER CONFIGURATION ---
 const char* ssid = "YOUR_WIFI_SSID";          // Replace with your WiFi Name
 const char* password = "YOUR_WIFI_PASSWORD";  // Replace with your WiFi Password
-const char* serverUrl = "http://YOUR_VNC_IP:5003/api/machine-status"; // Updated Endpoint
+const char* serverUrl = "http://YOUR_SERVER_IP:5003/api/machine-status"; // Updated Endpoint
 const int machineId = 7; // Machine 200A1
 
 // --- PIN DEFINITIONS & SERIAL ---

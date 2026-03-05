@@ -1,3 +1,7 @@
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useTranslation } from 'react-i18next';
+import { Download, MessageSquare } from 'lucide-react';
 import LogoLoader from '../components/LogoLoader';
 
 const History = () => {

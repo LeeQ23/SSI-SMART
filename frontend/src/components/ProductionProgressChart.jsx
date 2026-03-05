@@ -13,91 +13,113 @@ import {
 } from 'recharts';
 
 const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morning' }) => {
-    const data = useMemo(() => {
-        // Match user's specific scale request: Morning 7-17
+    const chartData = useMemo(() => {
         let startHour = 7;
         let endHour = 17;
 
         const name = shiftName.toLowerCase();
-        if (name.includes('morning')) {
-            startHour = 7;
-            endHour = 17;
-        } else if (name.includes('evening')) {
-            startHour = 15;
-            endHour = 23;
-        } else if (name.includes('night')) {
-            startHour = 23;
-            endHour = 31; // 07:00 next day
-        }
+        if (name.includes('morning')) { startHour = 7; endHour = 17; }
+        else if (name.includes('evening')) { startHour = 15; endHour = 23; }
+        else if (name.includes('night')) { startHour = 23; endHour = 31; }
 
-        const hours = [];
-        for (let h = startHour; h <= endHour; h++) {
-            hours.push(h);
-        }
+        const now = new Date();
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
 
-        let cumulativeGood = 0;
-        let cumulativeNG = 0;
+        const shiftStartTs = startOfToday.getTime() + (startHour * 3600 * 1000);
+        const shiftEndTs = startOfToday.getTime() + (endHour * 3600 * 1000);
 
-        return hours.map(hour => {
-            const hDisplay = hour % 24;
-            const hourEvents = events.filter(e => {
-                const eventDate = new Date(e.timestamp);
-                const eventHour = eventDate.getHours();
-                const eventDay = eventDate.getDate();
+        // Filter and sort events within this shift
+        const shiftEvents = events
+            .map(e => ({ ...e, ts: new Date(e.timestamp).getTime() }))
+            .filter(e => e.ts >= shiftStartTs && e.ts <= shiftEndTs)
+            .sort((a, b) => a.ts - b.ts);
 
-                // Simplified day-crossing logic for Night shift
-                if (hour >= 24) {
-                    // This is "tomorrow" in shift terms
-                    return eventHour === hDisplay;
-                }
-                return eventHour === hDisplay;
-            });
+        // Generate data points
+        const points = [];
 
-            const hourGood = hourEvents.filter(e => e.signal_type === 'good').length;
-            const hourNG = hourEvents.filter(e => e.signal_type === 'ng').length;
+        // 1. Shift Start
+        points.push({ ts: shiftStartTs, good: 0, ng: 0, targetLine: 0 });
 
-            cumulativeGood += hourGood;
-            cumulativeNG += hourNG;
+        // 2. Event points
+        let cumGood = 0;
+        let cumNG = 0;
+        shiftEvents.forEach(e => {
+            if (e.signal_type === 'good') cumGood++;
+            if (e.signal_type === 'ng') cumNG++;
 
-            const now = new Date();
-            const curH = now.getHours();
-            let isFuture = false;
-            // Standard shift
-            if (startHour < 24 && endHour <= 24) {
-                if (curH < hDisplay) isFuture = true;
-            } else {
-                // Night shift
-                if (curH >= startHour % 24) {
-                    if (hDisplay < startHour % 24 || hDisplay > curH) isFuture = true;
-                } else {
-                    if (hDisplay > curH && hDisplay < startHour % 24) isFuture = true;
-                }
+            // Only add if not in future
+            if (e.ts <= now.getTime()) {
+                points.push({
+                    ts: e.ts,
+                    good: cumGood,
+                    ng: cumNG,
+                    targetLine: (target / (shiftEndTs - shiftStartTs)) * (e.ts - shiftStartTs)
+                });
             }
-
-            return {
-                hour: `${hDisplay.toString().padStart(2, '0')}:00`,
-                good: isFuture ? null : cumulativeGood,
-                ng: isFuture ? null : cumulativeNG,
-                percent: isFuture ? null : ((cumulativeGood / target) * 100).toFixed(1),
-                targetLine: (target / (hours.length - 1)) * (hour - startHour) // Ideal linear path
-            };
         });
+
+        // 3. Current time point (tracker end)
+        if (now.getTime() > shiftStartTs && now.getTime() < shiftEndTs) {
+            points.push({
+                ts: now.getTime(),
+                good: cumGood,
+                ng: cumNG,
+                targetLine: (target / (shiftEndTs - shiftStartTs)) * (now.getTime() - shiftStartTs)
+            });
+        }
+
+        // 4. Shift End Target Line (to ensure ideal path spans the full width)
+        points.push({
+            ts: shiftEndTs,
+            good: null,
+            ng: null,
+            targetLine: target
+        });
+
+        // Add display time and percentage
+        return points.sort((a, b) => a.ts - b.ts).map(p => ({
+            ...p,
+            timeDisplay: new Date(p.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            percent: p.good !== null ? ((p.good / target) * 100).toFixed(1) : null
+        }));
     }, [events, target, shiftName]);
+
+    // Calculate ticks for every hour
+    const getTicks = () => {
+        let startHour = 7;
+        let endHour = 17;
+        const name = shiftName.toLowerCase();
+        if (name.includes('morning')) { startHour = 7; endHour = 17; }
+        else if (name.includes('evening')) { startHour = 15; endHour = 23; }
+        else if (name.includes('night')) { startHour = 23; endHour = 31; }
+
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+
+        const ticks = [];
+        for (let h = startHour; h <= endHour; h++) {
+            ticks.push(startOfToday.getTime() + (h * 3600 * 1000));
+        }
+        return ticks;
+    };
 
     return (
         <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                     <XAxis
-                        dataKey="hour"
+                        dataKey="ts"
+                        type="number"
+                        domain={['dataMin', 'dataMax']}
+                        ticks={getTicks()}
+                        tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                         stroke="#94a3b8"
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
-                        interval="preserveStartEnd"
                     />
-                    {/* Left Y-Axis: Units */}
                     <YAxis
                         yAxisId="left"
                         stroke="#94a3b8"
@@ -106,7 +128,6 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         axisLine={false}
                         domain={[0, target]}
                     />
-                    {/* Right Y-Axis: Percentage */}
                     <YAxis
                         yAxisId="right"
                         orientation="right"
@@ -117,14 +138,13 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         domain={[0, 100]}
                     />
                     <Tooltip
-                        trigger="hover"
                         contentStyle={{ backgroundColor: '#001F3F', border: '1px solid #0074D920', borderRadius: '8px' }}
                         itemStyle={{ fontSize: '12px' }}
+                        labelFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                         cursor={{ stroke: '#0074D9', strokeWidth: 1, strokeDasharray: '5 5' }}
                     />
                     <Legend verticalAlign="top" height={36} />
 
-                    {/* Ideal Production Area (Subtle Path) */}
                     <Area
                         yAxisId="left"
                         type="monotone"
@@ -133,6 +153,7 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         fill="#0074D905"
                         name="Ideal Path"
                         connectNulls={true}
+                        isAnimationActive={false}
                     />
 
                     <Line
@@ -141,10 +162,11 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         dataKey="good"
                         stroke="#22c55e"
                         strokeWidth={3}
-                        dot={{ r: 4, fill: '#22c55e' }}
-                        activeDot={{ r: 6 }}
+                        dot={false}
+                        activeDot={{ r: 4 }}
                         name="Good"
                         connectNulls={false}
+                        isAnimationActive={false}
                     />
                     <Line
                         yAxisId="left"
@@ -152,9 +174,11 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         dataKey="ng"
                         stroke="#ef4444"
                         strokeWidth={2}
-                        dot={{ r: 3, fill: '#ef4444' }}
+                        dot={false}
+                        activeDot={{ r: 3 }}
                         name="NG"
                         connectNulls={false}
+                        isAnimationActive={false}
                     />
                 </ComposedChart>
             </ResponsiveContainer>

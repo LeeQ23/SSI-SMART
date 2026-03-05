@@ -107,38 +107,31 @@ const Dashboard = () => {
         <div className="space-y-6">
             {/* Top Info Header Row */}
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-                <div className="glass-panel p-3 border-l-2 border-l-accent">
+                <div className="glass-panel p-3 border-l-2 border-l-accent flex flex-col items-center justify-center">
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Product ID</p>
-                    <p className="text-xl font-bold text-white">SI-136</p>
+                    <p className="text-xl font-bold text-white leading-none mt-1">SI-136</p>
                 </div>
-                <div className="glass-panel p-3">
+                <div className="glass-panel p-3 flex flex-col items-center justify-center">
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Target</p>
-                    <p className="text-xl font-bold text-white">{data.target}</p>
+                    <p className="text-xl font-bold text-white leading-none mt-1">{data.target}</p>
                 </div>
-                <div className="glass-panel p-3 border-l-2 border-l-accent/50">
+                <div className="glass-panel p-3 border-l-2 border-l-accent/50 flex flex-col items-center justify-center">
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Shift</p>
-                    <p className="text-xl font-bold text-accent">{data.shift}</p>
+                    <p className="text-xl font-bold text-accent leading-none mt-1">{data.shift}</p>
                 </div>
-                <div className="glass-panel p-3">
+                <div className="glass-panel p-3 flex flex-col items-center justify-center text-center">
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Machine ID</p>
                     <MachineSelector
                         selectedId={machineId || 1}
                         onChange={(id) => navigate(`/dashboard/${id}`)}
-                        className="bg-transparent border-none p-0 h-auto text-xl font-bold text-white"
+                        className="bg-transparent border-none p-0 h-auto text-xl font-bold text-white text-center w-full"
                     />
                 </div>
-                <div className="glass-panel p-3 col-span-1 bg-accent/5">
+                <div className="glass-panel p-3 col-span-2 bg-accent/5 flex flex-col items-center justify-center text-center">
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">DATE & TIME</p>
-                    <p className="text-sm font-mono font-bold text-white leading-tight">
+                    <p className="text-xl font-mono font-bold text-white leading-none mt-1">
                         {formatDateDisplay(currentTime)}
                     </p>
-                </div>
-                {/* State Indicator moved to Top Right */}
-                <div className="glass-panel p-3 flex items-center justify-center">
-                    <div className={`px-3 py-1 rounded-full flex items-center gap-2 ${data.state === 'running' ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'}`}>
-                        <div className={`w-2 h-2 rounded-full ${data.state === 'running' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-                        <span className="font-bold uppercase tracking-wider text-[10px]">{data.state}</span>
-                    </div>
                 </div>
             </div>
 
@@ -180,11 +173,11 @@ const Dashboard = () => {
                 </div>
 
                 {/* Combined OEE, Cycle Time & A/P/Q */}
-                <div className="glass-panel lg:col-span-2 overflow-hidden flex flex-col h-[236px]">
-                    <div className="flex-1 flex items-center p-6 gap-6">
+                <div className="glass-panel lg:col-span-2 overflow-hidden flex flex-col h-[236px] bg-white/[0.02]">
+                    <div className="flex-1 flex items-center p-4 gap-4">
                         <div className="flex-1 flex flex-col items-center justify-center">
-                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{t('dashboard.oee')}</h3>
-                            <div className="h-32 w-full relative">
+                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dashboard.oee')}</h3>
+                            <div className="h-28 w-full relative">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
@@ -259,7 +252,13 @@ const Dashboard = () => {
 
                 {/* 1/3 Status Timeline Card */}
                 <div className="glass-panel p-6">
-                    <h3 className="text-xl font-bold mb-6">{t('dashboard.status')}</h3>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold">{t('dashboard.status')}</h3>
+                        <div className={`px-2 py-0.5 rounded-full flex items-center gap-1.5 border ${data.state === 'running' ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${data.state === 'running' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                            <span className="font-bold uppercase tracking-widest text-[8px]">{data.state}</span>
+                        </div>
+                    </div>
                     <StatusTimelineChart
                         timeline={data.timeline}
                         productionEvents={data.productionEvents}
