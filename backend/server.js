@@ -171,7 +171,6 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
         const [
             [counts],
             [stateLogs],
-            [targets],
             [eventLogs]
         ] = await Promise.all([
             pool.query(`
@@ -186,7 +185,6 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
                 WHERE machine_id = ? AND timestamp >= ?
                 ORDER BY timestamp ASC
             `, [machineId, shiftStartStr]),
-            pool.query('SELECT * FROM targets WHERE date = ? AND machine_id = ?', [todayStr, machineId]),
             pool.query(`
                 SELECT signal_type, timestamp 
                 FROM production_events 
@@ -215,7 +213,7 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
             else downtime += durationSinceLast;
         }
 
-        const target = targets[0] ? targets[0].target_qty : 1000;
+        const target = 1000; // Default target
 
         // 3. Calculate OEE
         const totalCount = good + ng;
@@ -538,45 +536,6 @@ app.get('/api/analytics', authenticateToken, async (req, res) => {
     }
 });
 
-// Targets API
-app.get('/api/targets', authenticateToken, async (req, res) => {
-    try {
-        const [rows] = await pool.query(`
-            SELECT t.*, m.code as machine_code 
-            FROM targets t 
-            LEFT JOIN machines m ON t.machine_id = m.id 
-            ORDER BY date DESC 
-            LIMIT 50
-        `);
-        res.json(rows);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-
-app.post('/api/targets', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'manager') return res.sendStatus(403);
-    const { date, target_qty, order_name, machine_id = 1 } = req.body;
-    try {
-        await pool.query(
-            'INSERT INTO targets (date, target_qty, order_name, machine_id) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE target_qty = ?, order_name = ?, machine_id = ?',
-            [date, target_qty, order_name, machine_id, target_qty, order_name, machine_id]
-        );
-        res.sendStatus(201);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-
-app.delete('/api/targets/:id', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'manager') return res.sendStatus(403);
-    try {
-        await pool.query('DELETE FROM targets WHERE id = ?', [req.params.id]);
-        res.sendStatus(200);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
 
 
 
