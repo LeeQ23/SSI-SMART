@@ -5,7 +5,6 @@ import Layout from './components/Layout';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 import History from './pages/History';
-import Targets from './pages/Targets';
 import Analytics from './pages/Analytics';
 import Overview from './pages/Overview';
 
@@ -33,7 +32,6 @@ function App() {
                 } />
                 {/* Placeholders for other routes */}
                 <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
-                <Route path="/targets" element={<ProtectedRoute><Targets /></ProtectedRoute>} />
                 <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
             </Routes>
         </AuthProvider>

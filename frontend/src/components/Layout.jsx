@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
-import { LayoutDashboard, History, Target, Users, LogOut, Clock, LineChart, LayoutGrid, Maximize, Minimize } from 'lucide-react';
+import { LayoutDashboard, History, Users, LogOut, Clock, LineChart, LayoutGrid, Maximize, Minimize } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -31,7 +31,6 @@ const Layout = ({ children }) => {
                     case '2': navigate('/dashboard/1'); break;
                     case '3': if (user?.role === 'manager') navigate('/history'); break;
                     case '4': if (user?.role === 'manager') navigate('/analytics'); break;
-                    case '5': if (user?.role === 'manager') navigate('/targets'); break;
                     case 'l': case 'L': handleLogout(); break;
                     default: break;
                 }
@@ -102,7 +101,6 @@ const Layout = ({ children }) => {
                             <div className="w-8 h-[1px] bg-white/10 my-2" />
                             <NavItem to="/history" icon={History} label={t('nav.history')} shortcut="3" />
                             <NavItem to="/analytics" icon={LineChart} label={t('nav.analytics')} shortcut="4" />
-                            <NavItem to="/targets" icon={Target} label={t('nav.targets')} shortcut="5" />
                         </>
                     )}
                 </nav>
@@ -145,9 +143,27 @@ const Layout = ({ children }) => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto p-4">
-                <div className="h-full glass-panel p-6 overflow-y-auto">
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden p-4">
+                <div className="flex-1 glass-panel p-6 overflow-y-auto mb-4">
                     {children}
+                </div>
+
+                {/* Running Warning Text Marquee */}
+                <div className="glass-panel py-2 px-4 bg-red-500/10 border-red-500/20 overflow-hidden flex items-center shrink-0">
+                    <div className="animate-marquee inline-block">
+                        <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4">
+                            JIKA ADA ABNORMALITY LAKUKAN STOP - CALL - WAIT
+                        </span>
+                        <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
+                            JIKA ADA ABNORMALITY LAKUKAN STOP - CALL - WAIT
+                        </span>
+                        <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
+                            JIKA ADA ABNORMALITY LAKUKAN STOP - CALL - WAIT
+                        </span>
+                        <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
+                            JIKA ADA ABNORMALITY LAKUKAN STOP - CALL - WAIT
+                        </span>
+                    </div>
                 </div>
             </main>
         </div>
