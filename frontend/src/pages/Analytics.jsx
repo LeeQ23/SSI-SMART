@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { AlertCircle, Search } from 'lucide-react';
 import MachineSelector from '../components/MachineSelector';
 import StatusTimelineChart from '../components/StatusTimelineChart';
-import AnimatedNumber from '../components/AnimatedNumber';
 import ErrorToast from '../components/ErrorToast';
 
 const Analytics = () => {
@@ -162,19 +161,19 @@ const Analytics = () => {
                         <motion.div variants={itemVariants} className="glass-panel p-6 text-center">
                             <h3 className="text-gray-400 text-sm uppercase mb-2">{t('dashboard.good')}</h3>
                             <p className="text-4xl font-bold text-green-400">
-                                <AnimatedNumber value={data.metrics.good} />
+                                {data.metrics.good}
                             </p>
                         </motion.div>
                         <motion.div variants={itemVariants} className="glass-panel p-6 text-center">
                             <h3 className="text-gray-400 text-sm uppercase mb-2">{t('dashboard.ng')}</h3>
                             <p className="text-4xl font-bold text-red-400">
-                                <AnimatedNumber value={data.metrics.ng} />
+                                {data.metrics.ng}
                             </p>
                         </motion.div>
                         <motion.div variants={itemVariants} className="glass-panel p-6 text-center">
                             <h3 className="text-gray-400 text-sm uppercase mb-2">{t('dashboard.oee')}</h3>
                             <p className="text-4xl font-bold text-accent">
-                                <AnimatedNumber value={data.metrics.oee} decimals={1} suffix="%" />
+                                {Number(data.metrics.oee).toFixed(1)}%
                             </p>
                         </motion.div>
                     </div>
@@ -192,13 +191,13 @@ const Analytics = () => {
                             <div className="flex flex-col items-center">
                                 <span className="text-xs text-gray-400 uppercase tracking-tighter mb-1">{t('dashboard.running')}</span>
                                 <span className="text-xl font-bold text-green-400">
-                                    <AnimatedNumber value={data.metrics.runTime} isTime={true} />
+                                    {formatTime(data.metrics.runTime)}
                                 </span>
                             </div>
                             <div className="flex flex-col items-center border-l border-white/10 pl-8">
                                 <span className="text-xs text-gray-400 uppercase tracking-tighter mb-1">{t('dashboard.downtime')}</span>
                                 <span className="text-xl font-bold text-red-400">
-                                    <AnimatedNumber value={data.metrics.downTime} isTime={true} />
+                                    {formatTime(data.metrics.downTime)}
                                 </span>
                             </div>
                         </div>

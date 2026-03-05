@@ -7,16 +7,16 @@ import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import MachineSelector from '../components/MachineSelector';
 import StatusTimelineChart from '../components/StatusTimelineChart';
-import AnimatedNumber from '../components/AnimatedNumber';
 import ErrorToast from '../components/ErrorToast';
-
 import LogoLoader from '../components/LogoLoader';
+import ProductionProgressChart from '../components/ProductionProgressChart';
 
 const Dashboard = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [socket, setSocket] = useState(null);
     const [error, setError] = useState(null);
+    const [currentTime, setCurrentTime] = useState(new Date());
     const { t } = useTranslation();
     const { machineId } = useParams();
     const navigate = useNavigate();
@@ -29,11 +29,15 @@ const Dashboard = () => {
             setError(null);
         } catch (error) {
             console.error("Error fetching dashboard data", error);
-            // Don't set loading back to true here so UI stays visible
             setLoading(false);
             setError("Sync error");
         }
     };
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         if (Notification.permission !== 'granted') {
@@ -61,17 +65,16 @@ const Dashboard = () => {
             if (error) {
                 fetchData();
             }
-        }, 10000); // Auto retry every 10 seconds on error
+        }, 10000);
 
         return () => {
             newSocket.close();
             clearInterval(retryInterval);
         };
-    }, [machineId]); // Re-run when machineId changes
+    }, [machineId]);
 
 
     if (loading && !data) return <LogoLoader />;
-    // Removed error early return - let the UI render with old data
     if (!data) return <div className="text-white text-center p-10">No data available.</div>;
 
 
@@ -90,147 +93,161 @@ const Dashboard = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold flex items-center gap-3">
-                        Production Dashboard
-                    </h1>
-                    <p className="text-gray-400 mt-1">
-                        Shift: <span className="text-accent font-semibold">{data.shift}</span> | Target: {data.target}
-                    </p>
+            {/* Top Info Header Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="glass-panel p-3 border-l-2 border-l-accent">
+                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Product ID</p>
+                    <p className="text-xl font-bold text-white">SI-136</p>
                 </div>
-                <div className="flex items-center gap-4 w-full md:w-auto">
+                <div className="glass-panel p-3">
+                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Target</p>
+                    <p className="text-xl font-bold text-white">{data.target}</p>
+                </div>
+                <div className="glass-panel p-3">
+                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Shift</p>
+                    <p className="text-xl font-bold text-accent">{data.shift}</p>
+                </div>
+                <div className="glass-panel p-3">
+                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Machine ID</p>
                     <MachineSelector
                         selectedId={machineId || 1}
                         onChange={(id) => navigate(`/dashboard/${id}`)}
+                        className="bg-transparent border-none p-0 h-auto text-xl font-bold text-white"
                     />
-                    <div className={`px-4 py-2 rounded-full flex items-center gap-2 ${data.state === 'running' ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'}`}>
-                        <div className={`w-3 h-3 rounded-full ${data.state === 'running' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-                        <span className="font-bold uppercase tracking-wider text-sm">{data.state}</span>
-                    </div>
+                </div>
+                <div className="glass-panel p-3 col-span-2 lg:col-span-1 bg-accent/5">
+                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Current Time</p>
+                    <p className="text-xl font-mono font-bold text-white">
+                        {currentTime.toLocaleTimeString([], { hour12: false })}
+                    </p>
                 </div>
             </div>
 
+            <div className="flex justify-between items-center">
+                <div className={`px-4 py-2 rounded-full flex items-center gap-2 ${data.state === 'running' ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'}`}>
+                    <div className={`w-3 h-3 rounded-full ${data.state === 'running' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                    <span className="font-bold uppercase tracking-wider text-sm">{data.state}</span>
+                </div>
+                <p className="text-xs text-gray-500 font-mono">{currentTime.toLocaleDateString()}</p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="glass-panel p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <CheckCircle size={64} />
+                {/* Total OK & NG Stacked */}
+                <div className="space-y-4">
+                    <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <CheckCircle size={32} />
+                        </div>
+                        <h3 className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">TOTAL OK</h3>
+                        <div className="text-3xl font-bold text-success leading-none">
+                            {data.good}
+                        </div>
                     </div>
-                    <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-2">{t('dashboard.good')}</h3>
-                    <div className="text-5xl font-bold text-success">
-                        <AnimatedNumber value={data.good} />
+                    <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <XCircle size={32} />
+                        </div>
+                        <h3 className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">TOTAL NG</h3>
+                        <div className="text-3xl font-bold text-danger leading-none">
+                            {data.ng}
+                        </div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-2">Units</div>
                 </div>
 
-                <div className="glass-panel p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <XCircle size={64} />
+                {/* Progress % Box */}
+                <div className="glass-panel p-6 flex flex-col items-center justify-center bg-accent/5 ring-1 ring-accent/20">
+                    <h3 className="text-gray-400 text-xs uppercase tracking-widest mb-4">PRODUCTION PROGRESS %</h3>
+                    <div className="text-6xl font-black text-white drop-shadow-md">
+                        {((data.good / data.target) * 100).toFixed(1)}%
                     </div>
-                    <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-2">{t('dashboard.ng')}</h3>
-                    <div className="text-5xl font-bold text-danger">
-                        <AnimatedNumber value={data.ng} />
+                    <div className="w-full bg-white/5 h-2 rounded-full mt-6 overflow-hidden">
+                        <div
+                            className="bg-accent h-full transition-all duration-1000 shadow-[0_0_10px_#0074D9]"
+                            style={{ width: `${Math.min((data.good / data.target) * 100, 100)}%` }}
+                        />
                     </div>
-                    <div className="text-xs text-gray-500 mt-2">Units</div>
                 </div>
 
-                <div className="glass-panel p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Clock size={64} />
+                {/* Combined OEE & Cycle Time */}
+                <div className="glass-panel p-4 lg:col-span-2 flex items-center gap-6">
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{t('dashboard.oee')}</h3>
+                        <div className="h-32 w-full relative">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={oeeData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={45}
+                                        outerRadius={55}
+                                        fill="#8884d8"
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                        startAngle={90}
+                                        endAngle={-270}
+                                    >
+                                        {oeeData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <span className="text-2xl font-bold">{Number(data.oee).toFixed(1)}%</span>
+                            </div>
+                        </div>
                     </div>
-                    <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-2">{t('dashboard.cycle_time')}</h3>
-                    <div className="text-5xl font-bold text-warning">
-                        <AnimatedNumber value={data.avgCycleTime} decimals={1} suffix="s" />
+                    <div className="w-px h-24 bg-white/10" />
+                    <div className="flex-1 text-center">
+                        <Clock size={24} className="mx-auto mb-2 text-warning opacity-50" />
+                        <h3 className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{t('dashboard.cycle_time')}</h3>
+                        <div className="text-3xl font-bold text-warning">
+                            {Number(data.avgCycleTime).toFixed(1)}s
+                        </div>
+                        <div className="text-[10px] text-gray-500 mt-1 uppercase">Target: 2.0s</div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-2">{t('dashboard.target')}: 2.0s</div>
-                </div>
-
-                <div className="glass-panel p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Zap size={64} />
-                    </div>
-                    <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-2">{t('dashboard.current')}</h3>
-                    <div className="text-5xl font-bold text-accent">
-                        <AnimatedNumber value={data.current} decimals={2} suffix="A" />
-                    </div>
-                    <div className="text-xs text-gray-500 mt-2">{t('dashboard.threshold')}: 0.5A</div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="glass-panel p-6 flex flex-col items-center justify-center">
-                    <h3 className="text-xl font-bold mb-4">{t('dashboard.oee')}</h3>
-                    <div className="h-64 w-full relative">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={oeeData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                    startAngle={90}
-                                    endAngle={-270}
-                                >
-                                    {oeeData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                                    ))}
-                                </Pie>
-                                <Tooltip contentStyle={{ backgroundColor: '#001F3F', borderColor: '#003366', color: '#fff' }} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-4xl font-bold">
-                                <AnimatedNumber value={data.oee} decimals={1} suffix="%" />
-                            </span>
-                            <span className="text-xs text-gray-400">{t('dashboard.efficiency')}</span>
+                {/* 2/3 Production Progress Chart */}
+                <div className="glass-panel p-6 lg:col-span-2">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold flex items-center gap-2">
+                            Production Shift Progress
+                        </h3>
+                        <div className="flex gap-4 text-[10px] uppercase font-bold">
+                            <span className="text-green-400">● Good</span>
+                            <span className="text-red-400">● NG</span>
                         </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-4 w-full mt-4 text-center text-sm">
-                        <div>
-                            <div className="text-gray-400">{t('dashboard.availability')}</div>
-                            <div className="font-bold">
-                                <AnimatedNumber value={data.availability} decimals={1} suffix="%" />
-                            </div>
-                        </div>
-                        <div>
-                            <div className="text-gray-400">{t('dashboard.performance')}</div>
-                            <div className="font-bold">
-                                <AnimatedNumber value={data.performance} decimals={1} suffix="%" />
-                            </div>
-                        </div>
-                        <div>
-                            <div className="text-gray-400">{t('dashboard.quality')}</div>
-                            <div className="font-bold">
-                                <AnimatedNumber value={data.quality} decimals={1} suffix="%" />
-                            </div>
-                        </div>
-                    </div>
+                    <ProductionProgressChart
+                        events={data.productionEvents}
+                        target={data.target}
+                        shiftName={data.shift}
+                    />
                 </div>
 
-                <div className="glass-panel p-6 lg:col-span-2">
+                {/* 1/3 Status Timeline Card */}
+                <div className="glass-panel p-6">
                     <h3 className="text-xl font-bold mb-6">{t('dashboard.status')}</h3>
-
                     <StatusTimelineChart
                         timeline={data.timeline}
                         productionEvents={data.productionEvents}
-                        height={240}
+                        height={200}
                     />
-
-                    <div className="flex gap-8 mt-10 justify-center">
-                        <div className="flex flex-col items-center">
-                            <span className="text-xs text-gray-400 uppercase tracking-tighter mb-1">{t('dashboard.running')}</span>
-                            <span className="text-xl font-bold text-green-400">
-                                <AnimatedNumber value={data.runningTime} isTime={true} />
+                    <div className="space-y-4 mt-8">
+                        <div className="flex items-center justify-between p-3 bg-white/5 rounded">
+                            <span className="text-xs text-gray-400 uppercase tracking-tighter">{t('dashboard.running')}</span>
+                            <span className="font-bold text-green-400">
+                                {formatTime(data.runningTime)}
                             </span>
                         </div>
-                        <div className="flex flex-col items-center border-l border-white/10 pl-8">
-                            <span className="text-xs text-gray-400 uppercase tracking-tighter mb-1">{t('dashboard.downtime')}</span>
-                            <span className="text-xl font-bold text-red-400">
-                                <AnimatedNumber value={data.downtime} isTime={true} />
+                        <div className="flex items-center justify-between p-3 bg-white/5 rounded">
+                            <span className="text-xs text-gray-400 uppercase tracking-tighter">{t('dashboard.downtime')}</span>
+                            <span className="font-bold text-red-400">
+                                {formatTime(data.downtime)}
                             </span>
                         </div>
                     </div>

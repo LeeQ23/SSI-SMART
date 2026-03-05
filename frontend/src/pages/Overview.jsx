@@ -4,7 +4,6 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Activity, CheckCircle, XCircle, Zap, LayoutGrid } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import AnimatedNumber from '../components/AnimatedNumber';
 import ErrorToast from '../components/ErrorToast';
 
 import LogoLoader from '../components/LogoLoader';
@@ -107,13 +106,13 @@ const Overview = () => {
                             <div className="bg-white/5 p-2 rounded">
                                 <p className="text-[10px] text-gray-400 uppercase">Good</p>
                                 <p className="text-lg font-bold text-green-400">
-                                    <AnimatedNumber value={m.good} />
+                                    {m.good}
                                 </p>
                             </div>
                             <div className="bg-white/5 p-2 rounded">
                                 <p className="text-[10px] text-gray-400 uppercase">NG</p>
                                 <p className="text-lg font-bold text-red-400">
-                                    <AnimatedNumber value={m.ng} />
+                                    {m.ng}
                                 </p>
                             </div>
                         </div>
@@ -121,7 +120,7 @@ const Overview = () => {
                         <div className="flex items-center justify-between text-xs text-gray-500">
                             <div className="flex items-center gap-1">
                                 <Zap size={12} className={m.state === 'running' ? 'text-yellow-400 animate-pulse' : ''} />
-                                <AnimatedNumber value={m.current} decimals={2} suffix=" A" />
+                                {Number(m.current).toFixed(2)} A
                             </div>
                             <div className="group-hover:translate-x-1 transition-transform">
                                 Details →
