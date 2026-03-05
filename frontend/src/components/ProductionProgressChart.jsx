@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     LineChart,
     Line,
@@ -13,6 +14,7 @@ import {
 } from 'recharts';
 
 const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morning' }) => {
+    const { t } = useTranslation();
     const chartData = useMemo(() => {
         let startHour = 7;
         let endHour = 17;
@@ -119,7 +121,7 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
-                        label={{ value: 'Time', position: 'insideBottomRight', offset: -10, fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
+                        label={{ value: t('dashboard.time'), position: 'insideBottomRight', offset: -10, fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
                     />
                     <YAxis
                         yAxisId="left"
@@ -128,7 +130,7 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         tickLine={false}
                         axisLine={false}
                         domain={[0, target]}
-                        label={{ value: 'Target', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold', offset: 15 }}
+                        label={{ value: t('dashboard.target'), angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold', offset: 15 }}
                     />
                     <YAxis
                         yAxisId="right"
@@ -138,7 +140,7 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         tickLine={false}
                         axisLine={false}
                         domain={[0, 100]}
-                        label={{ value: '%', angle: 90, position: 'insideRight', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold', offset: 15 }}
+                        label={{ value: t('dashboard.percent'), angle: 90, position: 'insideRight', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold', offset: 15 }}
                     />
                     <Tooltip
                         contentStyle={{ backgroundColor: '#001F3F', border: '1px solid #0074D920', borderRadius: '8px' }}

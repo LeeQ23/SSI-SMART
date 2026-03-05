@@ -5,9 +5,6 @@
         "dashboard": "Dasbor",
         "history": "Riwayat",
         "analytics": "Analitik",
-        "targets": "Target",
-        "shifts": "Shift",
-        "users": "Pengguna",
         "logout": "Keluar"
     },
     "dashboard": {
@@ -26,7 +23,10 @@
         "running": "Waktu Jalan",
         "downtime": "Waktu Henti",
         "machine": "Mesin",
-        "all_machines": "Semua Mesin"
+        "all_machines": "Semua Mesin",
+        "production_progress": "Progres Produksi",
+        "time": "Waktu",
+        "percent": "%"
     },
     "login": {
         "welcome": "Selamat Datang Kembali",
@@ -35,55 +35,10 @@
         "password": "Kata Sandi",
         "signin": "Masuk"
     },
-    "targets": {
-        "title": "Target Produksi",
-        "set_daily": "Atur Target Harian",
-        "date": "Tanggal",
-        "order_name": "Nama Pesanan / ID",
-        "quantity": "Jumlah Target",
-        "save": "Simpan Target",
-        "recent": "Target Terbaru",
-        "table": {
-            "date": "Tanggal",
-            "order": "Pesanan",
-            "target": "Target",
-            "actions": "Tindakan"
-        },
-        "delete": "Hapus",
-        "success": "Target berhasil diperbarui!",
-        "error": "Gagal memperbarui target.",
-        "confirm": "Anda yakin?"
-    },
-    "users": {
-        "title": "Manajemen Pengguna",
-        "add_new": "Tambah Pengguna Baru",
-        "username": "Nama Pengguna",
-        "password": "Kata Sandi",
-        "role": "Peran",
-        "create": "Buat Pengguna",
-        "operator": "Operator",
-        "manager": "Manajer",
-        "table": {
-            "username": "Nama Pengguna",
-            "role": "Peran",
-            "created_at": "Dibuat Pada",
-            "actions": "Tindakan"
-        },
-        "success": "Pengguna berhasil ditambahkan!",
-        "error": "Gagal menambah pengguna"
-    },
-    "shifts": {
-        "title": "Konfigurasi Shift",
-        "loading": "Memuat Shift...",
-        "start_time": "Waktu Mulai",
-        "end_time": "Waktu Selesai",
-        "save": "Simpan Perubahan",
-        "success": "Shift berhasil diperbarui",
-        "error": "Gagal memperbarui shift"
-    },
     "common": {
         "error_title": "Kesalahan Sistem",
         "error_message": "Terjadi kesalahan saat mengambil data. Silakan periksa koneksi Anda.",
-        "retry": "Coba Lagi"
+        "retry": "Coba Lagi",
+        "abnormality_warning": "JIKA ADA ABNORMALITY LAKUKAN STOP - CALL - WAIT"
     }
 }

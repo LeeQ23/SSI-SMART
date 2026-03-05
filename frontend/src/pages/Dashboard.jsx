@@ -65,7 +65,7 @@ const Dashboard = () => {
             if (error) {
                 fetchData();
             }
-        }, 10000);
+        }, 3000);
 
         return () => {
             newSocket.close();
@@ -236,7 +236,7 @@ const Dashboard = () => {
                 <div className="glass-panel p-6 lg:col-span-2">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-xl font-bold flex items-center gap-2">
-                            Production Shift Progress
+                            {t('dashboard.production_progress')}
                         </h3>
                         <div className="flex gap-4 text-[10px] uppercase font-bold">
                             <span className="text-green-400">● Good</span>

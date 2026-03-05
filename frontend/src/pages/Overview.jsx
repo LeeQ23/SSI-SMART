@@ -60,7 +60,7 @@ const Overview = () => {
             if (error) {
                 fetchMachines();
             }
-        }, 10000);
+        }, 3000);
 
         return () => {
             socket.close();

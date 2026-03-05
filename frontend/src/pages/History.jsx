@@ -20,7 +20,7 @@ const History = () => {
       if (error) {
         fetchHistory();
       }
-    }, 10000);
+    }, 3000);
 
     return () => clearInterval(retryInterval);
   }, [selectedMachine, error]);

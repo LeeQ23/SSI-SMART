@@ -152,16 +152,16 @@ const Layout = ({ children }) => {
                 <div className="glass-panel py-2 px-4 bg-red-500/10 border-red-500/20 overflow-hidden flex items-center shrink-0">
                     <div className="animate-marquee inline-block">
                         <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4">
-                            JIKA ADA ABNORMALITY LAKUKAN STOP - CALL - WAIT
+                            {t('common.abnormality_warning')}
                         </span>
                         <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
-                            JIKA ADA ABNORMALITY LAKUKAN STOP - CALL - WAIT
+                            {t('common.abnormality_warning')}
                         </span>
                         <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
-                            JIKA ADA ABNORMALITY LAKUKAN STOP - CALL - WAIT
+                            {t('common.abnormality_warning')}
                         </span>
                         <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
-                            JIKA ADA ABNORMALITY LAKUKAN STOP - CALL - WAIT
+                            {t('common.abnormality_warning')}
                         </span>
                     </div>
                 </div>
