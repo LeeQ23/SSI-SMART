@@ -59,11 +59,26 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
             cumulativeGood += hourGood;
             cumulativeNG += hourNG;
 
+            const now = new Date();
+            const curH = now.getHours();
+            let isFuture = false;
+            // Standard shift
+            if (startHour < 24 && endHour <= 24) {
+                if (curH < hDisplay) isFuture = true;
+            } else {
+                // Night shift
+                if (curH >= startHour % 24) {
+                    if (hDisplay < startHour % 24 || hDisplay > curH) isFuture = true;
+                } else {
+                    if (hDisplay > curH && hDisplay < startHour % 24) isFuture = true;
+                }
+            }
+
             return {
-                hour: `${hDisplay}:00`,
-                good: cumulativeGood,
-                ng: cumulativeNG,
-                percent: ((cumulativeGood / target) * 100).toFixed(1),
+                hour: `${hDisplay.toString().padStart(2, '0')}:00`,
+                good: isFuture ? null : cumulativeGood,
+                ng: isFuture ? null : cumulativeNG,
+                percent: isFuture ? null : ((cumulativeGood / target) * 100).toFixed(1),
                 targetLine: (target / (hours.length - 1)) * (hour - startHour) // Ideal linear path
             };
         });
@@ -80,6 +95,7 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
+                        interval="preserveStartEnd"
                     />
                     {/* Left Y-Axis: Units */}
                     <YAxis
@@ -89,7 +105,6 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         tickLine={false}
                         axisLine={false}
                         domain={[0, target]}
-                        label={{ value: 'Units', angle: -90, position: 'insideLeft', offset: 10, fill: '#94a3b8', fontSize: 10 }}
                     />
                     {/* Right Y-Axis: Percentage */}
                     <YAxis
@@ -100,11 +115,12 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         tickLine={false}
                         axisLine={false}
                         domain={[0, 100]}
-                        label={{ value: '% Target', angle: 90, position: 'insideRight', offset: 10, fill: '#94a3b8', fontSize: 10 }}
                     />
                     <Tooltip
+                        trigger="hover"
                         contentStyle={{ backgroundColor: '#001F3F', border: '1px solid #0074D920', borderRadius: '8px' }}
                         itemStyle={{ fontSize: '12px' }}
+                        cursor={{ stroke: '#0074D9', strokeWidth: 1, strokeDasharray: '5 5' }}
                     />
                     <Legend verticalAlign="top" height={36} />
 
@@ -116,6 +132,7 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         stroke="none"
                         fill="#0074D905"
                         name="Ideal Path"
+                        connectNulls={true}
                     />
 
                     <Line
@@ -127,6 +144,7 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         dot={{ r: 4, fill: '#22c55e' }}
                         activeDot={{ r: 6 }}
                         name="Good"
+                        connectNulls={false}
                     />
                     <Line
                         yAxisId="left"
@@ -136,6 +154,7 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         strokeWidth={2}
                         dot={{ r: 3, fill: '#ef4444' }}
                         name="NG"
+                        connectNulls={false}
                     />
                 </ComposedChart>
             </ResponsiveContainer>

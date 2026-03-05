@@ -74,14 +74,14 @@ const Dashboard = () => {
     }, [machineId]);
 
 
-    if (loading && !data) return <LogoLoader />;
-    if (!data) return <div className="text-white text-center p-10">No data available.</div>;
+    const oeeData = useMemo(() => {
+        if (!data) return [];
+        return [
+            { name: 'OEE', value: parseFloat(data.oee) },
+            { name: 'Remaining', value: 100 - parseFloat(data.oee) }
+        ];
+    }, [data?.oee]);
 
-
-    const oeeData = [
-        { name: 'OEE', value: parseFloat(data.oee) },
-        { name: 'Remaining', value: 100 - parseFloat(data.oee) }
-    ];
     const COLORS = ['#0074D9', '#1a3a5a'];
 
     const formatTime = (seconds) => {
@@ -91,10 +91,22 @@ const Dashboard = () => {
         return `${h}h ${m}m ${s}s`;
     };
 
+    const formatDateDisplay = (date) => {
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const y = date.getFullYear();
+        const hh = date.getHours().toString().padStart(2, '0');
+        const mm = date.getMinutes().toString().padStart(2, '0');
+        return `${d}/${m}/${y} ${hh}:${mm}`;
+    };
+
+    if (loading && !data) return <LogoLoader />;
+    if (!data) return <div className="text-white text-center p-10">No data available.</div>;
+
     return (
         <div className="space-y-6">
             {/* Top Info Header Row */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                 <div className="glass-panel p-3 border-l-2 border-l-accent">
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Product ID</p>
                     <p className="text-xl font-bold text-white">SI-136</p>
@@ -103,7 +115,7 @@ const Dashboard = () => {
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Target</p>
                     <p className="text-xl font-bold text-white">{data.target}</p>
                 </div>
-                <div className="glass-panel p-3">
+                <div className="glass-panel p-3 border-l-2 border-l-accent/50">
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Shift</p>
                     <p className="text-xl font-bold text-accent">{data.shift}</p>
                 </div>
@@ -115,26 +127,25 @@ const Dashboard = () => {
                         className="bg-transparent border-none p-0 h-auto text-xl font-bold text-white"
                     />
                 </div>
-                <div className="glass-panel p-3 col-span-2 lg:col-span-1 bg-accent/5">
-                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Current Time</p>
-                    <p className="text-xl font-mono font-bold text-white">
-                        {currentTime.toLocaleTimeString([], { hour12: false })}
+                <div className="glass-panel p-3 col-span-1 bg-accent/5">
+                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">DATE & TIME</p>
+                    <p className="text-sm font-mono font-bold text-white leading-tight">
+                        {formatDateDisplay(currentTime)}
                     </p>
                 </div>
-            </div>
-
-            <div className="flex justify-between items-center">
-                <div className={`px-4 py-2 rounded-full flex items-center gap-2 ${data.state === 'running' ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'}`}>
-                    <div className={`w-3 h-3 rounded-full ${data.state === 'running' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-                    <span className="font-bold uppercase tracking-wider text-sm">{data.state}</span>
+                {/* State Indicator moved to Top Right */}
+                <div className="glass-panel p-3 flex items-center justify-center">
+                    <div className={`px-3 py-1 rounded-full flex items-center gap-2 ${data.state === 'running' ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'}`}>
+                        <div className={`w-2 h-2 rounded-full ${data.state === 'running' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                        <span className="font-bold uppercase tracking-wider text-[10px]">{data.state}</span>
+                    </div>
                 </div>
-                <p className="text-xs text-gray-500 font-mono">{currentTime.toLocaleDateString()}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {/* Total OK & NG Stacked */}
                 <div className="space-y-4">
-                    <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group">
+                    <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group h-[110px]">
                         <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                             <CheckCircle size={32} />
                         </div>
@@ -143,7 +154,7 @@ const Dashboard = () => {
                             {data.good}
                         </div>
                     </div>
-                    <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group">
+                    <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group h-[110px]">
                         <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                             <XCircle size={32} />
                         </div>
@@ -155,7 +166,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Progress % Box */}
-                <div className="glass-panel p-6 flex flex-col items-center justify-center bg-accent/5 ring-1 ring-accent/20">
+                <div className="glass-panel p-6 flex flex-col items-center justify-center bg-accent/5 ring-1 ring-accent/20 h-[236px]">
                     <h3 className="text-gray-400 text-xs uppercase tracking-widest mb-4">PRODUCTION PROGRESS %</h3>
                     <div className="text-6xl font-black text-white drop-shadow-md">
                         {((data.good / data.target) * 100).toFixed(1)}%
@@ -168,44 +179,61 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Combined OEE & Cycle Time */}
-                <div className="glass-panel p-4 lg:col-span-2 flex items-center gap-6">
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{t('dashboard.oee')}</h3>
-                        <div className="h-32 w-full relative">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={oeeData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={45}
-                                        outerRadius={55}
-                                        fill="#8884d8"
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        startAngle={90}
-                                        endAngle={-270}
-                                    >
-                                        {oeeData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className="text-2xl font-bold">{Number(data.oee).toFixed(1)}%</span>
+                {/* Combined OEE, Cycle Time & A/P/Q */}
+                <div className="glass-panel lg:col-span-2 overflow-hidden flex flex-col h-[236px]">
+                    <div className="flex-1 flex items-center p-6 gap-6">
+                        <div className="flex-1 flex flex-col items-center justify-center">
+                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{t('dashboard.oee')}</h3>
+                            <div className="h-32 w-full relative">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ComposedChart data={oeeData}>
+                                        <Pie
+                                            data={oeeData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={45}
+                                            outerRadius={55}
+                                            fill="#8884d8"
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            startAngle={90}
+                                            endAngle={-270}
+                                        >
+                                            {oeeData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                                            ))}
+                                        </Pie>
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span className="text-2xl font-bold">{Number(data.oee).toFixed(1)}%</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="w-px h-24 bg-white/10" />
-                    <div className="flex-1 text-center">
-                        <Clock size={24} className="mx-auto mb-2 text-warning opacity-50" />
-                        <h3 className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{t('dashboard.cycle_time')}</h3>
-                        <div className="text-3xl font-bold text-warning">
-                            {Number(data.avgCycleTime).toFixed(1)}s
+                        <div className="w-px h-24 bg-white/10" />
+                        <div className="flex-1 text-center">
+                            <Clock size={24} className="mx-auto mb-2 text-warning opacity-50" />
+                            <h3 className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{t('dashboard.cycle_time')}</h3>
+                            <div className="text-3xl font-bold text-warning">
+                                {Number(data.avgCycleTime).toFixed(1)}s
+                            </div>
+                            <div className="text-[10px] text-gray-500 mt-1 uppercase">Target: 2.0s</div>
                         </div>
-                        <div className="text-[10px] text-gray-500 mt-1 uppercase">Target: 2.0s</div>
+                    </div>
+                    {/* A/P/Q percentages row */}
+                    <div className="bg-white/5 border-t border-white/10 grid grid-cols-3 py-3 text-center">
+                        <div>
+                            <p className="text-[9px] text-gray-500 uppercase font-bold tracking-tighter">Availability</p>
+                            <p className="text-sm font-bold text-white">{data.availability}%</p>
+                        </div>
+                        <div className="border-x border-white/10">
+                            <p className="text-[9px] text-gray-500 uppercase font-bold tracking-tighter">Performance</p>
+                            <p className="text-sm font-bold text-white">{data.performance}%</p>
+                        </div>
+                        <div>
+                            <p className="text-[9px] text-gray-500 uppercase font-bold tracking-tighter">Quality</p>
+                            <p className="text-sm font-bold text-white">{data.quality}%</p>
+                        </div>
                     </div>
                 </div>
             </div>

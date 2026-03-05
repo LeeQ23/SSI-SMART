@@ -167,28 +167,38 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
         const todayStr = now.toISOString().split('T')[0];
         const shiftStartStr = `${todayStr} ${shift.start_time}`;
 
-        // 1. Get Real-time Counts
-        const [counts] = await pool.query(`
-            SELECT signal_type, COUNT(*) as count 
-            FROM production_events 
-            WHERE shift_id = ? 
-            AND machine_id = ?
-            AND timestamp >= ?
-            GROUP BY signal_type
-        `, [shift.id, machineId, shiftStartStr]);
+        // 1. Fetch all data in parallel
+        const [
+            [counts],
+            [stateLogs],
+            [targets],
+            [eventLogs]
+        ] = await Promise.all([
+            pool.query(`
+                SELECT signal_type, COUNT(*) as count 
+                FROM production_events 
+                WHERE shift_id = ? AND machine_id = ? AND timestamp >= ?
+                GROUP BY signal_type
+            `, [shift.id, machineId, shiftStartStr]),
+            pool.query(`
+                SELECT state, timestamp 
+                FROM machine_logs 
+                WHERE machine_id = ? AND timestamp >= ?
+                ORDER BY timestamp ASC
+            `, [machineId, shiftStartStr]),
+            pool.query('SELECT * FROM targets WHERE date = ? AND machine_id = ?', [todayStr, machineId]),
+            pool.query(`
+                SELECT signal_type, timestamp 
+                FROM production_events 
+                WHERE machine_id = ? AND timestamp >= ?
+                ORDER BY timestamp ASC
+            `, [machineId, shiftStartStr])
+        ]);
 
         const good = counts.find(c => c.signal_type === 'good')?.count || 0;
         const ng = counts.find(c => c.signal_type === 'ng')?.count || 0;
 
-        // 2. Calculate Running Time
-        const [stateLogs] = await pool.query(`
-            SELECT state, timestamp 
-            FROM machine_logs 
-            WHERE machine_id = ?
-            AND timestamp >= ?
-            ORDER BY timestamp ASC
-        `, [machineId, shiftStartStr]);
-
+        // 2. Calculate Running Time & Downtime
         let runningTime = 0;
         let downtime = 0;
         if (stateLogs.length > 0) {
@@ -205,35 +215,15 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
             else downtime += durationSinceLast;
         }
 
-        // 3. Get Target
-        const [targets] = await pool.query('SELECT * FROM targets WHERE date = ? AND machine_id = ?', [todayStr, machineId]);
         const target = targets[0] ? targets[0].target_qty : 1000;
 
-        // 4. Calculate OEE
+        // 3. Calculate OEE
         const totalCount = good + ng;
-        const plannedTime = 8 * 3600;
+        const plannedTime = 8 * 3600; // Assume 8h shifts for now
         const availability = plannedTime > 0 ? (runningTime / plannedTime) : 0;
         const performance = runningTime > 0 ? ((IDEAL_CYCLE_TIME * totalCount) / runningTime) : 0;
         const quality = totalCount > 0 ? (good / totalCount) : 0;
         const oee = (availability * performance * quality) * 100;
-
-        // 5. Get Status Timeline for the current shift
-        const [timelineLogs] = await pool.query(`
-            SELECT state, timestamp 
-            FROM machine_logs 
-            WHERE machine_id = ?
-            AND timestamp >= ?
-            ORDER BY timestamp ASC
-        `, [machineId, shiftStartStr]);
-
-        // 6. Get Production Events for the current shift
-        const [eventLogs] = await pool.query(`
-            SELECT signal_type, timestamp 
-            FROM production_events 
-            WHERE machine_id = ?
-            AND timestamp >= ?
-            ORDER BY timestamp ASC
-        `, [machineId, shiftStartStr]);
 
         const mState = initMachineState(machineId);
         res.json({
@@ -251,7 +241,7 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
             availability: (availability * 100).toFixed(1),
             performance: (performance * 100).toFixed(1),
             quality: (quality * 100).toFixed(1),
-            timeline: timelineLogs,
+            timeline: stateLogs, // Reuse stateLogs for timeline
             productionEvents: eventLogs
         });
     } catch (e) {
