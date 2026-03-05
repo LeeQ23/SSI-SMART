@@ -11,20 +11,32 @@ const Layout = ({ children }) => {
     const location = useLocation();
     const { t } = useTranslation();
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [isCollapsed, setIsCollapsed] = useState(true); // Default to collapsed for elegance
-    const [isHovered, setIsHovered] = useState(false);
 
-    // Sidebar is expanded if specifically explicitly not collapsed OR if being hovered
-    const showExpanded = !isCollapsed || isHovered;
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     useEffect(() => {
         const handleKeyDown = (e) => {
+            // Fullscreen shortcut
             if (e.key.toLowerCase() === 'f' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                 toggleFullscreen();
             }
-            if (e.key.toLowerCase() === 'b' && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                setIsCollapsed(prev => !prev);
+
+            // Navigation Shortcuts (Alt + Number)
+            if (e.altKey && !e.ctrlKey && !e.metaKey) {
+                switch (e.key) {
+                    case '1': navigate('/'); break;
+                    case '2': navigate('/dashboard/1'); break;
+                    case '3': if (user?.role === 'manager') navigate('/history'); break;
+                    case '4': if (user?.role === 'manager') navigate('/analytics'); break;
+                    case '5': if (user?.role === 'manager') navigate('/targets'); break;
+                    case '6': if (user?.role === 'manager') navigate('/shifts'); break;
+                    case '7': if (user?.role === 'manager') navigate('/users'); break;
+                    case 'l': case 'L': handleLogout(); break;
+                    default: break;
+                }
             }
         };
 
@@ -39,7 +51,7 @@ const Layout = ({ children }) => {
             window.removeEventListener('keydown', handleKeyDown);
             document.removeEventListener('fullscreenchange', handleFullscreenChange);
         };
-    }, []);
+    }, [user, navigate]);
 
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
@@ -51,110 +63,93 @@ const Layout = ({ children }) => {
         }
     };
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
+    const isActive = (path) => {
+        if (path === '/') return location.pathname === '/';
+        return location.pathname.startsWith(path);
     };
 
-    const isActive = (path) => location.pathname === path;
+    const NavItem = ({ to, icon: Icon, label, shortcut }) => (
+        <NavLink
+            to={to}
+            className={({ isActive }) => `group relative flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${isActive ? 'bg-accent text-white shadow-lg shadow-accent/40' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
+        >
+            <Icon size={22} strokeWidth={2} />
+
+            {/* Tooltip */}
+            <div className="absolute left-16 px-3 py-2 bg-gray-900 border border-white/10 rounded-lg text-xs font-medium text-white whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:left-14 transition-all duration-300 z-50 shadow-2xl">
+                <span className="flex items-center gap-3">
+                    {label}
+                    <span className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] text-gray-400 border border-white/5 uppercase">Alt + {shortcut}</span>
+                </span>
+                {/* Arrow */}
+                <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-b border-white/10 rotate-45" />
+            </div>
+        </NavLink>
+    );
 
     return (
         <div className="flex h-screen overflow-hidden bg-gradient-to-br from-primary to-black text-white">
-            {/* Sidebar */}
-            <aside
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-                className={`${showExpanded ? 'w-64' : 'w-20'} transition-all duration-300 ease-in-out glass-panel m-4 flex flex-col relative group/sidebar shadow-2xl overflow-hidden`}
-            >
-                <div className={`p-4 flex items-center ${showExpanded ? 'justify-between' : 'justify-center'} border-b border-white/10`}>
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        <img src="/logo.png" alt="SSI Logo" className="h-8 w-auto min-w-[32px] object-contain" />
-                        {showExpanded && <div className="font-bold text-lg tracking-wider whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">SSI SMART</div>}
-                    </div>
-                    {showExpanded && (
-                        <button
-                            onClick={() => setIsCollapsed(!isCollapsed)}
-                            className="p-1 hover:bg-white/10 rounded-full transition-colors opacity-0 group-hover/sidebar:opacity-100"
-                            title={isCollapsed ? "Pin Sidebar" : "Unpin Sidebar"}
-                        >
-                            <LayoutGrid size={14} className={isCollapsed ? 'text-gray-500' : 'text-accent'} />
-                        </button>
-                    )}
+            {/* Ultra-Slim Sidebar (Antigravity Style) */}
+            <aside className="w-20 glass-panel m-4 flex flex-col items-center py-6 shadow-2xl relative z-40 border border-white/5">
+                <div className="mb-8 p-1">
+                    <img src="/logo.png" alt="SSI Logo" className="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(0,116,217,0.3)]" />
                 </div>
 
-                <nav className="flex-1 p-3 space-y-2 overflow-y-auto overflow-x-hidden">
-                    <Link to="/" className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all ${isActive('/') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'} ${showExpanded ? '' : 'justify-center'}`} title={t('nav.overview')}>
-                        <LayoutGrid size={22} className="min-w-[22px]" />
-                        {showExpanded && <span className="whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">{t('nav.overview')}</span>}
-                    </Link>
-
-                    <Link to="/dashboard/1" className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all ${location.pathname.startsWith('/dashboard') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'} ${showExpanded ? '' : 'justify-center'}`} title={t('nav.detail_view')}>
-                        <LayoutDashboard size={22} className="min-w-[22px]" />
-                        {showExpanded && <span className="whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">{t('nav.detail_view')}</span>}
-                    </Link>
+                <nav className="flex-1 flex flex-col items-center gap-3 w-full">
+                    <NavItem to="/" icon={LayoutGrid} label={t('nav.overview')} shortcut="1" />
+                    <NavItem to="/dashboard/1" icon={LayoutDashboard} label={t('nav.detail_view')} shortcut="2" />
 
                     {user?.role === 'manager' && (
                         <>
-                            <div className={`my-4 border-t border-white/5 ${showExpanded ? '' : 'mx-2'}`} />
-                            <NavLink to="/history" className={({ isActive }) => `flex items-center gap-4 p-3 rounded-lg transition-all ${isActive ? 'bg-accent text-white shadow-lg shadow-blue-500/30' : 'text-gray-400 hover:bg-white/5 hover:text-white'} ${showExpanded ? '' : 'justify-center'}`} title={t('nav.history')}>
-                                <History size={22} className="min-w-[22px]" />
-                                {showExpanded && <span className="whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">{t('nav.history')}</span>}
-                            </NavLink>
-                            <NavLink to="/analytics" className={({ isActive }) => `flex items-center gap-4 p-3 rounded-lg transition-all ${isActive ? 'bg-accent text-white shadow-lg shadow-blue-500/30' : 'text-gray-400 hover:bg-white/5 hover:text-white'} ${showExpanded ? '' : 'justify-center'}`} title={t('nav.analytics')}>
-                                <LineChart size={22} className="min-w-[22px]" />
-                                {showExpanded && <span className="whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">{t('nav.analytics')}</span>}
-                            </NavLink>
-                            <Link to="/targets" className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all ${isActive('/targets') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'} ${showExpanded ? '' : 'justify-center'}`} title={t('nav.targets')}>
-                                <Target size={22} className="min-w-[22px]" />
-                                {showExpanded && <span className="whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">{t('nav.targets')}</span>}
-                            </Link>
-                            <Link to="/shifts" className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all ${isActive('/shifts') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'} ${showExpanded ? '' : 'justify-center'}`} title={t('nav.shifts')}>
-                                <Clock size={22} className="min-w-[22px]" />
-                                {showExpanded && <span className="whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">{t('nav.shifts')}</span>}
-                            </Link>
-                            <Link to="/users" className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all ${isActive('/users') ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'hover:bg-white/5 text-gray-300'} ${showExpanded ? '' : 'justify-center'}`} title={t('nav.users')}>
-                                <Users size={22} className="min-w-[22px]" />
-                                {showExpanded && <span className="whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">{t('nav.users')}</span>}
-                            </Link>
+                            <div className="w-8 h-[1px] bg-white/10 my-2" />
+                            <NavItem to="/history" icon={History} label={t('nav.history')} shortcut="3" />
+                            <NavItem to="/analytics" icon={LineChart} label={t('nav.analytics')} shortcut="4" />
+                            <NavItem to="/targets" icon={Target} label={t('nav.targets')} shortcut="5" />
+                            <NavItem to="/shifts" icon={Clock} label={t('nav.shifts')} shortcut="6" />
+                            <NavItem to="/users" icon={Users} label={t('nav.users')} shortcut="7" />
                         </>
                     )}
                 </nav>
 
-                <div className="p-3 border-t border-white/10 space-y-4">
-                    <div className={`flex ${showExpanded ? 'px-1' : 'justify-center'}`}>
-                        <LanguageSwitcher mini={!showExpanded} />
-                    </div>
+                <div className="mt-auto flex flex-col items-center gap-4 w-full px-2">
+                    <LanguageSwitcher mini={true} />
 
-                    {showExpanded && (
-                        <div className="px-3 text-xs text-gray-400 animate-in fade-in duration-500">
-                            {t('nav.logged_in') || 'Logged in as'} <span className="text-white font-semibold block truncate">{user?.username}</span>
-                        </div>
-                    )}
+                    <div className="w-8 h-[1px] bg-white/10" />
 
                     <button
                         onClick={handleLogout}
-                        className={`w-full flex items-center gap-4 px-3 py-3 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors ${showExpanded ? '' : 'justify-center'}`}
-                        title={t('nav.logout')}
+                        className="group relative flex items-center justify-center w-12 h-12 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all duration-300"
                     >
-                        <LogOut size={22} className="min-w-[22px]" />
-                        {showExpanded && <span className="whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">{t('nav.logout')}</span>}
+                        <LogOut size={22} />
+                        <div className="absolute left-16 px-3 py-2 bg-gray-900 border border-white/10 rounded-lg text-xs font-medium text-white whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:left-14 transition-all duration-300 z-50 shadow-2xl">
+                            <span className="flex items-center gap-3">
+                                {t('nav.logout')}
+                                <span className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] text-gray-400 border border-white/5 uppercase">Alt + L</span>
+                            </span>
+                            <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-b border-white/10 rotate-45" />
+                        </div>
                     </button>
 
-                    {showExpanded && (
-                        <button
-                            onClick={toggleFullscreen}
-                            className="w-full flex items-center justify-center gap-2 p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white border border-white/5 animate-in fade-in slide-in-from-bottom-2 duration-500"
-                            title={isFullscreen ? "Exit Fullscreen (f)" : "Enter Fullscreen (f)"}
-                        >
-                            {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-                            <span className="text-xs uppercase tracking-widest">{isFullscreen ? 'Windowed' : 'Fullscreen'}</span>
-                        </button>
-                    )}
+                    <button
+                        onClick={toggleFullscreen}
+                        className="group relative flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 hover:text-white transition-colors"
+                    >
+                        {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+                        <div className="absolute left-14 px-3 py-2 bg-gray-900 border border-white/10 rounded-lg text-xs font-medium text-white whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:left-12 transition-all duration-300 z-50">
+                            {isFullscreen ? 'Windowed' : 'Fullscreen'} (F)
+                            <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-b border-white/10 rotate-45" />
+                        </div>
+                    </button>
+
+                    {/* User Profile Initial (Subtle hint) */}
+                    <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center border border-accent/30 text-[10px] font-bold text-accent uppercase tracking-tighter">
+                        {user?.username?.substring(0, 2)}
+                    </div>
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto p-4 pl-0">
+            <main className="flex-1 overflow-auto p-4">
                 <div className="h-full glass-panel p-6 overflow-y-auto">
                     {children}
                 </div>
