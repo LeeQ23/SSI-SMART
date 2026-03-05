@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -186,7 +186,7 @@ const Dashboard = () => {
                             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{t('dashboard.oee')}</h3>
                             <div className="h-32 w-full relative">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart data={oeeData}>
+                                    <PieChart>
                                         <Pie
                                             data={oeeData}
                                             cx="50%"
@@ -203,7 +203,7 @@ const Dashboard = () => {
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
                                             ))}
                                         </Pie>
-                                    </ComposedChart>
+                                    </PieChart>
                                 </ResponsiveContainer>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                     <span className="text-2xl font-bold">{Number(data.oee).toFixed(1)}%</span>
