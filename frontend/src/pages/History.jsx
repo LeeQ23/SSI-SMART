@@ -1,9 +1,4 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Download, MessageSquare } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import MachineSelector from '../components/MachineSelector';
-import ErrorToast from '../components/ErrorToast';
+import LogoLoader from '../components/LogoLoader';
 
 const History = () => {
   const { t } = useTranslation();
@@ -97,7 +92,7 @@ const History = () => {
     }
   };
 
-  if (loading && history.length === 0) return <div className="text-white text-center p-10">Loading History...</div>;
+  if (loading && history.length === 0) return <LogoLoader />;
 
   return (
     <div className="space-y-6 relative">

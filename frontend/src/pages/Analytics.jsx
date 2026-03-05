@@ -136,7 +136,7 @@ const Analytics = () => {
                             ></div>
                             <span className="relative z-10 flex items-center gap-2 text-sm text-white drop-shadow-md">
                                 <Search size={16} className="animate-spin" />
-                                {progress}%
+                                {t('common.analyzing') || 'Processing...'}
                             </span>
                         </>
                     ) : (

@@ -1,7 +1,4 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Clock, Save } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import LogoLoader from '../components/LogoLoader';
 
 const Shifts = () => {
     const { t } = useTranslation();
@@ -36,7 +33,7 @@ const Shifts = () => {
         }
     };
 
-    if (loading) return <div>{t('shifts.loading')}</div>;
+    if (loading) return <LogoLoader />;
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">

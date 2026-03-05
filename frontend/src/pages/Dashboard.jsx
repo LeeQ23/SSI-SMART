@@ -10,6 +10,8 @@ import StatusTimelineChart from '../components/StatusTimelineChart';
 import AnimatedNumber from '../components/AnimatedNumber';
 import ErrorToast from '../components/ErrorToast';
 
+import LogoLoader from '../components/LogoLoader';
+
 const Dashboard = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -68,7 +70,7 @@ const Dashboard = () => {
     }, [machineId]); // Re-run when machineId changes
 
 
-    if (loading && !data) return <div className="text-white text-center p-10">Loading Dashboard...</div>;
+    if (loading && !data) return <LogoLoader />;
     // Removed error early return - let the UI render with old data
     if (!data) return <div className="text-white text-center p-10">No data available.</div>;
 

@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import AnimatedNumber from '../components/AnimatedNumber';
 import ErrorToast from '../components/ErrorToast';
 
+import LogoLoader from '../components/LogoLoader';
+
 const Overview = () => {
     const [machines, setMachines] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -67,7 +69,7 @@ const Overview = () => {
         };
     }, [error]);
 
-    if (loading && machines.length === 0) return <div className="text-white text-center p-10">Loading Overview...</div>;
+    if (loading && machines.length === 0) return <LogoLoader />;
     // Removed early error return
 
     return (

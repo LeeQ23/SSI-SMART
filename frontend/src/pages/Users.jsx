@@ -1,7 +1,4 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { UserPlus, Trash2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import LogoLoader from '../components/LogoLoader';
 
 const Users = () => {
     const { t } = useTranslation();
@@ -20,6 +17,7 @@ const Users = () => {
             setLoading(false);
         } catch (error) {
             console.error(t('users.error'), error);
+            setLoading(false);
         }
     };
 
@@ -34,6 +32,8 @@ const Users = () => {
             alert(t('users.error'));
         }
     };
+
+    if (loading) return <LogoLoader />;
 
     return (
         <div className="space-y-6">
