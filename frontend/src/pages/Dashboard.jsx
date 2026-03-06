@@ -109,7 +109,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                 <div className="glass-panel p-3 border-l-2 border-l-accent flex flex-col items-center justify-center">
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Product ID</p>
-                    <p className="text-xl font-bold text-white leading-none mt-1">SI-136</p>
+                    <p className="text-xl font-bold text-white leading-none mt-1">SI - 283</p>
                 </div>
                 <div className="glass-panel p-3 flex flex-col items-center justify-center">
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Target</p>

@@ -213,7 +213,7 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
             else downtime += durationSinceLast;
         }
 
-        const target = 1000; // Default target
+        const target = 4320; // Default target
 
         // 3. Calculate OEE
         const totalCount = good + ng;
