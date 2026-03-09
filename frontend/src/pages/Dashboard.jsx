@@ -11,12 +11,26 @@ import ErrorToast from '../components/ErrorToast';
 import LogoLoader from '../components/LogoLoader';
 import ProductionProgressChart from '../components/ProductionProgressChart';
 
+const DigitalClock = ({ formatDateDisplay }) => {
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    return (
+        <p className="text-xl font-mono font-bold text-white leading-none mt-1">
+            {formatDateDisplay(currentTime)}
+        </p>
+    );
+};
+
 const Dashboard = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [socket, setSocket] = useState(null);
     const [error, setError] = useState(null);
-    const [currentTime, setCurrentTime] = useState(new Date());
     const { t } = useTranslation();
     const { machineId } = useParams();
     const navigate = useNavigate();
@@ -34,10 +48,6 @@ const Dashboard = () => {
         }
     };
 
-    useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-        return () => clearInterval(timer);
-    }, []);
 
     useEffect(() => {
         if (Notification.permission !== 'granted') {
@@ -129,9 +139,7 @@ const Dashboard = () => {
                 </div>
                 <div className="glass-panel p-3 col-span-2 bg-accent/5 flex flex-col items-center justify-center text-center">
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">DATE & TIME</p>
-                    <p className="text-xl font-mono font-bold text-white leading-none mt-1">
-                        {formatDateDisplay(currentTime)}
-                    </p>
+                    <DigitalClock formatDateDisplay={formatDateDisplay} />
                 </div>
             </div>
 

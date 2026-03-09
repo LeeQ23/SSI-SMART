@@ -13,7 +13,7 @@ import {
     ComposedChart
 } from 'recharts';
 
-const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morning' }) => {
+const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftName = 'Morning' }) => {
     const { t } = useTranslation();
     const chartData = useMemo(() => {
         let startHour = 7;
@@ -88,7 +88,7 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
     }, [events, target, shiftName]);
 
     // Calculate ticks for every hour
-    const getTicks = () => {
+    const ticks = useMemo(() => {
         let startHour = 7;
         let endHour = 17;
         const name = shiftName.toLowerCase();
@@ -99,12 +99,12 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
 
-        const ticks = [];
+        const result = [];
         for (let h = startHour; h <= endHour; h++) {
-            ticks.push(startOfToday.getTime() + (h * 3600 * 1000));
+            result.push(startOfToday.getTime() + (h * 3600 * 1000));
         }
-        return ticks;
-    };
+        return result;
+    }, [shiftName]);
 
     return (
         <div className="h-[350px] w-full">
@@ -115,7 +115,7 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
                         dataKey="ts"
                         type="number"
                         domain={['dataMin', 'dataMax']}
-                        ticks={getTicks()}
+                        ticks={ticks}
                         tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                         stroke="#94a3b8"
                         fontSize={12}
@@ -189,6 +189,6 @@ const ProductionProgressChart = ({ events = [], target = 1000, shiftName = 'Morn
             </ResponsiveContainer>
         </div>
     );
-};
+});
 
 export default ProductionProgressChart;

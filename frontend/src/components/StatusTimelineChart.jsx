@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ScatterChart, Scatter, ZAxis, Cell, ComposedChart } from 'recharts';
 import { useTranslation } from 'react-i18next';
 
-const StatusTimelineChart = ({ timeline = [], height = 320 }) => {
+const StatusTimelineChart = React.memo(({ timeline = [], height = 320 }) => {
     const { t } = useTranslation();
 
-    const prepareData = () => {
+    const chartData = useMemo(() => {
         if (!timeline || timeline.length === 0) return [];
 
         return timeline.map(t => ({
@@ -15,9 +15,7 @@ const StatusTimelineChart = ({ timeline = [], height = 320 }) => {
             statusVal: t.state === 'running' ? 1 : 0,
             state: t.state
         }));
-    };
-
-    const chartData = prepareData();
+    }, [timeline]);
 
     if (chartData.length === 0) {
         return (
@@ -42,7 +40,7 @@ const StatusTimelineChart = ({ timeline = [], height = 320 }) => {
         return null;
     };
 
-    const getTicks = () => {
+    const ticks = useMemo(() => {
         if (chartData.length === 0) return [];
         const timestamps = chartData.map(d => d.timestamp);
         const min = Math.min(...timestamps);
@@ -51,14 +49,14 @@ const StatusTimelineChart = ({ timeline = [], height = 320 }) => {
         const start = new Date(min);
         start.setMinutes(start.getMinutes() >= 30 ? 30 : 0, 0, 0);
 
-        const ticks = [];
+        const result = [];
         let current = start.getTime();
         while (current <= max) {
-            ticks.push(current);
+            result.push(current);
             current += 30 * 60 * 1000;
         }
-        return ticks;
-    };
+        return result;
+    }, [chartData]);
 
     return (
         <div className="w-full">
@@ -75,7 +73,7 @@ const StatusTimelineChart = ({ timeline = [], height = 320 }) => {
                             dataKey="timestamp"
                             type="number"
                             domain={['auto', 'auto']}
-                            ticks={getTicks()}
+                            ticks={ticks}
                             tickFormatter={(unixTime) => new Date(unixTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                             stroke="#94a3b8"
                             fontSize={10}
@@ -107,6 +105,6 @@ const StatusTimelineChart = ({ timeline = [], height = 320 }) => {
             </div>
         </div>
     );
-};
+});
 
 export default StatusTimelineChart;

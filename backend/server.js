@@ -200,16 +200,16 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
         let runningTime = 0;
         let downtime = 0;
         if (stateLogs.length > 0) {
+            let prevTs = new Date(stateLogs[0].timestamp);
             for (let i = 0; i < stateLogs.length - 1; i++) {
-                const s = new Date(stateLogs[i].timestamp);
-                const e = new Date(stateLogs[i + 1].timestamp);
-                const duration = (e - s) / 1000;
+                const currentTs = new Date(stateLogs[i + 1].timestamp);
+                const duration = (currentTs - prevTs) / 1000;
                 if (stateLogs[i].state === 'running') runningTime += duration;
                 else downtime += duration;
+                prevTs = currentTs;
             }
-            const lastLog = stateLogs[stateLogs.length - 1];
-            const durationSinceLast = (now - new Date(lastLog.timestamp)) / 1000;
-            if (lastLog.state === 'running') runningTime += durationSinceLast;
+            const durationSinceLast = (now - prevTs) / 1000;
+            if (stateLogs[stateLogs.length - 1].state === 'running') runningTime += durationSinceLast;
             else downtime += durationSinceLast;
         }
 
