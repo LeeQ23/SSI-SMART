@@ -76,7 +76,7 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 320 }) => {
                             ticks={ticks}
                             tickFormatter={(unixTime) => new Date(unixTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                             stroke="#94a3b8"
-                            fontSize={10}
+                            fontSize={12}
                             tickLine={false}
                             axisLine={false}
                         />
@@ -88,19 +88,19 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 320 }) => {
                             dataKey="statusVal"
                             stroke="#4FC3F7"
                             fill="url(#colorStatus)"
-                            strokeWidth={2}
+                            strokeWidth={3}
                             isAnimationActive={false}
                         />
                     </ComposedChart>
                 </ResponsiveContainer>
             </div>
 
-            <div className="flex flex-wrap gap-4 mt-6 justify-center text-[10px] text-gray-500 uppercase tracking-tighter">
-                <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-[#4FC3F7]/40 border border-[#4FC3F7] rounded-sm"></span> Running
+            <div className="flex flex-wrap gap-8 mt-6 justify-center text-sm font-bold text-gray-400 uppercase tracking-tighter">
+                <div className="flex items-center gap-3">
+                    <span className="w-4 h-4 bg-[#4FC3F7]/40 border border-[#4FC3F7] rounded-sm"></span> Running
                 </div>
-                <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 border border-[#4FC3F7] rounded-sm"></span> Downtime
+                <div className="flex items-center gap-3">
+                    <span className="w-4 h-4 border border-[#4FC3F7] rounded-sm"></span> Downtime
                 </div>
             </div>
         </div>

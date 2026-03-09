@@ -20,7 +20,7 @@ const DigitalClock = ({ formatDateDisplay }) => {
     }, []);
 
     return (
-        <p className="text-xl font-mono font-bold text-white leading-none mt-1">
+        <p className="text-2xl font-mono font-bold text-white leading-none mt-1">
             {formatDateDisplay(currentTime)}
         </p>
     );
@@ -118,27 +118,32 @@ const Dashboard = () => {
             {/* Top Info Header Row */}
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                 <div className="glass-panel p-3 border-l-2 border-l-accent flex flex-col items-center justify-center">
-                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Product ID</p>
-                    <p className="text-xl font-bold text-white leading-none mt-1">SI - 283</p>
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Product ID</p>
+                    <p className="text-2xl font-bold text-white leading-none mt-1">SI - 283</p>
                 </div>
                 <div className="glass-panel p-3 flex flex-col items-center justify-center">
-                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Target</p>
-                    <p className="text-xl font-bold text-white leading-none mt-1">{data.target}</p>
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Target</p>
+                    <p className="text-2xl font-bold text-white leading-none mt-1">{data.target}</p>
                 </div>
                 <div className="glass-panel p-3 border-l-2 border-l-accent/50 flex flex-col items-center justify-center">
-                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Shift</p>
-                    <p className="text-xl font-bold text-accent leading-none mt-1">{data.shift}</p>
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Shift</p>
+                    <p className="text-2xl font-bold text-accent leading-none mt-1">{data.shift}</p>
                 </div>
                 <div className="glass-panel p-3 flex flex-col items-center justify-center text-center">
-                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Machine ID</p>
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Machine ID</p>
                     <MachineSelector
                         selectedId={machineId || 1}
                         onChange={(id) => navigate(`/dashboard/${id}`)}
-                        className="bg-transparent border-none p-0 h-auto text-xl font-bold text-white text-center w-full"
+                        className="bg-transparent border-none p-0 h-auto text-2xl font-bold text-white text-center w-full"
                     />
                 </div>
-                <div className="glass-panel p-3 col-span-2 bg-accent/5 flex flex-col items-center justify-center text-center">
-                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">DATE & TIME</p>
+                <div className="glass-panel p-3 flex flex-col items-center justify-center text-center">
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Operator</p>
+                    <p className="text-lg font-bold text-white leading-none mt-1">Bumi</p>
+                    <p className="text-xs text-gray-400 mt-1">12234567</p>
+                </div>
+                <div className="glass-panel p-3 bg-accent/5 flex flex-col items-center justify-center text-center">
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">DATE & TIME</p>
                     <DigitalClock formatDateDisplay={formatDateDisplay} />
                 </div>
             </div>
@@ -146,21 +151,21 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {/* Total OK & NG Stacked */}
                 <div className="space-y-4">
-                    <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group h-[110px]">
+                    <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group h-[120px]">
                         <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                             <CheckCircle size={32} />
                         </div>
-                        <h3 className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">TOTAL OK</h3>
-                        <div className="text-3xl font-bold text-success leading-none">
+                        <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-1">TOTAL OK</h3>
+                        <div className="text-5xl font-bold text-success leading-none">
                             {data.good}
                         </div>
                     </div>
-                    <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group h-[110px]">
+                    <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group h-[120px]">
                         <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                             <XCircle size={32} />
                         </div>
-                        <h3 className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">TOTAL NG</h3>
-                        <div className="text-3xl font-bold text-danger leading-none">
+                        <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-1">TOTAL NG</h3>
+                        <div className="text-5xl font-bold text-danger leading-none">
                             {data.ng}
                         </div>
                     </div>
@@ -168,8 +173,8 @@ const Dashboard = () => {
 
                 {/* Progress % Box */}
                 <div className="glass-panel p-6 flex flex-col items-center justify-center bg-accent/5 ring-1 ring-accent/20 h-[236px]">
-                    <h3 className="text-gray-400 text-xs uppercase tracking-widest mb-4">PRODUCTION PROGRESS %</h3>
-                    <div className="text-6xl font-black text-white drop-shadow-md">
+                    <h3 className="text-gray-400 text-sm uppercase tracking-widest mb-4">PRODUCTION PROGRESS %</h3>
+                    <div className="text-7xl font-black text-white drop-shadow-md">
                         {((data.good / data.target) * 100).toFixed(1)}%
                     </div>
                     <div className="w-full bg-white/5 h-2 rounded-full mt-6 overflow-hidden">
@@ -184,7 +189,7 @@ const Dashboard = () => {
                 <div className="glass-panel lg:col-span-2 overflow-hidden flex flex-col h-[236px] bg-white/[0.02]">
                     <div className="flex-1 flex items-center p-4 gap-4">
                         <div className="flex-1 flex flex-col items-center justify-center">
-                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dashboard.oee')}</h3>
+                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dashboard.oee')}</h3>
                             <div className="h-28 w-full relative">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
@@ -207,33 +212,33 @@ const Dashboard = () => {
                                     </PieChart>
                                 </ResponsiveContainer>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                    <span className="text-2xl font-bold">{Number(data.oee).toFixed(1)}%</span>
+                                    <span className="text-3xl font-bold">{Number(data.oee).toFixed(1)}%</span>
                                 </div>
                             </div>
                         </div>
                         <div className="w-px h-24 bg-white/10" />
                         <div className="flex-1 text-center">
                             <Clock size={24} className="mx-auto mb-2 text-warning opacity-50" />
-                            <h3 className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{t('dashboard.cycle_time')}</h3>
-                            <div className="text-3xl font-bold text-warning">
+                            <h3 className="text-gray-400 text-xs uppercase tracking-wider mb-1">{t('dashboard.cycle_time')}</h3>
+                            <div className="text-4xl font-bold text-warning">
                                 {Number(data.avgCycleTime).toFixed(1)}s
                             </div>
-                            <div className="text-[10px] text-gray-500 mt-1 uppercase">Target: 12.0s</div>
+                            <div className="text-xs text-gray-500 mt-1 uppercase">Target: 12.0s</div>
                         </div>
                     </div>
                     {/* A/P/Q percentages row */}
                     <div className="bg-white/5 border-t border-white/10 grid grid-cols-3 py-3 text-center">
                         <div>
-                            <p className="text-[9px] text-gray-500 uppercase font-bold tracking-tighter">Availability</p>
-                            <p className="text-sm font-bold text-white">{data.availability}%</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Availability</p>
+                            <p className="text-lg font-bold text-white">{data.availability}%</p>
                         </div>
                         <div className="border-x border-white/10">
-                            <p className="text-[9px] text-gray-500 uppercase font-bold tracking-tighter">Performance</p>
-                            <p className="text-sm font-bold text-white">{data.performance}%</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Performance</p>
+                            <p className="text-lg font-bold text-white">{data.performance}%</p>
                         </div>
                         <div>
-                            <p className="text-[9px] text-gray-500 uppercase font-bold tracking-tighter">Quality</p>
-                            <p className="text-sm font-bold text-white">{data.quality}%</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Quality</p>
+                            <p className="text-lg font-bold text-white">{data.quality}%</p>
                         </div>
                     </div>
                 </div>
@@ -274,14 +279,14 @@ const Dashboard = () => {
                     />
                     <div className="space-y-4 mt-8">
                         <div className="flex items-center justify-between p-3 bg-white/5 rounded">
-                            <span className="text-xs text-gray-400 uppercase tracking-tighter">{t('dashboard.running')}</span>
-                            <span className="font-bold text-green-400">
+                            <span className="text-sm text-gray-400 uppercase tracking-tighter">{t('dashboard.running')}</span>
+                            <span className="text-lg font-bold text-green-400">
                                 {formatTime(data.runningTime)}
                             </span>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-white/5 rounded">
-                            <span className="text-xs text-gray-400 uppercase tracking-tighter">{t('dashboard.downtime')}</span>
-                            <span className="font-bold text-red-400">
+                            <span className="text-sm text-gray-400 uppercase tracking-tighter">{t('dashboard.downtime')}</span>
+                            <span className="text-lg font-bold text-red-400">
                                 {formatTime(data.downtime)}
                             </span>
                         </div>
