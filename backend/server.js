@@ -165,7 +165,19 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
         const shift = await getShift();
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
-        const shiftStartStr = `${todayStr} ${shift.start_time}`;
+        let shiftStartStr = `${todayStr} ${shift.start_time}`;
+
+        // Handle midnight-crossing shifts: if current time is before end_time but after 00:00:00,
+        // and end_time < start_time, the shift actually started yesterday.
+        if (shift.end_time < shift.start_time) {
+            const timeString = now.toTimeString().split(' ')[0];
+            if (timeString <= shift.end_time) {
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = yesterday.toISOString().split('T')[0];
+                shiftStartStr = `${yesterdayStr} ${shift.start_time}`;
+            }
+        }
 
         // 1. Fetch all data in parallel
         const [
@@ -255,7 +267,18 @@ app.get('/api/dashboard/all', authenticateToken, async (req, res) => {
         const shift = await getShift();
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
-        const shiftStartStr = `${todayStr} ${shift.start_time}`;
+        let shiftStartStr = `${todayStr} ${shift.start_time}`;
+
+        // Handle midnight-crossing shifts
+        if (shift.end_time < shift.start_time) {
+            const timeString = now.toTimeString().split(' ')[0];
+            if (timeString <= shift.end_time) {
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = yesterday.toISOString().split('T')[0];
+                shiftStartStr = `${yesterdayStr} ${shift.start_time}`;
+            }
+        }
 
         const results = await Promise.all(machines.map(async (m) => {
             // Get basic stats for each machine

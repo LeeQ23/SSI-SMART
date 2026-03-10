@@ -14,11 +14,26 @@ export const AuthProvider = ({ children }) => {
         const savedToken = localStorage.getItem('token');
         const savedUser = localStorage.getItem('user');
         if (savedToken && savedUser) {
-            setUser(JSON.parse(savedUser));
+            const parsedUser = JSON.parse(savedUser);
+            setUser(parsedUser);
             setToken(savedToken);
             axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
         }
         setLoading(false);
+
+        // Add interceptor to handle 401 Unauthorized errors (session expired)
+        const interceptor = axios.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+                    logout();
+                    // Optional: could add a window.location.href = '/login' here or let the router handle it
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        return () => axios.interceptors.response.eject(interceptor);
     }, []);
 
     const login = async (username, password) => {

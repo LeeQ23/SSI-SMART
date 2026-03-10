@@ -111,7 +111,28 @@ const Dashboard = () => {
     };
 
     if (loading && !data) return <LogoLoader />;
-    if (!data) return <div className="text-white text-center p-10">No data available.</div>;
+
+    if (error && !data) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 space-y-4">
+                <div className="text-danger text-xl font-bold">Connection Error</div>
+                <p className="text-gray-400">Unable to fetch dashboard data. Retrying...</p>
+                <button
+                    onClick={fetchData}
+                    className="px-4 py-2 bg-accent text-white rounded hover:bg-accent/80 transition-colors"
+                >
+                    Retry Now
+                </button>
+            </div>
+        );
+    }
+
+    if (!data) return (
+        <div className="flex flex-col items-center justify-center p-20">
+            <div className="text-white text-xl">No data available for the current shift.</div>
+            <p className="text-gray-500 mt-2 text-sm uppercase tracking-widest">Waiting for machine signals...</p>
+        </div>
+    );
 
     return (
         <div className="space-y-6">
