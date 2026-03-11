@@ -63,6 +63,70 @@ const getShift = async () => {
     return rows[0] || { id: 3, name: 'Night' }; // Default fallback
 };
 
+const calculateSessionStats = async (machine_id, start_time, end_time) => {
+    const [
+        [counts],
+        [stateLogs]
+    ] = await Promise.all([
+        pool.query(`
+            SELECT signal_type, COUNT(*) as count 
+            FROM production_events 
+            WHERE machine_id = ? AND timestamp BETWEEN ? AND ?
+            GROUP BY signal_type
+        `, [machine_id, start_time, end_time]),
+        pool.query(`
+            SELECT state, timestamp 
+            FROM machine_logs 
+            WHERE machine_id = ? AND timestamp BETWEEN ? AND ?
+            ORDER BY timestamp ASC
+        `, [machine_id, start_time, end_time])
+    ]);
+
+    const good = counts.find(c => c.signal_type === 'good')?.count || 0;
+    const ng = counts.find(c => c.signal_type === 'ng')?.count || 0;
+    const totalCount = good + ng;
+
+    let runningTime = 0;
+    let downtime = 0;
+    if (stateLogs.length > 0) {
+        let prevTs = new Date(stateLogs[0].timestamp);
+        // Add duration from start_time to first log if first log is later
+        const sTime = new Date(start_time);
+        if (prevTs > sTime) {
+           // We don't know the state before the first log in this window, 
+           // but usually it's better to start from the first log.
+        }
+
+        for (let i = 0; i < stateLogs.length - 1; i++) {
+            const currentTs = new Date(stateLogs[i + 1].timestamp);
+            const duration = (currentTs - prevTs) / 1000;
+            if (stateLogs[i].state === 'running') runningTime += duration;
+            else downtime += duration;
+            prevTs = currentTs;
+        }
+        const eTime = new Date(end_time);
+        const durationSinceLast = (eTime - prevTs) / 1000;
+        if (stateLogs[stateLogs.length - 1].state === 'running') runningTime += durationSinceLast;
+        else downtime += durationSinceLast;
+    }
+
+    const availability = (runningTime + downtime) > 0 ? (runningTime / (runningTime + downtime)) : 0;
+    const performance = runningTime > 0 ? ((IDEAL_CYCLE_TIME * totalCount) / runningTime) : 0;
+    const quality = totalCount > 0 ? (good / totalCount) : 0;
+    const oee = (availability * performance * quality) * 100;
+
+    return {
+        good,
+        ng,
+        runningTime: Math.round(runningTime),
+        downtime: Math.round(downtime),
+        oee: Math.min(oee, 100).toFixed(1),
+        availability: (availability * 100).toFixed(1),
+        performance: (performance * 100).toFixed(1),
+        quality: (quality * 100).toFixed(1)
+    };
+};
+
 // --- Routes ---
 
 
@@ -158,101 +222,64 @@ app.post('/api/current', (req, res) => {
     return app._router.handle({ ...req, url: '/api/machine-status' }, res);
 });
 
-// Data API - Detailed view for one machine
+// Data API - Detailed view for one machine (Session-based)
 app.get('/api/dashboard', authenticateToken, async (req, res) => {
     const machine_id = req.query.machine_id || 1;
     try {
-        const shift = await getShift();
+        const [sessions] = await pool.query('SELECT * FROM active_sessions WHERE machine_id = ?', [machine_id]);
+        
+        let session = sessions[0];
+        if (!session) {
+            // If no active session, create a default one or return empty
+            // For now, let's just return a placeholder or handle it
+            return res.json({
+                noActiveSession: true,
+                machine_id
+            });
+        }
+
         const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
-        let shiftStartStr = `${todayStr} ${shift.start_time}`;
-
-        // Handle midnight-crossing shifts: if current time is before end_time but after 00:00:00,
-        // and end_time < start_time, the shift actually started yesterday.
-        if (shift.end_time < shift.start_time) {
-            const timeString = now.toTimeString().split(' ')[0];
-            if (timeString <= shift.end_time) {
-                const yesterday = new Date(now);
-                yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayStr = yesterday.toISOString().split('T')[0];
-                shiftStartStr = `${yesterdayStr} ${shift.start_time}`;
-            }
-        }
-
-        // 1. Fetch all data in parallel
-        const [
-            [counts],
-            [stateLogs],
-            [eventLogs]
-        ] = await Promise.all([
-            pool.query(`
-                SELECT signal_type, COUNT(*) as count 
-                FROM production_events 
-                WHERE shift_id = ? AND machine_id = ? AND timestamp >= ?
-                GROUP BY signal_type
-            `, [shift.id, machine_id, shiftStartStr]),
-            pool.query(`
-                SELECT state, timestamp 
-                FROM machine_logs 
-                WHERE machine_id = ? AND timestamp >= ?
-                ORDER BY timestamp ASC
-            `, [machine_id, shiftStartStr]),
-            pool.query(`
-                SELECT signal_type, timestamp 
-                FROM production_events 
-                WHERE machine_id = ? AND timestamp >= ?
-                ORDER BY timestamp ASC
-            `, [machine_id, shiftStartStr])
-        ]);
-
-        const good = counts.find(c => c.signal_type === 'good')?.count || 0;
-        const ng = counts.find(c => c.signal_type === 'ng')?.count || 0;
-
-        // 2. Calculate Running Time & Downtime
-        let runningTime = 0;
-        let downtime = 0;
-        if (stateLogs.length > 0) {
-            let prevTs = new Date(stateLogs[0].timestamp);
-            for (let i = 0; i < stateLogs.length - 1; i++) {
-                const currentTs = new Date(stateLogs[i + 1].timestamp);
-                const duration = (currentTs - prevTs) / 1000;
-                if (stateLogs[i].state === 'running') runningTime += duration;
-                else downtime += duration;
-                prevTs = currentTs;
-            }
-            const durationSinceLast = (now - prevTs) / 1000;
-            if (stateLogs[stateLogs.length - 1].state === 'running') runningTime += durationSinceLast;
-            else downtime += durationSinceLast;
-        }
-
-        const target = 4320; // Default target
-
-        // 3. Calculate OEE
-        const totalCount = good + ng;
-        const plannedTime = 8 * 3600; // Assume 8h shifts for now
-        const availability = plannedTime > 0 ? (runningTime / plannedTime) : 0;
-        const performance = runningTime > 0 ? ((IDEAL_CYCLE_TIME * totalCount) / runningTime) : 0;
-        const quality = totalCount > 0 ? (good / totalCount) : 0;
-        const oee = (availability * performance * quality) * 100;
+        const stats = await calculateSessionStats(machine_id, session.start_time, now);
 
         const mState = initMachineState(machine_id);
+        
+        // Fetch production events for current session
+        const [eventLogs] = await pool.query(`
+            SELECT signal_type, timestamp 
+            FROM production_events 
+            WHERE machine_id = ? AND timestamp >= ?
+            ORDER BY timestamp ASC
+        `, [machine_id, session.start_time]);
+
+        // Fetch state logs for timeline
+        const [stateLogs] = await pool.query(`
+            SELECT state, timestamp 
+            FROM machine_logs 
+            WHERE machine_id = ? AND timestamp >= ?
+            ORDER BY timestamp ASC
+        `, [machine_id, session.start_time]);
+
         res.json({
-            shift: shift.name,
+            product_id: session.product_id,
+            target: session.target_qty,
+            shift: session.shift_name,
+            operator: session.operator_name,
+            operator_nim: session.operator_nim,
             machine_id: machine_id,
-            target,
-            good,
-            ng,
+            good: stats.good,
+            ng: stats.ng,
             current: mState.current,
             state: mState.state,
-            runningTime: Math.round(runningTime),
-            downtime: Math.round(downtime),
-            oee: Math.min(oee, 100).toFixed(1),
-            avgCycleTime: totalCount > 0 ? (runningTime / totalCount).toFixed(2) : "0.00",
-            availability: (availability * 100).toFixed(1),
-            performance: (performance * 100).toFixed(1),
-            quality: (quality * 100).toFixed(1),
-            timeline: stateLogs, // Reuse stateLogs for timeline
-            productionEvents: eventLogs
+            runningTime: stats.runningTime,
+            downtime: stats.downtime,
+            oee: stats.oee,
+            avgCycleTime: (stats.good + stats.ng) > 0 ? (stats.runningTime / (stats.good + stats.ng)).toFixed(2) : "0.00",
+            availability: stats.availability,
+            performance: stats.performance,
+            quality: stats.quality,
+            timeline: stateLogs,
+            productionEvents: eventLogs,
+            session_start: session.start_time
         });
     } catch (e) {
         console.error("Dashboard Error", e);
@@ -320,35 +347,30 @@ app.get('/api/history', authenticateToken, async (req, res) => {
     try {
         const { machine_id, limit, start_date, end_date, orderBy, orderDir } = req.query;
         let query = `
-            SELECT 
-                DATE(timestamp) as date, 
-                shift_id,
-                COUNT(CASE WHEN signal_type = 'good' THEN 1 END) as good,
-                COUNT(CASE WHEN signal_type = 'ng' THEN 1 END) as ng
-            FROM production_events
+            SELECT ps.*, m.code as machine_code
+            FROM production_sessions ps
+            JOIN machines m ON ps.machine_id = m.id
             WHERE 1=1
         `;
         let params = [];
         if (machine_id) {
-            query += ` AND machine_id = ? `;
+            query += ` AND ps.machine_id = ? `;
             params.push(machine_id);
         }
         if (start_date) {
-            query += ` AND DATE(timestamp) >= ? `;
+            query += ` AND DATE(ps.start_time) >= ? `;
             params.push(start_date);
         }
         if (end_date) {
-            query += ` AND DATE(timestamp) <= ? `;
+            query += ` AND DATE(ps.start_time) <= ? `;
             params.push(end_date);
         }
 
-        query += ` GROUP BY DATE(timestamp), shift_id `;
-
         // Sorting
-        const allowedSort = ['date', 'shift_id', 'good', 'ng'];
-        const sortCol = allowedSort.includes(orderBy) ? orderBy : 'date';
+        const allowedSort = ['start_time', 'product_id', 'good_count', 'ng_count', 'oee'];
+        const sortCol = allowedSort.includes(orderBy) ? orderBy : 'ps.start_time';
         const sortDir = orderDir === 'ASC' ? 'ASC' : 'DESC';
-        query += ` ORDER BY ${sortCol} ${sortDir}, shift_id ${sortDir} `;
+        query += ` ORDER BY ${sortCol} ${sortDir} `;
 
         if (limit) {
             query += ` LIMIT ? `;
@@ -357,85 +379,7 @@ app.get('/api/history', authenticateToken, async (req, res) => {
             query += ` LIMIT 25 `;
         }
         const [rows] = await pool.query(query, params);
-
-        // 2. Fetch shift definitions to calculate time boundaries
-        const [shifts] = await pool.query('SELECT * FROM shifts');
-
-        // 3. Enrich each row with shift names and calculated durations
-        const history = await Promise.all(rows.map(async (row) => {
-            const sDef = shifts.find(x => x.id === row.shift_id);
-
-            // Manual local date string extraction (YYYY-MM-DD)
-            const d = new Date(row.date);
-            const dateStr = d.getFullYear() + '-' +
-                String(d.getMonth() + 1).padStart(2, '0') + '-' +
-                String(d.getDate()).padStart(2, '0');
-
-            // Default durations
-            let runTime = 0;
-            let downTime = 0;
-
-            if (sDef) {
-                // Construct search window for this shift on this date
-                const start = `${dateStr} ${sDef.start_time} `;
-                let end = `${dateStr} ${sDef.end_time} `;
-
-                // Fix for shifts crossing midnight (e.g. 23:00 to 07:00)
-                if (sDef.end_time < sDef.start_time) {
-                    const nextD = new Date(d);
-                    nextD.setDate(nextD.getDate() + 1);
-                    const nextDateStr = nextD.getFullYear() + '-' +
-                        String(nextD.getMonth() + 1).padStart(2, '0') + '-' +
-                        String(nextD.getDate()).padStart(2, '0');
-                    end = `${nextDateStr} ${sDef.end_time} `;
-                }
-
-                // Fetch machine logs for this specific shift window
-                let logQuery = 'SELECT state, timestamp FROM machine_logs WHERE timestamp BETWEEN ? AND ?';
-                let logParams = [start, end];
-                if (machine_id) {
-                    logQuery += ' AND machine_id = ?';
-                    logParams.push(machine_id);
-                }
-                logQuery += ' ORDER BY timestamp ASC';
-                const [logs] = await pool.query(logQuery, logParams);
-
-                // Calculate durations based on log intervals
-                if (logs.length > 1) {
-                    for (let i = 0; i < logs.length - 1; i++) {
-                        const s = new Date(logs[i].timestamp);
-                        const e = new Date(logs[i + 1].timestamp);
-                        const diff = (e - s) / 1000; // seconds
-                        if (logs[i].state === 'running') runTime += diff;
-                        else downTime += diff;
-                    }
-                }
-            }
-
-            const good = Number(row.good);
-            const ng = Number(row.ng);
-            const totalParts = good + ng;
-            const totalTime = runTime + downTime;
-
-            // OEE Calculation: (Good * Ideal Cycle) / Total Time
-            let oee = 0;
-            if (totalTime > 0) {
-                oee = (good * IDEAL_CYCLE_TIME) / totalTime;
-            }
-
-            return {
-                ...row,
-                shift_name: sDef ? sDef.name : 'Unknown',
-                good,
-                ng,
-                log_count: totalParts,
-                runTime: Math.round(runTime),
-                downTime: Math.round(downTime),
-                oee: (oee * 100).toFixed(1)
-            };
-        }));
-
-        res.json(history);
+        res.json(rows);
     } catch (e) {
         console.error("History API Error", e);
         res.status(500).json({ error: e.message });
@@ -459,6 +403,83 @@ app.get('/api/shifts', async (req, res) => {
         const [shifts] = await pool.query('SELECT * FROM shifts');
         res.json(shifts);
     } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- Session Management APIs ---
+
+app.post('/api/session/edit', authenticateToken, async (req, res) => {
+    const { 
+        password, 
+        machine_id, 
+        product_id, 
+        target_qty, 
+        shift_name, 
+        operator_name, 
+        operator_nim 
+    } = req.body;
+
+    if (password !== 'admin123') {
+        return res.status(401).json({ error: 'Incorrect password' });
+    }
+
+    if (!machine_id || !product_id || !target_qty || !shift_name || !operator_name || !operator_nim) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    try {
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        try {
+            // 1. Check for current active session
+            const [activeSessions] = await connection.query('SELECT * FROM active_sessions WHERE machine_id = ?', [machine_id]);
+            const now = new Date();
+
+            if (activeSessions.length > 0) {
+                const session = activeSessions[0];
+                // 2. Calculate stats for the session that is ending
+                const stats = await calculateSessionStats(machine_id, session.start_time, now);
+
+                // 3. Save to production_sessions history
+                await connection.query(`
+                    INSERT INTO production_sessions 
+                    (machine_id, product_id, target_qty, shift_name, operator_name, operator_nim, 
+                     start_time, end_time, good_count, ng_count, running_duration_sec, downtime_duration_sec, 
+                     oee, availability, performance, quality) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
+                    machine_id, session.product_id, session.target_qty, session.shift_name, session.operator_name, session.operator_nim,
+                    session.start_time, now, stats.good, stats.ng, stats.runningTime, stats.downtime,
+                    stats.oee, stats.availability, stats.performance, stats.quality
+                ]);
+
+                // 4. Remove from active_sessions
+                await connection.query('DELETE FROM active_sessions WHERE machine_id = ?', [machine_id]);
+            }
+
+            // 5. Create new active session
+            await connection.query(`
+                INSERT INTO active_sessions 
+                (machine_id, product_id, target_qty, shift_name, operator_name, operator_nim, start_time) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `, [machine_id, product_id, target_qty, shift_name, operator_name, operator_nim, now]);
+
+            await connection.commit();
+            res.json({ message: 'Session updated successfully' });
+            
+            // Broadcast update
+            io.emit('data_updated', { machine_id });
+
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    } catch (e) {
+        console.error("Session Edit Error", e);
         res.status(500).json({ error: e.message });
     }
 });

@@ -10,8 +10,9 @@ import StatusTimelineChart from '../components/StatusTimelineChart';
 import ErrorToast from '../components/ErrorToast';
 import LogoLoader from '../components/LogoLoader';
 import ProductionProgressChart from '../components/ProductionProgressChart';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Settings } from 'lucide-react';
 import DowntimeModal from '../components/DowntimeModal';
+import EditSessionModal from '../components/EditSessionModal';
 
 const DigitalClock = ({ formatDateDisplay }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -37,6 +38,7 @@ const Dashboard = () => {
     const { machineId } = useParams();
     const navigate = useNavigate();
     const [isDowntimeModalOpen, setIsDowntimeModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -130,10 +132,28 @@ const Dashboard = () => {
         );
     }
 
-    if (!data) return (
-        <div className="flex flex-col items-center justify-center p-20">
-            <div className="text-white text-xl">No data available for the current shift.</div>
-            <p className="text-gray-500 mt-2 text-sm uppercase tracking-widest">Waiting for machine signals...</p>
+    if (!data || data.noActiveSession) return (
+        <div className="flex flex-col items-center justify-center p-20 gap-6">
+            <div className="text-white text-xl text-center">
+                No active production session found for this machine.
+                <p className="text-gray-500 mt-2 text-sm uppercase tracking-widest font-normal">Please start a new session to begin tracking performance.</p>
+            </div>
+            
+            <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="px-8 py-4 bg-accent text-white rounded-xl font-bold flex items-center gap-3 shadow-lg shadow-accent/20 active:scale-95 transition-all"
+            >
+                <Settings size={20} />
+                START PRODUCTION SESSION
+            </button>
+
+            <EditSessionModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                currentData={null}
+                machineId={machineId || 1}
+                onSessionCaptured={fetchData}
+            />
         </div>
     );
 
@@ -143,7 +163,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                 <div className="glass-panel p-3 border-l-2 border-l-accent flex flex-col items-center justify-center">
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Product ID</p>
-                    <p className="text-2xl font-bold text-white leading-none mt-1">SI - 283</p>
+                    <p className="text-2xl font-bold text-white leading-none mt-1">{data.product_id}</p>
                 </div>
                 <div className="glass-panel p-3 flex flex-col items-center justify-center">
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Target</p>
@@ -163,8 +183,8 @@ const Dashboard = () => {
                 </div>
                 <div className="glass-panel p-3 flex flex-col items-center justify-center text-center">
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Operator</p>
-                    <p className="text-lg font-bold text-white leading-none mt-1">Bumi</p>
-                    <p className="text-xs text-gray-400 mt-1">12234567</p>
+                    <p className="text-lg font-bold text-white leading-none mt-1">{data.operator}</p>
+                    <p className="text-xs text-gray-400 mt-1">{data.operator_nim}</p>
                 </div>
                 <div className="glass-panel p-3 bg-accent/5 flex flex-col items-center justify-center text-center">
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">DATE & TIME</p>
@@ -285,7 +305,14 @@ const Dashboard = () => {
                         target={data.target}
                         shiftName={data.shift}
                     />
-                    <div className="mt-6 pt-4 border-t border-white/5">
+                    <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
+                        <button
+                            onClick={() => setIsEditModalOpen(true)}
+                            className="w-full py-3 bg-accent/10 hover:bg-accent/20 text-accent rounded-xl border border-accent/20 transition-all flex items-center justify-center gap-2 font-bold group"
+                        >
+                            <Settings size={18} className="group-hover:rotate-90 transition-transform duration-500" />
+                            EDIT SESSION (Product, Operator, Shift)
+                        </button>
                         <button
                             onClick={() => setIsDowntimeModalOpen(true)}
                             className="w-full py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 rounded-xl border border-amber-500/20 transition-all flex items-center justify-center gap-2 font-bold group"
@@ -333,6 +360,14 @@ const Dashboard = () => {
                 isOpen={isDowntimeModalOpen}
                 onClose={() => setIsDowntimeModalOpen(false)}
                 initialMachineId={machineId || 1}
+            />
+
+            <EditSessionModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                currentData={data}
+                machineId={machineId || 1}
+                onSessionCaptured={fetchData}
             />
         </div>
     );
