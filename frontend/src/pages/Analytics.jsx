@@ -202,6 +202,58 @@ const Analytics = () => {
                             </div>
                         </div>
                     </motion.div>
+
+                    {/* Downtime Events List (New) */}
+                    <motion.div variants={itemVariants} className="glass-panel overflow-hidden">
+                        <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+                            <h3 className="text-lg font-bold text-white">Downtime Events in Period</h3>
+                            <span className="px-2 py-1 rounded bg-red-500/20 text-red-400 text-xs font-bold">
+                                {data.downtimeEvents?.length || 0} Events
+                            </span>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-white/5 text-gray-400 uppercase text-[10px] font-bold tracking-widest">
+                                    <tr>
+                                        <th className="p-3">Machine</th>
+                                        <th className="p-3">Start</th>
+                                        <th className="p-3">End</th>
+                                        <th className="p-3">Reason</th>
+                                        <th className="p-3">Operator</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/10">
+                                    {data.downtimeEvents?.map((d, idx) => (
+                                        <tr key={idx} className="hover:bg-white/5 transition-colors">
+                                            <td className="p-3">
+                                                <span className="px-2 py-0.5 rounded bg-accent/10 text-accent text-[10px] font-mono font-bold border border-accent/20">
+                                                    {d.machine_code}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 text-gray-300">
+                                                {new Date(d.start_time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                            </td>
+                                            <td className="p-3 text-gray-300">
+                                                {d.end_time
+                                                    ? new Date(d.end_time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
+                                                    : <span className="text-accent italic">Ongoing</span>
+                                                }
+                                            </td>
+                                            <td className="p-3 text-gray-400 italic font-medium">{d.reason}</td>
+                                            <td className="p-3 text-gray-400">{d.operator_name || 'System'}</td>
+                                        </tr>
+                                    ))}
+                                    {(!data.downtimeEvents || data.downtimeEvents.length === 0) && (
+                                        <tr>
+                                            <td colSpan="5" className="p-8 text-center text-gray-500 italic">
+                                                No specific downtime events recorded in this timeframe.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </motion.div>
                 </motion.div>
             )}
         </div>

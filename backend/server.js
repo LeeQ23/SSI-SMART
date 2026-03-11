@@ -160,7 +160,7 @@ app.post('/api/current', (req, res) => {
 
 // Data API - Detailed view for one machine
 app.get('/api/dashboard', authenticateToken, async (req, res) => {
-    const machineId = req.query.machine_id || 1;
+    const machine_id = req.query.machine_id || 1;
     try {
         const shift = await getShift();
         const now = new Date();
@@ -190,19 +190,19 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
                 FROM production_events 
                 WHERE shift_id = ? AND machine_id = ? AND timestamp >= ?
                 GROUP BY signal_type
-            `, [shift.id, machineId, shiftStartStr]),
+            `, [shift.id, machine_id, shiftStartStr]),
             pool.query(`
                 SELECT state, timestamp 
                 FROM machine_logs 
                 WHERE machine_id = ? AND timestamp >= ?
                 ORDER BY timestamp ASC
-            `, [machineId, shiftStartStr]),
+            `, [machine_id, shiftStartStr]),
             pool.query(`
                 SELECT signal_type, timestamp 
                 FROM production_events 
                 WHERE machine_id = ? AND timestamp >= ?
                 ORDER BY timestamp ASC
-            `, [machineId, shiftStartStr])
+            `, [machine_id, shiftStartStr])
         ]);
 
         const good = counts.find(c => c.signal_type === 'good')?.count || 0;
@@ -235,10 +235,10 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
         const quality = totalCount > 0 ? (good / totalCount) : 0;
         const oee = (availability * performance * quality) * 100;
 
-        const mState = initMachineState(machineId);
+        const mState = initMachineState(machine_id);
         res.json({
             shift: shift.name,
-            machine_id: machineId,
+            machine_id: machine_id,
             target,
             good,
             ng,
@@ -263,13 +263,11 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 // Overview Grid for all machines
 app.get('/api/dashboard/all', authenticateToken, async (req, res) => {
     try {
-        const [machines] = await pool.query('SELECT * FROM machines');
         const shift = await getShift();
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
         let shiftStartStr = `${todayStr} ${shift.start_time}`;
 
-        // Handle midnight-crossing shifts
         if (shift.end_time < shift.start_time) {
             const timeString = now.toTimeString().split(' ')[0];
             if (timeString <= shift.end_time) {
@@ -280,29 +278,31 @@ app.get('/api/dashboard/all', authenticateToken, async (req, res) => {
             }
         }
 
-        const results = await Promise.all(machines.map(async (m) => {
-            // Get basic stats for each machine
-            const [counts] = await pool.query(`
-                SELECT signal_type, COUNT(*) as count FROM production_events 
-                WHERE machine_id = ? AND timestamp >= ? GROUP BY signal_type
-            `, [m.id, shiftStartStr]);
+        const [rows] = await pool.query(`
+            SELECT 
+                m.id, m.code, m.type,
+                COUNT(CASE WHEN pe.signal_type = 'good' THEN 1 END) as good,
+                COUNT(CASE WHEN pe.signal_type = 'ng' THEN 1 END) as ng
+            FROM machines m
+            LEFT JOIN production_events pe ON m.id = pe.machine_id AND pe.timestamp >= ?
+            GROUP BY m.id
+        `, [shiftStartStr]);
 
-            const good = counts.find(c => c.signal_type === 'good')?.count || 0;
-            const ng = counts.find(c => c.signal_type === 'ng')?.count || 0;
-
-            const mState = initMachineState(m.id);
+        const results = rows.map(r => {
+            const mState = initMachineState(r.id);
             return {
-                id: m.id,
-                code: m.code,
-                type: m.type,
-                good,
-                ng,
+                id: r.id,
+                code: r.code,
+                type: r.type,
+                good: parseInt(r.good) || 0,
+                ng: parseInt(r.ng) || 0,
                 state: mState.state,
                 current: mState.current
             };
-        }));
+        });
         res.json(results);
     } catch (e) {
+        console.error("Dashboard All Error", e);
         res.status(500).json({ error: e.message });
     }
 });
@@ -318,7 +318,7 @@ app.get('/api/machines', authenticateToken, async (req, res) => {
 
 app.get('/api/history', authenticateToken, async (req, res) => {
     try {
-        const machineId = req.query.machine_id;
+        const { machine_id, limit, start_date, end_date, orderBy, orderDir } = req.query;
         let query = `
             SELECT 
                 DATE(timestamp) as date, 
@@ -326,17 +326,36 @@ app.get('/api/history', authenticateToken, async (req, res) => {
                 COUNT(CASE WHEN signal_type = 'good' THEN 1 END) as good,
                 COUNT(CASE WHEN signal_type = 'ng' THEN 1 END) as ng
             FROM production_events
+            WHERE 1=1
         `;
         let params = [];
-        if (machineId) {
-            query += ` WHERE machine_id = ? `;
-            params.push(machineId);
+        if (machine_id) {
+            query += ` AND machine_id = ? `;
+            params.push(machine_id);
         }
-        query += `
-            GROUP BY DATE(timestamp), shift_id
-            ORDER BY date DESC, shift_id DESC
-            LIMIT 30
-        `;
+        if (start_date) {
+            query += ` AND DATE(timestamp) >= ? `;
+            params.push(start_date);
+        }
+        if (end_date) {
+            query += ` AND DATE(timestamp) <= ? `;
+            params.push(end_date);
+        }
+
+        query += ` GROUP BY DATE(timestamp), shift_id `;
+
+        // Sorting
+        const allowedSort = ['date', 'shift_id', 'good', 'ng'];
+        const sortCol = allowedSort.includes(orderBy) ? orderBy : 'date';
+        const sortDir = orderDir === 'ASC' ? 'ASC' : 'DESC';
+        query += ` ORDER BY ${sortCol} ${sortDir}, shift_id ${sortDir} `;
+
+        if (limit) {
+            query += ` LIMIT ? `;
+            params.push(parseInt(limit));
+        } else {
+            query += ` LIMIT 25 `;
+        }
         const [rows] = await pool.query(query, params);
 
         // 2. Fetch shift definitions to calculate time boundaries
@@ -358,8 +377,8 @@ app.get('/api/history', authenticateToken, async (req, res) => {
 
             if (sDef) {
                 // Construct search window for this shift on this date
-                const start = `${dateStr} ${sDef.start_time}`;
-                let end = `${dateStr} ${sDef.end_time}`;
+                const start = `${dateStr} ${sDef.start_time} `;
+                let end = `${dateStr} ${sDef.end_time} `;
 
                 // Fix for shifts crossing midnight (e.g. 23:00 to 07:00)
                 if (sDef.end_time < sDef.start_time) {
@@ -368,15 +387,15 @@ app.get('/api/history', authenticateToken, async (req, res) => {
                     const nextDateStr = nextD.getFullYear() + '-' +
                         String(nextD.getMonth() + 1).padStart(2, '0') + '-' +
                         String(nextD.getDate()).padStart(2, '0');
-                    end = `${nextDateStr} ${sDef.end_time}`;
+                    end = `${nextDateStr} ${sDef.end_time} `;
                 }
 
                 // Fetch machine logs for this specific shift window
                 let logQuery = 'SELECT state, timestamp FROM machine_logs WHERE timestamp BETWEEN ? AND ?';
                 let logParams = [start, end];
-                if (machineId) {
+                if (machine_id) {
                     logQuery += ' AND machine_id = ?';
-                    logParams.push(machineId);
+                    logParams.push(machine_id);
                 }
                 logQuery += ' ORDER BY timestamp ASC';
                 const [logs] = await pool.query(logQuery, logParams);
@@ -455,6 +474,109 @@ app.put('/api/shifts/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// --- Downtime Recording APIs ---
+
+// Start a downtime
+app.post('/api/downtime/start', authenticateToken, async (req, res) => {
+    const { machine_id, reason } = req.body;
+    const operator_id = req.user.id;
+
+    if (!machine_id || !reason) {
+        return res.status(400).send('Machine ID and Reason are required');
+    }
+
+    try {
+        await pool.query(
+            'INSERT INTO downtimes (machine_id, reason, operator_id) VALUES (?, ?, ?)',
+            [machine_id, reason, operator_id]
+        );
+        res.sendStatus(201);
+    } catch (e) {
+        console.error("Downtime Start Error", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// End a downtime
+app.post('/api/downtime/end', authenticateToken, async (req, res) => {
+    const { machine_id } = req.body;
+
+    if (!machine_id) {
+        return res.status(400).send('Machine ID is required');
+    }
+
+    try {
+        await pool.query(
+            'UPDATE downtimes SET end_time = CURRENT_TIMESTAMP WHERE machine_id = ? AND end_time IS NULL',
+            [machine_id]
+        );
+        res.sendStatus(200);
+    } catch (e) {
+        console.error("Downtime End Error", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Get downtime history
+app.get('/api/downtimes', authenticateToken, async (req, res) => {
+    try {
+        const { machine_id, limit, start_date, end_date, orderBy, orderDir } = req.query;
+        let query = `
+            SELECT d.*, m.code as machine_code, u.username as operator_name
+            FROM downtimes d
+            JOIN machines m ON d.machine_id = m.id
+            LEFT JOIN users u ON d.operator_id = u.id
+            WHERE 1=1
+        `;
+        let params = [];
+
+        if (machine_id) {
+            query += ` AND d.machine_id = ? `;
+            params.push(machine_id);
+        }
+        if (start_date) {
+            query += ` AND d.start_time >= ? `;
+            params.push(start_date);
+        }
+        if (end_date) {
+            query += ` AND d.start_time <= ? `;
+            params.push(end_date);
+        }
+
+        // Sorting
+        const allowedSort = ['start_time', 'end_time', 'machine_code', 'reason'];
+        const sortCol = allowedSort.includes(orderBy) ? orderBy : 'd.start_time';
+        const sortDir = orderDir === 'ASC' ? 'ASC' : 'DESC';
+        query += ` ORDER BY ${sortCol} ${sortDir} `;
+
+        if (limit) {
+            query += ` LIMIT ? `;
+            params.push(parseInt(limit));
+        } else {
+            query += ` LIMIT 25 `;
+        }
+
+        const [rows] = await pool.query(query, params);
+        res.json(rows);
+    } catch (e) {
+        console.error("Downtime History Fetch Error", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Get active downtime for a machine
+app.get('/api/downtime/active/:machine_id', authenticateToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            'SELECT * FROM downtimes WHERE machine_id = ? AND end_time IS NULL LIMIT 1',
+            [req.params.machine_id]
+        );
+        res.json(rows[0] || null);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Seed Endpoint (for demo)
 app.post('/api/seed', async (req, res) => {
     const hashedPassword = await bcrypt.hash('pass123', 10);
@@ -472,18 +594,18 @@ app.get('/api/analytics', authenticateToken, async (req, res) => {
     }
 
     try {
-        const machineId = req.query.machine_id;
+        const machine_id = req.query.machine_id;
 
         // 1. Get Production Counts (Good/NG)
         let eventQuery = `
             SELECT signal_type, CAST(COUNT(*) AS UNSIGNED) as count
             FROM production_events
             WHERE timestamp BETWEEN ? AND ?
-        `;
+            `;
         let eventParams = [start, end];
-        if (machineId) {
+        if (machine_id) {
             eventQuery += ' AND machine_id = ?';
-            eventParams.push(machineId);
+            eventParams.push(machine_id);
         }
         eventQuery += ' GROUP BY signal_type';
         const [eventRows] = await pool.query(eventQuery, eventParams);
@@ -494,9 +616,9 @@ app.get('/api/analytics', authenticateToken, async (req, res) => {
         // 2. Get Machine State Logs
         let stateQuery = 'SELECT state, timestamp FROM machine_logs WHERE timestamp BETWEEN ? AND ?';
         let stateParams = [start, end];
-        if (machineId) {
+        if (machine_id) {
             stateQuery += ' AND machine_id = ?';
-            stateParams.push(machineId);
+            stateParams.push(machine_id);
         }
         stateQuery += ' ORDER BY timestamp ASC';
         const [stateLogs] = await pool.query(stateQuery, stateParams);
@@ -528,15 +650,31 @@ app.get('/api/analytics', authenticateToken, async (req, res) => {
         const quality = totalParts > 0 ? good / totalParts : 0;
         const oee = availability * performance * quality;
 
-        // 3. Get Production Event Logs
+        // 3. Get Production Event Logs (for tiny dots in timeline)
         let eventLogQuery = 'SELECT signal_type, timestamp FROM production_events WHERE timestamp BETWEEN ? AND ?';
         let eventLogParams = [start, end];
-        if (machineId) {
+        if (machine_id) {
             eventLogQuery += ' AND machine_id = ?';
-            eventLogParams.push(machineId);
+            eventLogParams.push(machine_id);
         }
         eventLogQuery += ' ORDER BY timestamp ASC';
         const [productionEvents] = await pool.query(eventLogQuery, eventLogParams);
+
+        // 4. Get Downtime Events for this period (Requested by user)
+        let downtimeLogQuery = `
+            SELECT d.*, m.code as machine_code, u.username as operator_name
+            FROM downtimes d
+            JOIN machines m ON d.machine_id = m.id
+            LEFT JOIN users u ON d.operator_id = u.id
+            WHERE d.start_time BETWEEN ? AND ?
+        `;
+        let downtimeLogParams = [start, end];
+        if (machine_id) {
+            downtimeLogQuery += ' AND d.machine_id = ?';
+            downtimeLogParams.push(machine_id);
+        }
+        downtimeLogQuery += ' ORDER BY d.start_time DESC';
+        const [downtimeEvents] = await pool.query(downtimeLogQuery, downtimeLogParams);
 
         res.json({
             metrics: {
@@ -550,7 +688,8 @@ app.get('/api/analytics', authenticateToken, async (req, res) => {
                 downTime: downTimeSec
             },
             timeline,
-            productionEvents
+            productionEvents,
+            downtimeEvents
         });
 
     } catch (e) {
@@ -567,15 +706,15 @@ const PORT = process.env.PORT || 5003;
 
 const startServer = (port) => {
     server.listen(port, () => {
-        console.log(`Server running on port ${port}`);
+        console.log(`Server running on port ${port} `);
         try {
             const fs = require('fs');
-            fs.writeFileSync('server_status.txt', `[${new Date().toISOString()}] Server successfully listening on port ${port}\n`);
+            fs.writeFileSync('server_status.txt', `[${new Date().toISOString()}] Server successfully listening on port ${port} \n`);
         } catch (e) { console.error("Log failed", e); }
     }).on('error', (err) => {
         const fs = require('fs');
         try {
-            fs.appendFileSync('server_startup_error.log', `[${new Date().toISOString()}] Error on port ${port}: ${err.code} - ${err.message}\n`);
+            fs.appendFileSync('server_startup_error.log', `[${new Date().toISOString()}] Error on port ${port}: ${err.code} - ${err.message} \n`);
         } catch (fse) { }
 
         if (err.code === 'EADDRINUSE') {

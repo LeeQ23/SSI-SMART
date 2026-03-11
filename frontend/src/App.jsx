@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import History from './pages/History';
 import Analytics from './pages/Analytics';
 import Overview from './pages/Overview';
+import DowntimeHistory from './pages/DowntimeHistory';
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
@@ -33,6 +34,7 @@ function App() {
                 {/* Placeholders for other routes */}
                 <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
                 <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                <Route path="/downtime-history" element={<ProtectedRoute><DowntimeHistory /></ProtectedRoute>} />
             </Routes>
         </AuthProvider>
     );

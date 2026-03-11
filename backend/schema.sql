@@ -37,6 +37,17 @@ CREATE TABLE IF NOT EXISTS production_logs (
   FOREIGN KEY (shift_id) REFERENCES shifts(id) ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS downtimes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  machine_id INT NOT NULL,
+  reason TEXT NOT NULL,
+  start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  end_time TIMESTAMP NULL,
+  operator_id INT,
+  FOREIGN KEY (machine_id) REFERENCES machines(id),
+  FOREIGN KEY (operator_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS shift_comments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   shift_date DATE NOT NULL,

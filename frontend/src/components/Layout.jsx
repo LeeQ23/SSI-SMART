@@ -1,9 +1,10 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
-import { LayoutDashboard, History, Users, LogOut, Clock, LineChart, LayoutGrid, Maximize, Minimize } from 'lucide-react';
+import { LayoutDashboard, History, Users, LogOut, Clock, LineChart, LayoutGrid, Maximize, Minimize, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import LanguageSwitcher from './LanguageSwitcher';
+import DowntimeModal from './DowntimeModal';
 
 const Layout = ({ children }) => {
     const { user, logout } = useAuth();
@@ -11,6 +12,7 @@ const Layout = ({ children }) => {
     const location = useLocation();
     const { t } = useTranslation();
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isDowntimeModalOpen, setIsDowntimeModalOpen] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -31,6 +33,7 @@ const Layout = ({ children }) => {
                     case '2': navigate('/dashboard/1'); break;
                     case '3': if (user?.role === 'manager') navigate('/history'); break;
                     case '4': if (user?.role === 'manager') navigate('/analytics'); break;
+                    case 'd': case 'D': setIsDowntimeModalOpen(true); break;
                     case 'l': case 'L': handleLogout(); break;
                     default: break;
                 }
@@ -101,11 +104,26 @@ const Layout = ({ children }) => {
                             <div className="w-8 h-[1px] bg-white/10 my-2" />
                             <NavItem to="/history" icon={History} label={t('nav.history')} shortcut="3" />
                             <NavItem to="/analytics" icon={LineChart} label={t('nav.analytics')} shortcut="4" />
+                            <NavItem to="/downtime-history" icon={Clock} label="Downtime History" shortcut="H" />
                         </>
                     )}
                 </nav>
 
                 <div className="mt-auto flex flex-col items-center gap-4 w-full px-2">
+                    <button
+                        onClick={() => setIsDowntimeModalOpen(true)}
+                        className="group relative flex items-center justify-center w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-all duration-300 border border-amber-500/20"
+                    >
+                        <AlertTriangle size={22} />
+                        <div className="absolute left-16 px-3 py-2 bg-gray-900 border border-white/10 rounded-lg text-xs font-medium text-white whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:left-14 transition-all duration-300 z-50 shadow-2xl">
+                            <span className="flex items-center gap-3">
+                                Manual Downtime
+                                <span className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] text-gray-400 border border-white/5 uppercase">Alt + D</span>
+                            </span>
+                            <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-b border-white/10 rotate-45" />
+                        </div>
+                    </button>
+
                     <LanguageSwitcher mini={true} />
 
                     <div className="w-8 h-[1px] bg-white/10" />
@@ -166,6 +184,11 @@ const Layout = ({ children }) => {
                     </div>
                 </div>
             </main>
+
+            <DowntimeModal
+                isOpen={isDowntimeModalOpen}
+                onClose={() => setIsDowntimeModalOpen(false)}
+            />
         </div>
     );
 };

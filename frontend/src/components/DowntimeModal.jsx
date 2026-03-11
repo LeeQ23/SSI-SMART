@@ -1,0 +1,187 @@
+import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import { Clock, Play, Square, X, AlertCircle } from 'lucide-react';
+import MachineSelector from './MachineSelector';
+
+const DowntimeModal = ({ isOpen, onClose, initialMachineId }) => {
+    const [machineId, setMachineId] = useState(initialMachineId || 1);
+    const [reason, setReason] = useState('');
+    const [isActive, setIsActive] = useState(false);
+    const [startTime, setStartTime] = useState(null);
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // Check for active downtime on mount or when machineId changes
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const checkActive = async () => {
+            try {
+                const res = await axios.get(`/api/downtime/active/${machineId}`);
+                if (res.data) {
+                    setIsActive(true);
+                    setReason(res.data.reason);
+                    setStartTime(new Date(res.data.start_time));
+                } else {
+                    if (!isActive) {
+                        setIsActive(false);
+                        setReason('');
+                        setStartTime(null);
+                    }
+                }
+            } catch (err) {
+                console.error("Error checking active downtime", err);
+            }
+        };
+
+        checkActive();
+    }, [isOpen, machineId]);
+
+    // Stopwatch logic
+    useEffect(() => {
+        let interval = null;
+        if (isActive && startTime) {
+            interval = setInterval(() => {
+                const now = new Date();
+                setElapsedTime(Math.floor((now - startTime) / 1000));
+            }, 1000);
+        } else {
+            setElapsedTime(0);
+            clearInterval(interval);
+        }
+        return () => clearInterval(interval);
+    }, [isActive, startTime]);
+
+    const handleStart = async () => {
+        if (!reason.trim()) {
+            setError("Please enter a reason for the downtime");
+            return;
+        }
+        setLoading(true);
+        setError(null);
+        try {
+            await axios.post('/api/downtime/start', { machine_id: machineId, reason });
+            setIsActive(true);
+            setStartTime(new Date());
+        } catch (err) {
+            setError("Failed to start downtime recording");
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleFinish = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            await axios.post('/api/downtime/end', { machine_id: machineId });
+            setIsActive(false);
+            setStartTime(null);
+            setElapsedTime(0);
+            setReason('');
+            onClose(); // Close on finish
+        } catch (err) {
+            setError("Failed to end downtime recording");
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatElapsedTime = (seconds) => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="glass-panel w-full max-w-md p-6 relative animate-in fade-in zoom-in duration-300">
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                >
+                    <X size={24} />
+                </button>
+
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-accent/20 rounded-lg text-accent">
+                        <Clock size={24} />
+                    </div>
+                    <h2 className="text-xl font-bold">Manual Downtime</h2>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                            Select Machine
+                        </label>
+                        <MachineSelector
+                            selectedId={machineId}
+                            onChange={(id) => !isActive && setMachineId(id)}
+                        />
+                        {isActive && <p className="text-[10px] text-warning mt-1 italic">Machine cannot be changed during active downtime</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                            Reason for Downtime
+                        </label>
+                        <textarea
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            disabled={isActive}
+                            placeholder="e.g., Maintenance, Toilet Break, Tooling change..."
+                            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-accent transition-all h-24 resize-none"
+                        />
+                    </div>
+
+                    {error && (
+                        <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                            <AlertCircle size={16} />
+                            {error}
+                        </div>
+                    )}
+
+                    {isActive && (
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center space-y-2">
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">Active Duration</p>
+                            <p className="text-5xl font-mono font-bold text-accent drop-shadow-[0_0_10px_rgba(0,116,217,0.5)]">
+                                {formatElapsedTime(elapsedTime)}
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="pt-4">
+                        {!isActive ? (
+                            <button
+                                onClick={handleStart}
+                                disabled={loading}
+                                className="w-full bg-accent hover:bg-accent/80 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-accent/20 active:scale-[0.98]"
+                            >
+                                <Play size={20} fill="currentColor" />
+                                START DOWNTIME
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleFinish}
+                                disabled={loading}
+                                className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-red-500/20 active:scale-[0.98]"
+                            >
+                                <Square size={20} fill="currentColor" />
+                                FINISH DOWNTIME
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default DowntimeModal;

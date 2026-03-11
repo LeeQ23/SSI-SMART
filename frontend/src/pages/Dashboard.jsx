@@ -10,6 +10,8 @@ import StatusTimelineChart from '../components/StatusTimelineChart';
 import ErrorToast from '../components/ErrorToast';
 import LogoLoader from '../components/LogoLoader';
 import ProductionProgressChart from '../components/ProductionProgressChart';
+import { AlertTriangle } from 'lucide-react';
+import DowntimeModal from '../components/DowntimeModal';
 
 const DigitalClock = ({ formatDateDisplay }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -34,6 +36,7 @@ const Dashboard = () => {
     const { t } = useTranslation();
     const { machineId } = useParams();
     const navigate = useNavigate();
+    const [isDowntimeModalOpen, setIsDowntimeModalOpen] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -282,6 +285,15 @@ const Dashboard = () => {
                         target={data.target}
                         shiftName={data.shift}
                     />
+                    <div className="mt-6 pt-4 border-t border-white/5">
+                        <button
+                            onClick={() => setIsDowntimeModalOpen(true)}
+                            className="w-full py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 rounded-xl border border-amber-500/20 transition-all flex items-center justify-center gap-2 font-bold group"
+                        >
+                            <AlertTriangle size={18} className="group-hover:scale-110 transition-transform" />
+                            RECORD MANUAL DOWNTIME (Alt + D)
+                        </button>
+                    </div>
                 </div>
 
                 {/* 1/3 Status Timeline Card */}
@@ -316,6 +328,12 @@ const Dashboard = () => {
             </div>
 
             {error && <ErrorToast />}
+
+            <DowntimeModal
+                isOpen={isDowntimeModalOpen}
+                onClose={() => setIsDowntimeModalOpen(false)}
+                initialMachineId={machineId || 1}
+            />
         </div>
     );
 };
