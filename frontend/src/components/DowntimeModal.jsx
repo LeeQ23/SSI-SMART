@@ -24,11 +24,9 @@ const DowntimeModal = ({ isOpen, onClose, initialMachineId }) => {
                     setReason(res.data.reason);
                     setStartTime(new Date(res.data.start_time));
                 } else {
-                    if (!isActive) {
-                        setIsActive(false);
-                        setReason('');
-                        setStartTime(null);
-                    }
+                    setIsActive(false);
+                    setReason('');
+                    setStartTime(null);
                 }
             } catch (err) {
                 console.error("Error checking active downtime", err);
@@ -123,9 +121,9 @@ const DowntimeModal = ({ isOpen, onClose, initialMachineId }) => {
                         </label>
                         <MachineSelector
                             selectedId={machineId}
-                            onChange={(id) => !isActive && setMachineId(id)}
+                            onChange={(id) => setMachineId(id)}
                         />
-                        {isActive && <p className="text-[10px] text-warning mt-1 italic">Machine cannot be changed during active downtime</p>}
+                        {isActive && <p className="text-[10px] text-accent mt-1 italic">Selecting another machine will show its downtime status</p>}
                     </div>
 
                     <div>
@@ -137,7 +135,7 @@ const DowntimeModal = ({ isOpen, onClose, initialMachineId }) => {
                             onChange={(e) => setReason(e.target.value)}
                             disabled={isActive}
                             placeholder="e.g., Maintenance, Toilet Break, Tooling change..."
-                            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-accent transition-all h-24 resize-none"
+                            className={`w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-accent transition-all h-24 resize-none ${isActive ? 'opacity-70 grayscale-[0.5]' : ''}`}
                         />
                     </div>
 
