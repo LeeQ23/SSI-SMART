@@ -290,30 +290,16 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 // Overview Grid for all machines
 app.get('/api/dashboard/all', authenticateToken, async (req, res) => {
     try {
-        const shift = await getShift();
-        const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
-        let shiftStartStr = `${todayStr} ${shift.start_time}`;
-
-        if (shift.end_time < shift.start_time) {
-            const timeString = now.toTimeString().split(' ')[0];
-            if (timeString <= shift.end_time) {
-                const yesterday = new Date(now);
-                yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayStr = yesterday.toISOString().split('T')[0];
-                shiftStartStr = `${yesterdayStr} ${shift.start_time}`;
-            }
-        }
-
         const [rows] = await pool.query(`
             SELECT 
                 m.id, m.code, m.type,
                 COUNT(CASE WHEN pe.signal_type = 'good' THEN 1 END) as good,
                 COUNT(CASE WHEN pe.signal_type = 'ng' THEN 1 END) as ng
             FROM machines m
-            LEFT JOIN production_events pe ON m.id = pe.machine_id AND pe.timestamp >= ?
+            LEFT JOIN active_sessions as s ON m.id = s.machine_id
+            LEFT JOIN production_events pe ON m.id = pe.machine_id AND (s.start_time IS NOT NULL AND pe.timestamp >= s.start_time)
             GROUP BY m.id
-        `, [shiftStartStr]);
+        `);
 
         const results = rows.map(r => {
             const mState = initMachineState(r.id);
