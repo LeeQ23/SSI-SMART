@@ -43,8 +43,13 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 320 }) => {
     const ticks = useMemo(() => {
         if (chartData.length === 0) return [];
         const timestamps = chartData.map(d => d.timestamp);
-        const min = Math.min(...timestamps);
-        const max = Math.max(...timestamps);
+        
+        let min = timestamps[0];
+        let max = timestamps[0];
+        for (let i = 1; i < timestamps.length; i++) {
+            if (timestamps[i] < min) min = timestamps[i];
+            if (timestamps[i] > max) max = timestamps[i];
+        }
 
         const start = new Date(min);
         start.setMinutes(start.getMinutes() >= 30 ? 30 : 0, 0, 0);
