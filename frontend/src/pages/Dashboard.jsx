@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -10,7 +10,7 @@ import StatusTimelineChart from '../components/StatusTimelineChart';
 import ErrorToast from '../components/ErrorToast';
 import LogoLoader from '../components/LogoLoader';
 import ProductionProgressChart from '../components/ProductionProgressChart';
-import { AlertTriangle, Settings, Pause } from 'lucide-react';
+import { AlertTriangle, Settings } from 'lucide-react';
 import DowntimeModal from '../components/DowntimeModal';
 import EditSessionModal from '../components/EditSessionModal';
 
@@ -34,25 +34,13 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [socket, setSocket] = useState(null);
     const [error, setError] = useState(null);
-    const [isPaused, setIsPaused] = useState(false);
-    const isPausedRef = useRef(false);
     const { t } = useTranslation();
     const { machineId } = useParams();
     const navigate = useNavigate();
     const [isDowntimeModalOpen, setIsDowntimeModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-    const handleTogglePause = () => {
-        const nextState = !isPaused;
-        setIsPaused(nextState);
-        isPausedRef.current = nextState;
-        if (!nextState) {
-            fetchData(true);
-        }
-    };
-
-    const fetchData = async (force = false) => {
-        if (isPausedRef.current && !force) return;
+    const fetchData = async () => {
         try {
             const res = await axios.get(`/api/dashboard?machine_id=${machineId || 1}`);
             setData(res.data);
@@ -171,19 +159,6 @@ const Dashboard = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-end">
-                <button
-                    onClick={handleTogglePause}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-bold text-sm border
-                        ${isPaused 
-                            ? 'bg-amber-500/20 text-amber-500 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]' 
-                            : 'bg-green-500/10 text-green-500 border-green-500/30 hover:bg-green-500/20'}`}
-                >
-                    {isPaused ? <Pause size={16} className="fill-current" /> : <Activity size={16} />}
-                    {isPaused ? 'UPDATES PAUSED' : 'LIVE UPDATES ACTIVE'}
-                </button>
-            </div>
-
             {/* Top Info Header Row */}
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                 <div className="glass-panel p-3 border-l-2 border-l-accent flex flex-col items-center justify-center">
