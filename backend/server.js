@@ -56,11 +56,44 @@ const authenticateToken = (req, res, next) => {
 };
 
 // --- Helper Functions ---
-const getShift = async () => {
+const getCurrentShiftWindow = () => {
     const now = new Date();
-    const timeString = now.toTimeString().split(' ')[0];
-    const [rows] = await pool.query('SELECT * FROM shifts WHERE ? BETWEEN start_time AND end_time OR (start_time > end_time AND (? >= start_time OR ? <= end_time))', [timeString, timeString, timeString]);
-    return rows[0] || { id: 3, name: 'Night' }; // Default fallback
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const timeInMinutes = currentHour * 60 + currentMinute;
+    
+    // Morning: 07:25 (445 min) to 19:25 (1165 min)
+    const morningStart = 7 * 60 + 25;
+    const morningEnd = 19 * 60 + 25;
+    
+    let shiftStart = new Date(now);
+    let shiftEnd = new Date(now);
+    let shiftName = '';
+    let shiftId = 1;
+
+    if (timeInMinutes >= morningStart && timeInMinutes <= morningEnd) {
+        shiftName = 'Morning';
+        shiftId = 1;
+        shiftStart.setHours(7, 25, 0, 0);
+        shiftEnd.setHours(19, 25, 59, 999);
+    } else {
+        shiftName = 'Night';
+        shiftId = 2;
+        if (timeInMinutes > morningEnd) {
+            shiftStart.setHours(19, 26, 0, 0);
+            shiftEnd.setDate(shiftEnd.getDate() + 1);
+            shiftEnd.setHours(7, 24, 59, 999);
+        } else {
+            shiftStart.setDate(shiftStart.getDate() - 1);
+            shiftStart.setHours(19, 26, 0, 0);
+            shiftEnd.setHours(7, 24, 59, 999);
+        }
+    }
+    return { id: shiftId, name: shiftName, start: shiftStart, end: shiftEnd };
+};
+
+const getShift = async () => {
+    return getCurrentShiftWindow();
 };
 
 const calculateSessionStats = async (machine_id, start_time, end_time) => {
@@ -222,49 +255,40 @@ app.post('/api/current', (req, res) => {
     return app._router.handle({ ...req, url: '/api/machine-status' }, res);
 });
 
-// Data API - Detailed view for one machine (Session-based)
+// Data API - Detailed view for one machine (Shift-based counts, with Session info)
 app.get('/api/dashboard', authenticateToken, async (req, res) => {
     const machine_id = req.query.machine_id || 1;
     try {
         const [sessions] = await pool.query('SELECT * FROM active_sessions WHERE machine_id = ?', [machine_id]);
-        
         let session = sessions[0];
-        if (!session) {
-            // If no active session, create a default one or return empty
-            // For now, let's just return a placeholder or handle it
-            return res.json({
-                noActiveSession: true,
-                machine_id
-            });
-        }
-
+        
         const now = new Date();
-        const stats = await calculateSessionStats(machine_id, session.start_time, now);
+        const currentShift = getCurrentShiftWindow();
+        
+        const stats = await calculateSessionStats(machine_id, currentShift.start, now);
 
         const mState = initMachineState(machine_id);
         
-        // Fetch production events for current session
         const [eventLogs] = await pool.query(`
             SELECT signal_type, timestamp 
             FROM production_events 
             WHERE machine_id = ? AND timestamp >= ?
             ORDER BY timestamp ASC
-        `, [machine_id, session.start_time]);
+        `, [machine_id, currentShift.start]);
 
-        // Fetch state logs for timeline
         const [stateLogs] = await pool.query(`
             SELECT state, timestamp 
             FROM machine_logs 
             WHERE machine_id = ? AND timestamp >= ?
             ORDER BY timestamp ASC
-        `, [machine_id, session.start_time]);
+        `, [machine_id, currentShift.start]);
 
         res.json({
-            product_id: session.product_id,
-            target: session.target_qty,
-            shift: session.shift_name,
-            operator: session.operator_name,
-            operator_nim: session.operator_nim,
+            product_id: session ? session.product_id : '-',
+            target: session ? session.target_qty : 0,
+            shift: currentShift.name,
+            operator: session ? session.operator_name : '-',
+            operator_nim: session ? session.operator_nim : '-',
             machine_id: machine_id,
             good: stats.good,
             ng: stats.ng,
@@ -279,7 +303,7 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
             quality: stats.quality,
             timeline: stateLogs,
             productionEvents: eventLogs,
-            session_start: session.start_time
+            session_start: session ? session.start_time : currentShift.start
         });
     } catch (e) {
         console.error("Dashboard Error", e);
@@ -290,16 +314,16 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 // Overview Grid for all machines
 app.get('/api/dashboard/all', authenticateToken, async (req, res) => {
     try {
+        const currentShift = getCurrentShiftWindow();
         const [rows] = await pool.query(`
             SELECT 
                 m.id, m.code, m.type,
                 COUNT(CASE WHEN pe.signal_type = 'good' THEN 1 END) as good,
                 COUNT(CASE WHEN pe.signal_type = 'ng' THEN 1 END) as ng
             FROM machines m
-            LEFT JOIN active_sessions as s ON m.id = s.machine_id
-            LEFT JOIN production_events pe ON m.id = pe.machine_id AND (s.start_time IS NOT NULL AND pe.timestamp >= s.start_time)
+            LEFT JOIN production_events pe ON m.id = pe.machine_id AND pe.timestamp >= ?
             GROUP BY m.id
-        `);
+        `, [currentShift.start]);
 
         const results = rows.map(r => {
             const mState = initMachineState(r.id);

@@ -19,7 +19,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
         if (isOpen) {
             setStep('password');
             setPassword('');
-            setError(null);
+            setError(null);ff
             if (currentData) {
                 setFormData({
                     product_id: currentData.product_id || '',
