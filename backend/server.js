@@ -37,7 +37,8 @@ const initMachineState = (id) => {
             ng: 0,
             lastPulse: Date.now(),
             state: 'downtime',
-            lastStateChange: Date.now()
+            lastStateChange: Date.now(),
+            lastSignalTime: 0
         };
     }
     return machinesState[id];
@@ -212,10 +213,22 @@ app.post('/api/signal', async (req, res) => {
 
         // Update in-memory count for dashboard efficiency
         const mState = initMachineState(machine_id);
+        mState.lastSignalTime = Date.now();
         if (type === 'good') mState.good++;
         else mState.ng++;
 
+        const timeSinceSignal = Date.now() - mState.lastSignalTime;
+        const isRunningTarget = (mState.current > CURRENT_THRESHOLD) || (timeSinceSignal <= 60000);
+        const newState = isRunningTarget ? 'running' : 'downtime';
+        
+        if (newState !== mState.state) {
+            mState.state = newState;
+            mState.lastStateChange = Date.now();
+            pool.query('INSERT INTO machine_logs (machine_current, state, machine_id) VALUES (?, ?, ?)', [mState.current, newState, machine_id]).catch(console.error);
+        }
+
         io.emit('data_updated', { machine_id });
+        io.emit('machine_update', { machine_id, ...mState });
 
         res.sendStatus(200);
     } catch (e) {
@@ -231,18 +244,22 @@ app.post('/api/machine-status', async (req, res) => {
     if (current === undefined) return res.sendStatus(400);
 
     const val = parseFloat(current);
-    const newState = val > CURRENT_THRESHOLD ? 'running' : 'downtime';
-
+    
     // Update in-memory for instant feedback
     const mState = initMachineState(machine_id);
     mState.current = val;
-    mState.state = newState;
-    mState.lastStateChange = Date.now();
+    
+    const timeSinceSignal = Date.now() - mState.lastSignalTime;
+    const newState = (val > CURRENT_THRESHOLD) || (timeSinceSignal <= 60000) ? 'running' : 'downtime';
 
-    try {
-        await pool.query('INSERT INTO machine_logs (machine_current, state, machine_id) VALUES (?, ?, ?)', [val, newState, machine_id]);
-    } catch (e) {
-        console.error("Machine Log Error", e);
+    if (newState !== mState.state) {
+        mState.state = newState;
+        mState.lastStateChange = Date.now();
+        try {
+            await pool.query('INSERT INTO machine_logs (machine_current, state, machine_id) VALUES (?, ?, ?)', [val, newState, machine_id]);
+        } catch (e) {
+            console.error("Machine Log Error", e);
+        }
     }
 
     io.emit('machine_update', { machine_id, ...mState });
@@ -511,6 +528,24 @@ const saveShiftHistory = async () => {
 // Schedule history save based on shift times (Server local time matches standard)
 cron.schedule('24 7 * * *', saveShiftHistory);
 cron.schedule('25 19 * * *', saveShiftHistory);
+
+// --- Machine State Watcher ---
+setInterval(() => {
+    const now = Date.now();
+    for (const [id, mState] of Object.entries(machinesState)) {
+        const timeSinceSignal = now - mState.lastSignalTime;
+        const isRunningTarget = (mState.current > CURRENT_THRESHOLD) || (timeSinceSignal <= 60000);
+        const newState = isRunningTarget ? 'running' : 'downtime';
+        
+        if (newState !== mState.state) {
+            mState.state = newState;
+            mState.lastStateChange = now;
+            pool.query('INSERT INTO machine_logs (machine_current, state, machine_id) VALUES (?, ?, ?)', [mState.current, newState, id]).catch(console.error);
+            // It uses machine_id for socket listeners
+            io.emit('machine_update', { machine_id: id, ...mState });
+        }
+    }
+}, 5000);
 
 app.put('/api/shifts/:id', authenticateToken, async (req, res) => {
     if (req.user.role !== 'manager') return res.sendStatus(403);
