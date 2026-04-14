@@ -6,6 +6,7 @@ const cors = require('cors');
 const pool = require('./database');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const cron = require('node-cron');
 require('dotenv').config();
 
 const app = express();
@@ -439,60 +440,77 @@ app.post('/api/session/edit', authenticateToken, async (req, res) => {
     }
 
     try {
-        const connection = await pool.getConnection();
-        await connection.beginTransaction();
-
-        try {
-            // 1. Check for current active session
-            const [activeSessions] = await connection.query('SELECT * FROM active_sessions WHERE machine_id = ?', [machine_id]);
-            const now = new Date();
-
-            if (activeSessions.length > 0) {
-                const session = activeSessions[0];
-                // 2. Calculate stats for the session that is ending
-                const stats = await calculateSessionStats(machine_id, session.start_time, now);
-
-                // 3. Save to production_sessions history
-                await connection.query(`
-                    INSERT INTO production_sessions 
-                    (machine_id, product_id, target_qty, shift_name, operator_name, operator_nim, 
-                     start_time, end_time, good_count, ng_count, running_duration_sec, downtime_duration_sec, 
-                     oee, availability, performance, quality) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `, [
-                    machine_id, session.product_id, session.target_qty, session.shift_name, session.operator_name, session.operator_nim,
-                    session.start_time, now, stats.good, stats.ng, stats.runningTime, stats.downtime,
-                    stats.oee, stats.availability, stats.performance, stats.quality
-                ]);
-
-                // 4. Remove from active_sessions
-                await connection.query('DELETE FROM active_sessions WHERE machine_id = ?', [machine_id]);
-            }
-
-            // 5. Create new active session
-            await connection.query(`
+        const [activeSessions] = await pool.query('SELECT * FROM active_sessions WHERE machine_id = ?', [machine_id]);
+        
+        if (activeSessions.length > 0) {
+            // Update existing
+            await pool.query(`
+                UPDATE active_sessions 
+                SET product_id = ?, target_qty = ?, shift_name = ?, operator_name = ?, operator_nim = ? 
+                WHERE machine_id = ?
+            `, [product_id, target_qty, shift_name, operator_name, operator_nim, machine_id]);
+        } else {
+            // Insert if missing
+            await pool.query(`
                 INSERT INTO active_sessions 
                 (machine_id, product_id, target_qty, shift_name, operator_name, operator_nim, start_time) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            `, [machine_id, product_id, target_qty, shift_name, operator_name, operator_nim, now]);
-
-            await connection.commit();
-            res.json({ message: 'Session updated successfully' });
-            
-            // Broadcast update
-            io.emit('data_updated', { machine_id });
-
-        } catch (error) {
-            await connection.rollback();
-            throw error;
-        } finally {
-            connection.release();
+                VALUES (?, ?, ?, ?, ?, ?, NOW())
+            `, [machine_id, product_id, target_qty, shift_name, operator_name, operator_nim]);
         }
+
+        res.json({ message: 'Parameters updated successfully' });
+        
+        // Broadcast update
+        io.emit('data_updated', { machine_id });
+
     } catch (e) {
-        console.error("Session Edit Error", e);
+        console.error("Session Update Error", e);
         res.status(500).json({ error: e.message });
     }
 });
+
+// --- Scheduled Tasks ---
+const saveShiftHistory = async () => {
+    console.log(`[${new Date().toISOString()}] Auto-saving shift history...`);
+    try {
+        const [machines] = await pool.query('SELECT id FROM machines');
+        const now = new Date();
+        const shiftWindow = getCurrentShiftWindow(); 
+        
+        for (const m of machines) {
+            const machine_id = m.id;
+            const [activeSessions] = await pool.query('SELECT * FROM active_sessions WHERE machine_id = ?', [machine_id]);
+            
+            let session = activeSessions[0];
+            let product_id = session ? session.product_id : 'N/A';
+            let target_qty = session ? session.target_qty : 0;
+            let shift_name = shiftWindow.name; 
+            let operator_name = session ? session.operator_name : 'N/A';
+            let operator_nim = session ? session.operator_nim : 'N/A';
+
+            const stats = await calculateSessionStats(machine_id, shiftWindow.start, now);
+
+            await pool.query(`
+                INSERT INTO production_sessions 
+                (machine_id, product_id, target_qty, shift_name, operator_name, operator_nim, 
+                 start_time, end_time, good_count, ng_count, running_duration_sec, downtime_duration_sec, 
+                 oee, availability, performance, quality) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                machine_id, product_id, target_qty, shift_name, operator_name, operator_nim,
+                shiftWindow.start, now, stats.good, stats.ng, stats.runningTime, stats.downtime,
+                stats.oee, stats.availability, stats.performance, stats.quality
+            ]);
+        }
+        console.log(`[${new Date().toISOString()}] Auto-save completed.`);
+    } catch (e) {
+        console.error("Failed to auto-save shift history:", e);
+    }
+};
+
+// Schedule history save based on shift times (Server local time matches standard)
+cron.schedule('24 7 * * *', saveShiftHistory);
+cron.schedule('25 19 * * *', saveShiftHistory);
 
 app.put('/api/shifts/:id', authenticateToken, async (req, res) => {
     if (req.user.role !== 'manager') return res.sendStatus(403);

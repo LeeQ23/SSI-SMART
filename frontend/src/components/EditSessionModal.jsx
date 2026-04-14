@@ -19,7 +19,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
         if (isOpen) {
             setStep('password');
             setPassword('');
-            setError(null);ff
+            setError(null);
             if (currentData) {
                 setFormData({
                     product_id: currentData.product_id || '',
@@ -50,9 +50,6 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
             setError('All fields must be filled');
             return;
         }
-
-        const confirmed = window.confirm("Are you sure you want to start a new session? Previous data will be saved to history.");
-        if (!confirmed) return;
 
         setLoading(true);
         setError(null);
@@ -88,7 +85,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                     <div className="p-2 bg-accent/20 rounded-lg text-accent">
                         <Settings size={24} />
                     </div>
-                    <h2 className="text-xl font-bold">Edit Session</h2>
+                    <h2 className="text-xl font-bold">Update Parameters</h2>
                 </div>
 
                 {step === 'password' ? (
@@ -96,7 +93,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                         <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg flex items-start gap-3 mb-4">
                             <ShieldCheck className="text-amber-500 mt-0.5" size={18} />
                             <p className="text-xs text-amber-200/80 leading-relaxed">
-                                Editing session parameters requires technician authorization. Please enter the administration password to proceed.
+                                Updating active parameters requires technician authorization. Please enter the administration password to proceed.
                             </p>
                         </div>
                         
@@ -196,7 +193,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                             className="w-full bg-success hover:bg-success/80 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] mt-2 disabled:opacity-50"
                         >
                             <Save size={18} />
-                            {loading ? 'SAVING...' : 'START NEW SESSION'}
+                            {loading ? 'UPDATING...' : 'UPDATE PARAMETERS'}
                         </button>
                     </form>
                 )}
