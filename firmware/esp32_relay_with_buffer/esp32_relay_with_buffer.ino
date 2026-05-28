@@ -33,7 +33,7 @@ void setup() {
   pinMode(PIN_NG,   INPUT_PULLDOWN);
 
   // Static IP Configuration
-  IPAddress local_IP(192, 168, 1, 149);
+  IPAddress local_IP(192, 168, 1, 115);
   IPAddress gateway(192, 168, 1, 1);
   IPAddress subnet(255, 255, 255, 0);
   IPAddress primaryDNS(192, 168, 1, 1); 
