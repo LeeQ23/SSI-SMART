@@ -661,6 +661,37 @@ app.get('/api/downtime/active/:machine_id', authenticateToken, async (req, res) 
     }
 });
 
+// --- Quality Inspection APIs (From SSI Measure) ---
+
+app.post('/api/inspections', async (req, res) => {
+    const { id, operator_name, operator_nim, product_id, inspection_type, criteria, start_time, end_time, total_ok, total_ng, status } = req.body;
+    
+    try {
+        await pool.query(
+            `INSERT INTO quality_inspections 
+             (measure_session_id, operator_name, operator_nim, product_id, inspection_type, criteria, start_time, end_time, total_ok, total_ng, status) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, operator_name, operator_nim, product_id, inspection_type, criteria, start_time, end_time, total_ok, total_ng, status]
+        );
+        
+        io.emit('inspection_received', req.body);
+        res.sendStatus(201);
+    } catch (e) {
+        console.error("Quality Inspection Insert Error", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/inspections', authenticateToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT * FROM quality_inspections ORDER BY received_at DESC LIMIT 50');
+        res.json(rows);
+    } catch (e) {
+        console.error("Quality Inspection Fetch Error", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Seed Endpoint (for demo)
 app.post('/api/seed', async (req, res) => {
     const hashedPassword = await bcrypt.hash('pass123', 10);
