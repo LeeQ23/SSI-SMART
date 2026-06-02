@@ -1,0 +1,162 @@
+const express = require('express');
+const router = express.Router();
+const pool = require('../database');
+const config = require('../config');
+const authenticateToken = require('../utils/auth');
+
+router.get('/', authenticateToken, async (req, res) => {
+    const { start, end } = req.query;
+
+    if (!start || !end) {
+        return res.status(400).send('Start and End dates required');
+    }
+
+    try {
+        const machine_id = req.query.machine_id;
+
+        // 1. Get Production Counts (Good/NG)
+        let eventQuery = `
+            SELECT signal_type, CAST(COUNT(*) AS UNSIGNED) as count
+            FROM production_events
+            WHERE timestamp BETWEEN ? AND ?
+            `;
+        let eventParams = [start, end];
+        if (machine_id) {
+            eventQuery += ' AND machine_id = ?';
+            eventParams.push(machine_id);
+        }
+        eventQuery += ' GROUP BY signal_type';
+        const [eventRows] = await pool.query(eventQuery, eventParams);
+
+        const good = Number(eventRows.find(r => r.signal_type === 'good')?.count || 0);
+        const ng = Number(eventRows.find(r => r.signal_type === 'ng')?.count || 0);
+
+        // 2. Get Machine State Logs
+        let stateQuery = 'SELECT state, timestamp FROM machine_logs WHERE timestamp BETWEEN ? AND ?';
+        let stateParams = [start, end];
+        if (machine_id) {
+            stateQuery += ' AND machine_id = ?';
+            stateParams.push(machine_id);
+        }
+        stateQuery += ' ORDER BY timestamp ASC';
+        const [stateLogs] = await pool.query(stateQuery, stateParams);
+
+        let runTimeSec = 0;
+        let downTimeSec = 0;
+        let timeline = stateLogs.map(l => ({
+            state: l.state,
+            timestamp: l.timestamp
+        }));
+
+        // Calculate durations
+        if (stateLogs.length > 0) {
+            for (let i = 0; i < stateLogs.length - 1; i++) {
+                const s = new Date(stateLogs[i].timestamp);
+                const e = new Date(stateLogs[i + 1].timestamp);
+                const duration = (e - s) / 1000;
+                if (stateLogs[i].state === 'running') runTimeSec += duration;
+                else downTimeSec += duration;
+            }
+        }
+
+        const totalTime = runTimeSec + downTimeSec;
+        const totalParts = good + ng;
+
+        // Correct OEE calculation
+        const availability = totalTime > 0 ? runTimeSec / totalTime : 0;
+        const performance = runTimeSec > 0 ? (totalParts * config.IDEAL_CYCLE_TIME) / runTimeSec : 0;
+        const quality = totalParts > 0 ? good / totalParts : 0;
+        const oee = availability * performance * quality;
+
+        // 3. Get Production Event Logs (for tiny dots in timeline)
+        let eventLogQuery = 'SELECT signal_type, timestamp FROM production_events WHERE timestamp BETWEEN ? AND ?';
+        let eventLogParams = [start, end];
+        if (machine_id) {
+            eventLogQuery += ' AND machine_id = ?';
+            eventLogParams.push(machine_id);
+        }
+        eventLogQuery += ' ORDER BY timestamp ASC';
+        const [productionEvents] = await pool.query(eventLogQuery, eventLogParams);
+
+        // 4. Get Downtime Events for this period (Requested by user)
+        let downtimeLogQuery = `
+            SELECT d.*, m.code as machine_code, u.username as operator_name
+            FROM downtimes d
+            JOIN machines m ON d.machine_id = m.id
+            LEFT JOIN users u ON d.operator_id = u.id
+            WHERE d.start_time BETWEEN ? AND ?
+        `;
+        let downtimeLogParams = [start, end];
+        if (machine_id) {
+            downtimeLogQuery += ' AND d.machine_id = ?';
+            downtimeLogParams.push(machine_id);
+        }
+        downtimeLogQuery += ' ORDER BY d.start_time DESC';
+        const [downtimeEvents] = await pool.query(downtimeLogQuery, downtimeLogParams);
+
+        res.json({
+            metrics: {
+                good,
+                ng,
+                oee: (oee * 100).toFixed(1),
+                availability: (availability * 100).toFixed(1),
+                performance: (performance * 100).toFixed(1),
+                quality: (quality * 100).toFixed(1),
+                runTime: runTimeSec,
+                downTime: downTimeSec
+            },
+            timeline,
+            productionEvents,
+            downtimeEvents
+        });
+
+    } catch (e) {
+        console.error("Analytics Error", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.get('/history', authenticateToken, async (req, res) => {
+    try {
+        const { machine_id, limit, start_date, end_date, orderBy, orderDir } = req.query;
+        let query = `
+            SELECT ps.*, m.code as machine_code
+            FROM production_sessions ps
+            JOIN machines m ON ps.machine_id = m.id
+            WHERE 1=1
+        `;
+        let params = [];
+        if (machine_id) {
+            query += ` AND ps.machine_id = ? `;
+            params.push(machine_id);
+        }
+        if (start_date) {
+            query += ` AND DATE(ps.start_time) >= ? `;
+            params.push(start_date);
+        }
+        if (end_date) {
+            query += ` AND DATE(ps.start_time) <= ? `;
+            params.push(end_date);
+        }
+
+        // Sorting
+        const allowedSort = ['start_time', 'product_id', 'good_count', 'ng_count', 'oee'];
+        const sortCol = allowedSort.includes(orderBy) ? orderBy : 'ps.start_time';
+        const sortDir = orderDir === 'ASC' ? 'ASC' : 'DESC';
+        query += ` ORDER BY ${sortCol} ${sortDir} `;
+
+        if (limit) {
+            query += ` LIMIT ? `;
+            params.push(parseInt(limit));
+        } else {
+            query += ` LIMIT 25 `;
+        }
+        const [rows] = await pool.query(query, params);
+        res.json(rows);
+    } catch (e) {
+        console.error("History API Error", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+module.exports = router;

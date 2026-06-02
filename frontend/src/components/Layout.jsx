@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
-import { LayoutDashboard, History, Users, LogOut, Clock, LineChart, LayoutGrid, Maximize, Minimize, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, History, Users, LogOut, Clock, LineChart, LayoutGrid, Maximize, Minimize, AlertTriangle, Settings as SettingsIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -33,6 +33,7 @@ const Layout = ({ children }) => {
                     case '2': navigate('/dashboard/1'); break;
                     case '3': if (user?.role === 'manager') navigate('/history'); break;
                     case '4': if (user?.role === 'manager') navigate('/analytics'); break;
+                    case '5': if (user?.role === 'manager') navigate('/settings'); break;
                     case 'd': case 'D': setIsDowntimeModalOpen(true); break;
                     case 'l': case 'L': handleLogout(); break;
                     default: break;
@@ -105,6 +106,7 @@ const Layout = ({ children }) => {
                             <NavItem to="/history" icon={History} label={t('nav.history')} shortcut="3" />
                             <NavItem to="/analytics" icon={LineChart} label={t('nav.analytics')} shortcut="4" />
                             <NavItem to="/downtime-history" icon={Clock} label="Downtime History" shortcut="H" />
+                            <NavItem to="/settings" icon={SettingsIcon} label="Settings" shortcut="5" />
                         </>
                     )}
                 </nav>

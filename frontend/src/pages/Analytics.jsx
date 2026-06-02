@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -14,10 +15,19 @@ const Analytics = () => {
     const [start, setStart] = useState('');
     const [end, setEnd] = useState('');
     const [selectedMachine, setSelectedMachine] = useState('');
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [progress, setProgress] = useState(0);
-    const [error, setError] = useState('');
+    
+    // We only want to fetch when the user clicks "Analyze"
+    const [shouldFetch, setShouldFetch] = useState(false);
+
+    const { data, isLoading: loading, error, refetch } = useQuery({
+        queryKey: ['analytics', start, end, selectedMachine],
+        queryFn: async () => {
+            const url = `/api/analytics?start=${start}&end=${end}${selectedMachine ? `&machine_id=${selectedMachine}` : ''}`;
+            const res = await axios.get(url);
+            return res.data;
+        },
+        enabled: shouldFetch && !!start && !!end,
+    });
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -50,39 +60,13 @@ const Analytics = () => {
         return `${h}h ${m}m ${s}s`;
     };
 
-    const fetchAnalytics = async (e) => {
+    const handleAnalyze = (e) => {
         e.preventDefault();
-        setLoading(true);
-        setProgress(0);
-        setError('');
-        setData(null);
-
-        // Simulated progress interval
-        const interval = setInterval(() => {
-            setProgress(prev => {
-                if (prev >= 95) return prev;
-                // Slow down as it approaches 95%
-                const step = prev < 60 ? 10 : prev < 80 ? 5 : 1;
-                return prev + step;
-            });
-        }, 150);
-
-        try {
-            const url = `/api/analytics?start=${start}&end=${end}${selectedMachine ? `&machine_id=${selectedMachine}` : ''}`;
-            const res = await axios.get(url);
-            clearInterval(interval);
-            setProgress(100);
-
-            // Short delay to show 100% before rendering
-            setTimeout(() => {
-                setData(res.data);
-                setLoading(false);
-            }, 300);
-        } catch (error) {
-            clearInterval(interval);
-            console.error("Error fetching analytics", error);
-            setError("Failed to load analytics data. Please check your connection or try a different date range.");
-            setLoading(false);
+        if (start && end) {
+            setShouldFetch(true);
+            // If already enabled but parameters changed, it will fetch automatically due to queryKey change.
+            // But if it's the same key and we just want to force a refresh, we can call refetch()
+            setTimeout(() => refetch(), 0);
         }
     };
 
@@ -92,7 +76,7 @@ const Analytics = () => {
             <h1 className="text-3xl font-bold text-white">{t('nav.analytics')}</h1>
 
             {/* Controls */}
-            <form onSubmit={fetchAnalytics} className="glass-panel p-6 flex flex-wrap gap-4 items-end">
+            <form onSubmit={handleAnalyze} className="glass-panel p-6 flex flex-wrap gap-4 items-end">
                 <div>
                     <label className="block text-gray-400 mb-2 text-sm uppercase tracking-wider">{t('dashboard.machine')}</label>
                     <MachineSelector

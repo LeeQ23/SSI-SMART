@@ -8,6 +8,8 @@ import History from './pages/History';
 import Analytics from './pages/Analytics';
 import Overview from './pages/Overview';
 import DowntimeHistory from './pages/DowntimeHistory';
+import Settings from './pages/Settings';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
@@ -23,18 +25,23 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/" element={
                     <ProtectedRoute>
-                        <Overview />
+                        <ErrorBoundary>
+                            <Overview />
+                        </ErrorBoundary>
                     </ProtectedRoute>
                 } />
                 <Route path="/dashboard/:machineId" element={
                     <ProtectedRoute>
-                        <Dashboard />
+                        <ErrorBoundary>
+                            <Dashboard />
+                        </ErrorBoundary>
                     </ProtectedRoute>
                 } />
                 {/* Placeholders for other routes */}
-                <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
-                <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-                <Route path="/downtime-history" element={<ProtectedRoute><DowntimeHistory /></ProtectedRoute>} />
+                <Route path="/history" element={<ProtectedRoute><ErrorBoundary><History /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/analytics" element={<ProtectedRoute><ErrorBoundary><Analytics /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/downtime-history" element={<ProtectedRoute><ErrorBoundary><DowntimeHistory /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><ErrorBoundary><Settings /></ErrorBoundary></ProtectedRoute>} />
             </Routes>
         </AuthProvider>
     );

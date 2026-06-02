@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Activity, CheckCircle, XCircle, Clock, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -30,29 +31,24 @@ const DigitalClock = ({ formatDateDisplay }) => {
 };
 
 const Dashboard = () => {
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [socket, setSocket] = useState(null);
-    const [error, setError] = useState(null);
     const { t } = useTranslation();
     const { machineId } = useParams();
     const navigate = useNavigate();
+    const [socket, setSocket] = useState(null);
     const [isDowntimeModalOpen, setIsDowntimeModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    
+    const queryClient = useQueryClient();
+    const currentMachineId = machineId || 1;
 
-    const fetchData = async () => {
-        try {
-            const res = await axios.get(`/api/dashboard?machine_id=${machineId || 1}`);
-            setData(res.data);
-            setLoading(false);
-            setError(null);
-        } catch (error) {
-            console.error("Error fetching dashboard data", error);
-            setLoading(false);
-            setError("Sync error");
-        }
-    };
-
+    const { data, isLoading: loading, error, refetch } = useQuery({
+        queryKey: ['dashboard', currentMachineId],
+        queryFn: async () => {
+            const res = await axios.get(`/api/dashboard?machine_id=${currentMachineId}`);
+            return res.data;
+        },
+        refetchInterval: false, // We rely on sockets for real-time
+    });
 
     useEffect(() => {
         if (Notification.permission !== 'granted') {
@@ -62,29 +58,34 @@ const Dashboard = () => {
         const newSocket = io();
         setSocket(newSocket);
 
-        fetchData();
-
         newSocket.on('machine_update', (update) => {
-            if (update.machine_id == (machineId || 1)) {
-                fetchData();
+            if (update.machine_id == currentMachineId) {
+                // Optimistically update the React Query cache
+                queryClient.setQueryData(['dashboard', currentMachineId], prev => {
+                    if (!prev) return prev;
+                    
+                    const newGood = update.good !== undefined ? Math.max(prev.good, update.good) : prev.good;
+                    const newNg = update.ng !== undefined ? Math.max(prev.ng, update.ng) : prev.ng;
+                    
+                    return {
+                        ...prev,
+                        current: update.current !== undefined ? update.current : prev.current,
+                        state: update.state || prev.state,
+                        good: newGood,
+                        ng: newNg
+                    };
+                });
             }
         });
 
         newSocket.on('data_updated', (update) => {
-            if (update.machine_id == (machineId || 1)) {
-                fetchData();
+            if (update.machine_id == currentMachineId && update.major_change) {
+                refetch();
             }
         });
 
-        const retryInterval = setInterval(() => {
-            if (error) {
-                fetchData();
-            }
-        }, 3000);
-
         return () => {
-            newSocket.close();
-            clearInterval(retryInterval);
+            newSocket.disconnect();
         };
     }, [machineId]);
 
