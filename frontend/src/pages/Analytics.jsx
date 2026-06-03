@@ -205,23 +205,23 @@ const Analytics = () => {
                         <motion.div variants={itemVariants} className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-green-500/50 transition-colors">
                             <div className="absolute top-0 left-0 w-full h-1 bg-green-500 shadow-[0_0_10px_#10B981]"></div>
                             <h3 className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">{t('dashboard.good')}</h3>
-                            <p className="text-5xl font-bold text-green-400 drop-shadow-[0_0_15px_rgba(74,222,128,0.4)]">
+                            <div className="text-5xl font-bold text-green-400 drop-shadow-[0_0_15px_rgba(74,222,128,0.4)]">
                                 <AnimatedNumber value={data.metrics.good} />
-                            </p>
+                            </div>
                         </motion.div>
                         <motion.div variants={itemVariants} className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-red-500/50 transition-colors">
                             <div className="absolute top-0 left-0 w-full h-1 bg-red-500 shadow-[0_0_10px_#EF4444]"></div>
                             <h3 className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">{t('dashboard.ng')}</h3>
-                            <p className="text-5xl font-bold text-red-400 drop-shadow-[0_0_15px_rgba(248,113,113,0.4)]">
+                            <div className="text-5xl font-bold text-red-400 drop-shadow-[0_0_15px_rgba(248,113,113,0.4)]">
                                 <AnimatedNumber value={data.metrics.ng} />
-                            </p>
+                            </div>
                         </motion.div>
                         <motion.div variants={itemVariants} className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-accent/50 transition-colors">
                             <div className="absolute top-0 left-0 w-full h-1 bg-accent shadow-[0_0_10px_#60A5FA]"></div>
                             <h3 className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">{t('dashboard.oee')}</h3>
-                            <p className="text-5xl font-bold text-accent drop-shadow-[0_0_15px_rgba(96,165,250,0.4)]">
+                            <div className="text-5xl font-bold text-accent drop-shadow-[0_0_15px_rgba(96,165,250,0.4)]">
                                 <AnimatedNumber value={data.metrics.oee} decimals={1} suffix="%" />
-                            </p>
+                            </div>
                         </motion.div>
                         
                         <motion.div variants={itemVariants} className="glass-panel p-4 flex flex-col items-center justify-center relative min-h-[140px]">
