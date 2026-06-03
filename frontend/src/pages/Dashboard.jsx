@@ -170,24 +170,24 @@ const Dashboard = () => {
     return (
         <div className="space-y-6">
             {/* Top Info Header Row */}
-            <div className="grid grid-cols-2 lg:grid-cols-7 gap-4">
-                <div className="glass-panel-raised p-4 border-l-4 border-l-accent flex flex-col justify-center">
+            <div className="flex flex-wrap xl:flex-nowrap gap-4">
+                <div className="glass-panel-raised p-4 border-l-4 border-l-accent flex flex-col justify-center flex-[1.5] min-w-[140px]">
                     <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.product_id', 'PRODUCT ID')}</h3>
                     <div className="text-xl font-black text-white">{data.product_id || '-'}</div>
                 </div>
-                <div className="glass-panel p-4 flex flex-col justify-center">
+                <div className="glass-panel p-4 flex flex-col justify-center flex-1 min-w-[100px]">
                     <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.lot_number', 'LOT NUMBER')}</h3>
                     <div className="text-lg font-bold text-gray-200">{data.lot_number || '-'}</div>
                 </div>
-                <div className="glass-panel p-4 flex flex-col justify-center">
+                <div className="glass-panel p-4 flex flex-col justify-center flex-1 min-w-[100px]">
                     <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.target', 'TARGET')}</h3>
                     <div className="text-lg font-bold text-accent tabular-nums">{data.target}</div>
                 </div>
-                <div className="glass-panel p-4 flex flex-col justify-center">
+                <div className="glass-panel p-4 flex flex-col justify-center flex-1 min-w-[100px]">
                     <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.shift', 'SHIFT')}</h3>
                     <div className="text-lg font-bold text-gray-200">{data.shift}</div>
                 </div>
-                <div className="glass-panel p-4 flex flex-col justify-center relative overflow-hidden">
+                <div className="glass-panel p-4 flex flex-col justify-center relative overflow-hidden flex-[2.5] min-w-[220px]">
                     <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.machine_id', 'MACHINE')}</h3>
                     <MachineSelector
                         selectedId={machineId || 1}
@@ -195,11 +195,11 @@ const Dashboard = () => {
                         className="bg-transparent border-none p-0 h-auto text-xl font-bold text-white w-full outline-none focus:ring-0"
                     />
                 </div>
-                <div className="glass-panel p-4 flex flex-col justify-center">
+                <div className="glass-panel p-4 flex flex-col justify-center flex-[1.5] min-w-[140px]">
                     <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.operator', 'OPERATOR')}</h3>
                     <div className="text-lg font-bold text-gray-200 truncate">{data.operator}</div>
                 </div>
-                <div className="glass-panel-recessed p-4 flex flex-col justify-center items-end bg-black/20">
+                <div className="glass-panel-recessed p-4 flex flex-col justify-center items-end bg-black/20 flex-[1.5] min-w-[140px] shrink-0">
                     <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">SYSTEM TIME</h3>
                     <DigitalClock formatDateDisplay={formatDateDisplay} />
                 </div>
@@ -217,7 +217,6 @@ const Dashboard = () => {
                             <div className="text-5xl font-bold text-success leading-none drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] tabular-nums">
                                 <AnimatedNumber value={data.good} />
                             </div>
-                            <span className="text-xl text-gray-500 font-bold tabular-nums">/ {data.target}</span>
                         </div>
                     </div>
                     <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group h-[120px]">
@@ -229,7 +228,6 @@ const Dashboard = () => {
                             <div className="text-5xl font-bold text-danger leading-none drop-shadow-[0_0_15px_rgba(239,68,68,0.3)] tabular-nums">
                                 <AnimatedNumber value={data.ng} />
                             </div>
-                            <span className="text-xl text-gray-500 font-bold tabular-nums">/ {data.target}</span>
                         </div>
                     </div>
                 </div>
@@ -312,7 +310,7 @@ const Dashboard = () => {
                         </div>
                     </div>
                     {/* A/P/Q Linear Bullet Bars */}
-                    <div className="bg-black/20 border-t border-white/10 p-3 space-y-3">
+                    <div className="bg-black/20 border-t border-white/10 p-2 space-y-1.5 flex flex-col justify-center flex-1">
                         {/* Availability */}
                         <div className="flex items-center gap-3">
                             <span className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter w-20 text-right">{t('dashboard.availability', 'Availability')}</span>

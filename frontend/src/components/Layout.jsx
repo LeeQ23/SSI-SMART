@@ -156,7 +156,7 @@ const Layout = ({ children }) => {
                         </div>
                     </button>
 
-                    <LanguageSwitcher />
+                    <LanguageSwitcher mini />
 
                     <div className="w-8 h-[1px] bg-white/10" />
 

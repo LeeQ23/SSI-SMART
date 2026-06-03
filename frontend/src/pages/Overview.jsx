@@ -97,7 +97,7 @@ const Overview = () => {
                         className={`p-4 rounded-xl cursor-pointer hover:scale-[1.02] transition-all duration-300 group relative overflow-hidden border backdrop-blur-md ${
                             m.state === 'running' 
                                 ? 'bg-success/5 border-success/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
-                                : 'bg-danger/5 border-danger/30 shadow-[0_0_15px_rgba(239,68,68,0.1)] animate-pulse-slow'
+                                : 'bg-danger/5 border-danger/30 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
                         }`}
                     >
                         <div className="flex justify-between items-start mb-4">
@@ -143,7 +143,11 @@ const Overview = () => {
 
                         {/* Background subtle glow when running */}
                         {m.state === 'running' && (
-                            <div className="absolute -right-10 -top-10 w-32 h-32 bg-success/20 blur-[40px] rounded-full pointer-events-none" />
+                            <div className="absolute -right-10 -top-10 w-32 h-32 bg-success/30 blur-[40px] rounded-full pointer-events-none animate-breathe" />
+                        )}
+                        {/* Background subtle glow when stopped */}
+                        {m.state !== 'running' && (
+                            <div className="absolute -right-10 -top-10 w-32 h-32 bg-danger/20 blur-[40px] rounded-full pointer-events-none animate-breathe" />
                         )}
                     </div>
                 ))}

@@ -74,16 +74,11 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
     const { t } = useTranslation();
     
     const chartData = useMemo(() => {
-        let startHour = 7;
-        let endHour = 17;
+        // Fixed 24-hour cycle per user request
+        const startHour = 0;
+        const endHour = 24;
 
-        const name = shiftName.toLowerCase();
-        if (name.includes('morning')) { startHour = 7; endHour = 17; }
-        else if (name.includes('evening')) { startHour = 15; endHour = 23; }
-        else if (name.includes('night')) { startHour = 23; endHour = 31; }
-
-        const shiftHours = endHour - startHour;
-        const targetPerHour = shiftHours > 0 ? target / shiftHours : 0;
+        const targetPerHour = target > 0 ? target / 24 : 0;
 
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
