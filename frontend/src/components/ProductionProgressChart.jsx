@@ -92,14 +92,17 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
 
+        const graphStartTs = startOfToday.getTime();
+        const graphEndTs = startOfToday.getTime() + (24 * 3600 * 1000);
+
         const shiftStartTs = startOfToday.getTime() + (startHour * 3600 * 1000);
         const shiftEndTs = startOfToday.getTime() + (endHour * 3600 * 1000);
         const totalDuration = shiftEndTs - shiftStartTs;
 
-        // Filter events for this shift
+        // Filter events for this day
         const shiftEvents = events
             .map(e => ({ type: e.signal_type, ts: new Date(e.timestamp).getTime() }))
-            .filter(e => e.ts >= shiftStartTs && e.ts <= shiftEndTs)
+            .filter(e => e.ts >= graphStartTs && e.ts <= graphEndTs)
             .sort((a, b) => a.ts - b.ts);
 
         const points = [];
@@ -108,11 +111,10 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
         let cumGood = 0;
         let cumNG = 0;
         let eventIndex = 0;
-        
-        const endTimeToRender = Math.min(now.getTime(), shiftEndTs);
+        const endTimeToRender = Math.min(now.getTime(), graphEndTs);
 
-        // Generate data points by buckets
-        for (let bucketTime = shiftStartTs; bucketTime <= endTimeToRender; bucketTime += BUCKET_SIZE_MS) {
+        // Generate data points by buckets across the whole 24 hours
+        for (let bucketTime = graphStartTs; bucketTime <= endTimeToRender; bucketTime += BUCKET_SIZE_MS) {
             // Add all events that happened before this bucket time
             while (eventIndex < shiftEvents.length && shiftEvents[eventIndex].ts <= bucketTime) {
                 if (shiftEvents[eventIndex].type === 'good') cumGood++;
@@ -120,32 +122,35 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
                 eventIndex++;
             }
 
+            // Calculate target line ONLY if within the shift window
+            let targetLineVal = null;
+            if (bucketTime >= shiftStartTs && bucketTime <= shiftEndTs) {
+                targetLineVal = (target / totalDuration) * (bucketTime - shiftStartTs);
+            } else if (bucketTime > shiftEndTs) {
+                targetLineVal = target;
+            } else {
+                targetLineVal = 0;
+            }
+
             points.push({
                 ts: bucketTime,
                 good: cumGood,
                 ng: cumNG,
-                targetLine: (target / totalDuration) * (bucketTime - shiftStartTs)
+                targetLine: targetLineVal
             });
         }
 
-        // Always add the current exact moment if we are mid-shift to show live edge
-        if (now.getTime() > shiftStartTs && now.getTime() < shiftEndTs) {
-            while (eventIndex < shiftEvents.length && shiftEvents[eventIndex].ts <= now.getTime()) {
-                if (shiftEvents[eventIndex].type === 'good') cumGood++;
-                if (shiftEvents[eventIndex].type === 'ng') cumNG++;
-                eventIndex++;
-            }
-            points.push({
-                ts: now.getTime(),
-                good: cumGood,
-                ng: cumNG,
-                targetLine: (target / totalDuration) * (now.getTime() - shiftStartTs)
-            });
-        }
-
-        // Add the final target point so the ideal line stretches all the way to the end
+        // Add the very start of the day if missed
         points.push({
-            ts: shiftEndTs,
+            ts: graphStartTs,
+            good: null,
+            ng: null,
+            targetLine: 0
+        });
+
+        // Add the very end of the day to stretch the X-axis across 24h
+        points.push({
+            ts: graphEndTs,
             good: null,
             ng: null,
             targetLine: target
@@ -164,24 +169,17 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
         return uniquePoints;
     }, [events, target, shiftName]);
 
-    // Calculate ticks for every hour
+    // Calculate ticks for every 2 hours
     const ticks = useMemo(() => {
-        let startHour = 7;
-        let endHour = 17;
-        const name = shiftName.toLowerCase();
-        if (name.includes('morning')) { startHour = 7; endHour = 17; }
-        else if (name.includes('evening')) { startHour = 15; endHour = 23; }
-        else if (name.includes('night')) { startHour = 23; endHour = 31; }
-
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
 
         const result = [];
-        for (let h = startHour; h <= endHour; h++) {
+        for (let h = 0; h <= 24; h += 2) {
             result.push(startOfToday.getTime() + (h * 3600 * 1000));
         }
         return result;
-    }, [shiftName]);
+    }, []);
 
     return (
         <div className="h-[350px] w-full">

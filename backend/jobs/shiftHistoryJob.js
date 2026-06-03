@@ -16,6 +16,7 @@ const saveShiftHistory = async () => {
             
             let session = activeSessions[0];
             let product_id = session ? session.product_id : 'N/A';
+            let lot_number = session ? session.lot_number : '-';
             let target_qty = session ? session.target_qty : 0;
             let shift_name = shiftWindow.name; 
             let operator_name = session ? session.operator_name : 'N/A';
@@ -25,12 +26,12 @@ const saveShiftHistory = async () => {
 
             await pool.query(`
                 INSERT INTO production_sessions 
-                (machine_id, product_id, target_qty, shift_name, operator_name, operator_nim, 
+                (machine_id, product_id, lot_number, target_qty, shift_name, operator_name, operator_nim, 
                  start_time, end_time, good_count, ng_count, running_duration_sec, downtime_duration_sec, 
                  oee, availability, performance, quality) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
-                machine_id, product_id, target_qty, shift_name, operator_name, operator_nim,
+                machine_id, product_id, lot_number, target_qty, shift_name, operator_name, operator_nim,
                 shiftWindow.start, now, stats.good, stats.ng, stats.runningTime, stats.downtime,
                 stats.oee, stats.availability, stats.performance, stats.quality
             ]);

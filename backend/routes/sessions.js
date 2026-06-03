@@ -12,14 +12,15 @@ router.post('/edit', authenticateToken, async (req, res) => {
         target_qty, 
         shift_name, 
         operator_name, 
-        operator_nim 
+        operator_nim,
+        lot_number 
     } = req.body;
 
     if (password !== 'admin123') {
         return res.status(401).json({ error: 'Incorrect password' });
     }
 
-    if (!machine_id || !product_id || !target_qty || !shift_name || !operator_name || !operator_nim) {
+    if (!machine_id || !product_id || !target_qty || !shift_name || !operator_name || !operator_nim || !lot_number) {
         return res.status(400).json({ error: 'All fields are required' });
     }
 
@@ -30,16 +31,16 @@ router.post('/edit', authenticateToken, async (req, res) => {
             // Update existing
             await pool.query(`
                 UPDATE active_sessions 
-                SET product_id = ?, target_qty = ?, shift_name = ?, operator_name = ?, operator_nim = ? 
+                SET product_id = ?, target_qty = ?, shift_name = ?, operator_name = ?, operator_nim = ?, lot_number = ?
                 WHERE machine_id = ?
-            `, [product_id, target_qty, shift_name, operator_name, operator_nim, machine_id]);
+            `, [product_id, target_qty, shift_name, operator_name, operator_nim, lot_number, machine_id]);
         } else {
             // Insert if missing
             await pool.query(`
                 INSERT INTO active_sessions 
-                (machine_id, product_id, target_qty, shift_name, operator_name, operator_nim, start_time) 
-                VALUES (?, ?, ?, ?, ?, ?, NOW())
-            `, [machine_id, product_id, target_qty, shift_name, operator_name, operator_nim]);
+                (machine_id, product_id, target_qty, shift_name, operator_name, operator_nim, lot_number, start_time) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            `, [machine_id, product_id, target_qty, shift_name, operator_name, operator_nim, lot_number]);
         }
 
         res.json({ message: 'Parameters updated successfully' });

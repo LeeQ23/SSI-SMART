@@ -161,12 +161,16 @@ const Dashboard = () => {
     return (
         <div className="space-y-6">
             {/* Top Info Header Row */}
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-                <div className="glass-panel p-3 border-l-2 border-l-accent flex flex-col items-center justify-center">
+            <div className="grid grid-cols-2 lg:grid-cols-7 gap-4">
+                <div className="glass-panel p-3 border-l-2 border-l-accent flex flex-col items-center justify-center text-center">
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Product ID</p>
-                    <p className="text-2xl font-bold text-white leading-none mt-1">{data.product_id}</p>
+                    <p className="text-lg font-bold text-white leading-none mt-1">{data.product_id}</p>
                 </div>
-                <div className="glass-panel p-3 flex flex-col items-center justify-center">
+                <div className="glass-panel p-3 border-l-2 border-l-accent/50 flex flex-col items-center justify-center text-center">
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Lot Number</p>
+                    <p className="text-lg font-bold text-white leading-none mt-1">{data.lot_number || '-'}</p>
+                </div>
+                <div className="glass-panel p-3 flex flex-col items-center justify-center text-center">
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Target</p>
                     <p className="text-2xl font-bold text-white leading-none mt-1">{data.target}</p>
                 </div>

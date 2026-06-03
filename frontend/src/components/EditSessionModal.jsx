@@ -7,6 +7,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
     const [password, setPassword] = useState('');
     const [formData, setFormData] = useState({
         product_id: '',
+        lot_number: '',
         target_qty: '',
         shift_name: '',
         operator_name: '',
@@ -23,6 +24,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
             if (currentData) {
                 setFormData({
                     product_id: currentData.product_id || '',
+                    lot_number: currentData.lot_number || '',
                     target_qty: currentData.target || '',
                     shift_name: currentData.shift || '',
                     operator_name: currentData.operator || '',
@@ -46,7 +48,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
         e.preventDefault();
         
         // Validation
-        if (!formData.product_id || !formData.target_qty || !formData.shift_name || !formData.operator_name || !formData.operator_nim) {
+        if (!formData.product_id || !formData.target_qty || !formData.shift_name || !formData.operator_name || !formData.operator_nim || !formData.lot_number) {
             setError('All fields must be filled');
             return;
         }
@@ -128,7 +130,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                 ) : (
                     <form onSubmit={handleFormSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
+                            <div>
                                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Product ID</label>
                                 <input
                                     type="text"
@@ -136,6 +138,16 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                                     onChange={(e) => setFormData({...formData, product_id: e.target.value})}
                                     className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-1 focus:ring-accent"
                                     placeholder="e.g., SI-283"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Lot Number</label>
+                                <input
+                                    type="text"
+                                    value={formData.lot_number}
+                                    onChange={(e) => setFormData({...formData, lot_number: e.target.value})}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                                    placeholder="e.g., L-10293"
                                 />
                             </div>
                             <div>
