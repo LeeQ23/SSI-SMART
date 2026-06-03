@@ -113,10 +113,6 @@ const Analytics = () => {
                     {loading ? (
                         <>
                             <div className="absolute inset-0 bg-blue-700/50"></div>
-                            <div
-                                className="absolute inset-y-0 left-0 bg-blue-400 transition-all duration-300"
-                                style={{ width: `${progress}%` }}
-                            ></div>
                             <span className="relative z-10 flex items-center gap-2 text-sm text-white drop-shadow-md">
                                 <Search size={16} className="animate-spin" />
                                 {t('common.analyzing') || 'Processing...'}
