@@ -3,12 +3,13 @@ import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, Search } from 'lucide-react';
+import { AlertCircle, Search, Clock, Calendar } from 'lucide-react';
 import MachineSelector from '../components/MachineSelector';
 import StatusTimelineChart from '../components/StatusTimelineChart';
 import ErrorToast from '../components/ErrorToast';
+import AnimatedNumber from '../components/AnimatedNumber';
 
 const Analytics = () => {
     const { t } = useTranslation();
@@ -61,6 +62,34 @@ const Analytics = () => {
         const s = Math.floor(seconds % 60);
         return `${h}h ${m}m ${s}s`;
     };
+    const setQuickDate = (type) => {
+        const now = new Date();
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        
+        let s, e;
+        if (type === 'today') {
+            s = new Date(startOfToday);
+            e = new Date(now);
+        } else if (type === 'yesterday') {
+            s = new Date(startOfToday.getTime() - 24 * 3600 * 1000);
+            e = new Date(startOfToday.getTime() - 1000);
+        } else if (type === 'this_week') {
+            const day = startOfToday.getDay();
+            const diff = startOfToday.getDate() - day + (day === 0 ? -6 : 1);
+            startOfToday.setDate(diff);
+            s = new Date(startOfToday);
+            e = new Date(now);
+        }
+        
+        const formatForInput = (d) => {
+            const tzoffset = d.getTimezoneOffset() * 60000;
+            return (new Date(d - tzoffset)).toISOString().slice(0, 16);
+        };
+        
+        setStart(formatForInput(s));
+        setEnd(formatForInput(e));
+    };
 
     const handleAnalyze = (e) => {
         e.preventDefault();
@@ -77,7 +106,15 @@ const Analytics = () => {
             <h1 className="text-3xl font-bold text-white">{t('nav.analytics')}</h1>
 
             {/* Controls */}
-            <form onSubmit={handleAnalyze} className="glass-panel p-6 flex flex-wrap gap-4 items-end">
+            <div className="glass-panel p-6 space-y-4">
+                <div className="flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
+                    <span className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Calendar size={16} /> Quick Filters:</span>
+                    <button onClick={() => setQuickDate('today')} className="px-3 py-1 rounded-full text-xs font-bold border border-white/20 hover:border-accent hover:text-accent transition-colors">Today</button>
+                    <button onClick={() => setQuickDate('yesterday')} className="px-3 py-1 rounded-full text-xs font-bold border border-white/20 hover:border-accent hover:text-accent transition-colors">Yesterday</button>
+                    <button onClick={() => setQuickDate('this_week')} className="px-3 py-1 rounded-full text-xs font-bold border border-white/20 hover:border-accent hover:text-accent transition-colors">This Week</button>
+                </div>
+                
+                <form onSubmit={handleAnalyze} className="flex flex-wrap gap-4 items-end">
                 <div>
                     <label className="block text-gray-400 mb-2 text-sm uppercase tracking-wider">{t('dashboard.machine')}</label>
                     <MachineSelector
@@ -126,140 +163,213 @@ const Analytics = () => {
                         </>
                     )}
                 </button>
-            </form>
+                </form>
+            </div>
 
             {error && <ErrorToast />}
 
-            {data && (
+            {loading ? (
+                <div className="space-y-6 animate-pulse">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div className="glass-panel h-36 rounded-xl bg-white/5 border border-white/10 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
+                        </div>
+                        <div className="glass-panel h-36 rounded-xl bg-white/5 border border-white/10 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" style={{animationDelay: '150ms'}}></div>
+                        </div>
+                        <div className="glass-panel h-36 rounded-xl bg-white/5 border border-white/10 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" style={{animationDelay: '300ms'}}></div>
+                        </div>
+                        <div className="glass-panel h-36 rounded-xl bg-white/5 border border-white/10 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" style={{animationDelay: '450ms'}}></div>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 glass-panel h-96 rounded-xl bg-white/5 border border-white/10 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" style={{animationDelay: '600ms'}}></div>
+                        </div>
+                        <div className="glass-panel h-96 rounded-xl bg-white/5 border border-white/10 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" style={{animationDelay: '750ms'}}></div>
+                        </div>
+                    </div>
+                </div>
+            ) : data && (
                 <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="space-y-8"
+                    className="space-y-6"
                 >
-                    {/* Metrics Overview */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <motion.div variants={itemVariants} className="glass-panel p-6 text-center">
-                            <h3 className="text-gray-400 text-sm uppercase mb-2">{t('dashboard.good')}</h3>
-                            <p className="text-4xl font-bold text-green-400">
-                                {data.metrics.good}
+                    {/* Top Row: Metrics + Donut */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <motion.div variants={itemVariants} className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-green-500/50 transition-colors">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-green-500 shadow-[0_0_10px_#10B981]"></div>
+                            <h3 className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">{t('dashboard.good')}</h3>
+                            <p className="text-5xl font-bold text-green-400 drop-shadow-[0_0_15px_rgba(74,222,128,0.4)]">
+                                <AnimatedNumber value={data.metrics.good} />
                             </p>
                         </motion.div>
-                        <motion.div variants={itemVariants} className="glass-panel p-6 text-center">
-                            <h3 className="text-gray-400 text-sm uppercase mb-2">{t('dashboard.ng')}</h3>
-                            <p className="text-4xl font-bold text-red-400">
-                                {data.metrics.ng}
+                        <motion.div variants={itemVariants} className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-red-500/50 transition-colors">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-red-500 shadow-[0_0_10px_#EF4444]"></div>
+                            <h3 className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">{t('dashboard.ng')}</h3>
+                            <p className="text-5xl font-bold text-red-400 drop-shadow-[0_0_15px_rgba(248,113,113,0.4)]">
+                                <AnimatedNumber value={data.metrics.ng} />
                             </p>
                         </motion.div>
-                        <motion.div variants={itemVariants} className="glass-panel p-6 text-center">
-                            <h3 className="text-gray-400 text-sm uppercase mb-2">{t('dashboard.oee')}</h3>
-                            <p className="text-4xl font-bold text-accent">
-                                {Number(data.metrics.oee).toFixed(1)}%
+                        <motion.div variants={itemVariants} className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-accent/50 transition-colors">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-accent shadow-[0_0_10px_#60A5FA]"></div>
+                            <h3 className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">{t('dashboard.oee')}</h3>
+                            <p className="text-5xl font-bold text-accent drop-shadow-[0_0_15px_rgba(96,165,250,0.4)]">
+                                <AnimatedNumber value={data.metrics.oee} decimals={1} suffix="%" />
                             </p>
+                        </motion.div>
+                        
+                        <motion.div variants={itemVariants} className="glass-panel p-4 flex flex-col items-center justify-center relative min-h-[140px]">
+                            <h3 className="text-gray-400 text-[10px] font-bold tracking-widest uppercase absolute top-4 left-4">Ratio</h3>
+                            <div className="h-full w-full mt-4">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={[
+                                                { name: 'Running', value: Number(data.metrics.runTime) || 1 }, // Ensure it renders if 0
+                                                { name: 'Downtime', value: Number(data.metrics.downTime) }
+                                            ]}
+                                            innerRadius="60%"
+                                            outerRadius="85%"
+                                            paddingAngle={4}
+                                            dataKey="value"
+                                            stroke="none"
+                                            isAnimationActive={true}
+                                        >
+                                            <Cell fill="#10B981" />
+                                            <Cell fill={Number(data.metrics.downTime) > 0 ? "#EF4444" : "transparent"} />
+                                        </Pie>
+                                        <Tooltip 
+                                            content={({ active, payload }) => {
+                                                if (active && payload && payload.length) {
+                                                    const val = payload[0].payload.name === 'Running' && Number(data.metrics.runTime) === 0 ? 0 : payload[0].value;
+                                                    return (
+                                                        <div className="bg-gray-900/95 border border-white/10 p-2 rounded shadow-xl text-xs backdrop-blur-md">
+                                                            <span className="text-gray-300">{payload[0].name}: </span>
+                                                            <span className="font-bold text-white">{formatTime(val)}</span>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
                         </motion.div>
                     </div>
 
-                    {/* Timeline Chart */}
-                    <motion.div variants={itemVariants} className="glass-panel p-6">
-                        <h3 className="text-xl font-bold text-white mb-4">{t('dashboard.status')}</h3>
-                        <StatusTimelineChart
-                            timeline={data.timeline}
-                            productionEvents={data.productionEvents}
-                            showEvents={false}
-                        />
-
-                        <div className="flex gap-8 mt-10 justify-center">
-                            <div className="flex flex-col items-center">
-                                <span className="text-xs text-gray-400 uppercase tracking-tighter mb-1">{t('dashboard.running')}</span>
-                                <span className="text-xl font-bold text-green-400">
-                                    {formatTime(data.metrics.runTime)}
-                                </span>
-                            </div>
-                            <div className="flex flex-col items-center border-l border-white/10 pl-8">
-                                <span className="text-xs text-gray-400 uppercase tracking-tighter mb-1">{t('dashboard.downtime')}</span>
-                                <span className="text-xl font-bold text-red-400">
-                                    {formatTime(data.metrics.downTime)}
-                                </span>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Downtime Events List (New) */}
-                    <motion.div variants={itemVariants} className="glass-panel overflow-hidden">
-                        <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-                            <h3 className="text-lg font-bold text-white">Downtime Events in Period</h3>
-                            <span className="px-2 py-1 rounded bg-red-500/20 text-red-400 text-xs font-bold">
-                                {data.downtimeEvents?.length || 0} Events
-                            </span>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-white/5 text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-                                    <tr>
-                                        <th className="p-3">Machine</th>
-                                        <th className="p-3">Start</th>
-                                        <th className="p-3">End</th>
-                                        <th className="p-3">Reason</th>
-                                        <th className="p-3">Operator</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/10">
-                                    {data.downtimeEvents?.map((d, idx) => (
-                                        <tr key={idx} className="hover:bg-white/5 transition-colors">
-                                            <td className="p-3">
-                                                <span className="px-2 py-0.5 rounded bg-accent/10 text-accent text-[10px] font-mono font-bold border border-accent/20">
-                                                    {d.machine_code}
-                                                </span>
-                                            </td>
-                                            <td className="p-3 text-gray-300">
-                                                {new Date(d.start_time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                                            </td>
-                                            <td className="p-3 text-gray-300">
-                                                {d.end_time
-                                                    ? new Date(d.end_time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
-                                                    : <span className="text-accent italic">Ongoing</span>
-                                                }
-                                            </td>
-                                            <td className="p-3 text-gray-400 italic font-medium">{d.reason}</td>
-                                            <td className="p-3 text-gray-400">{d.operator_name || 'System'}</td>
-                                        </tr>
-                                    ))}
-                                    {(!data.downtimeEvents || data.downtimeEvents.length === 0) && (
-                                        <tr>
-                                            <td colSpan="5" className="p-8 text-center text-gray-500 italic">
-                                                No specific downtime events recorded in this timeframe.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        {/* Pagination Controls */}
-                        {data.pagination && data.pagination.totalPages > 1 && (
-                            <div className="p-4 border-t border-white/10 flex justify-between items-center bg-white/5">
-                                <span className="text-sm text-gray-400">
-                                    Showing page {data.pagination.currentPage} of {data.pagination.totalPages}
-                                </span>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                                        disabled={page === 1}
-                                        className="px-4 py-1.5 rounded bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors"
-                                    >
-                                        Previous
-                                    </button>
-                                    <button
-                                        onClick={() => setPage(p => Math.min(data.pagination.totalPages, p + 1))}
-                                        disabled={page === data.pagination.totalPages}
-                                        className="px-4 py-1.5 rounded bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors"
-                                    >
-                                        Next
-                                    </button>
+                    {/* Bottom Row: Timeline + Table */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Timeline */}
+                        <motion.div variants={itemVariants} className="glass-panel p-6 lg:col-span-2 flex flex-col">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                                    <Clock size={18} className="text-accent" /> {t('dashboard.status')} Timeline
+                                </h3>
+                                <div className="flex gap-4 text-xs font-bold tracking-widest bg-white/5 px-4 py-1.5 rounded-full border border-white/10">
+                                    <span className="text-green-400">RUN: <AnimatedNumber value={data.metrics.runTime} isTime={true} /></span>
+                                    <span className="text-white/20">|</span>
+                                    <span className="text-red-400">DOWN: <AnimatedNumber value={data.metrics.downTime} isTime={true} /></span>
                                 </div>
                             </div>
-                        )}
-                    </motion.div>
+                            <div className="flex-1 min-h-[300px]">
+                                <StatusTimelineChart
+                                    timeline={data.timeline}
+                                    height="100%"
+                                />
+                            </div>
+                        </motion.div>
+
+                        {/* Downtime Events List */}
+                        <motion.div variants={itemVariants} className="glass-panel flex flex-col overflow-hidden max-h-[500px]">
+                            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5 backdrop-blur-md">
+                                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Downtime Log</h3>
+                                <span className="px-2 py-0.5 rounded bg-red-500/20 border border-red-500/50 text-red-400 text-xs font-bold">
+                                    {data.pagination?.totalEvents || data.downtimeEvents?.length || 0} Events
+                                </span>
+                            </div>
+                            <div className="overflow-y-auto flex-1 custom-scrollbar">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-black/20 text-gray-400 uppercase text-[9px] font-bold tracking-widest sticky top-0 z-10 backdrop-blur-md">
+                                        <tr>
+                                            <th className="p-3">Time</th>
+                                            <th className="p-3">Reason</th>
+                                            <th className="p-3 text-right">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {data.downtimeEvents?.map((d, idx) => (
+                                            <tr key={idx} className="hover:bg-white/10 transition-colors group">
+                                                <td className="p-3 text-gray-300">
+                                                    <div className="font-mono text-white group-hover:text-accent transition-colors">
+                                                        {new Date(d.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                    <div className="text-[9px] text-gray-500 mt-0.5">
+                                                        {new Date(d.start_time).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                                    </div>
+                                                </td>
+                                                <td className="p-3">
+                                                    <div className="font-medium text-gray-300">{d.reason}</div>
+                                                    <div className="text-[10px] text-accent/70 mt-0.5 font-mono">{d.machine_code}</div>
+                                                </td>
+                                                <td className="p-3 text-right">
+                                                    {d.end_time ? (
+                                                        <span className="text-[10px] text-gray-500 font-mono">Resolved</span>
+                                                    ) : (
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            <span className="relative flex h-2 w-2">
+                                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                                            </span>
+                                                            <span className="text-red-400 font-bold text-[10px] uppercase tracking-wider">Ongoing</span>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {(!data.downtimeEvents || data.downtimeEvents.length === 0) && (
+                                            <tr>
+                                                <td colSpan="3" className="p-8 text-center text-gray-500 italic">
+                                                    No downtime recorded.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            {/* Pagination Controls */}
+                            {data.pagination && data.pagination.totalPages > 1 && (
+                                <div className="p-3 border-t border-white/10 flex justify-between items-center bg-black/20">
+                                    <span className="text-[10px] text-gray-400 font-mono">
+                                        PG {data.pagination.currentPage} / {data.pagination.totalPages}
+                                    </span>
+                                    <div className="flex gap-1">
+                                        <button
+                                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                                            disabled={page === 1}
+                                            className="px-2 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                        </button>
+                                        <button
+                                            onClick={() => setPage(p => Math.min(data.pagination.totalPages, p + 1))}
+                                            disabled={page === data.pagination.totalPages}
+                                            className="px-2 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </motion.div>
+                    </div>
                 </motion.div>
             )}
         </div>
