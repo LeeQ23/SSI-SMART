@@ -23,7 +23,7 @@ const Login = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-black p-4">
-            <div className="w-full max-w-md glass-panel p-8 animate-pulse-slow">
+            <div className="w-full max-w-md glass-panel p-8">
                 <div className="text-center mb-8">
                     <img src="/logo.png" alt="SSI Logo" className="h-16 mx-auto mb-4" />
                     <h1 className="text-3xl font-bold text-white">{t('login.welcome')}</h1>

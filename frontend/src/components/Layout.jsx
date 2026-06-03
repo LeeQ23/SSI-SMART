@@ -14,7 +14,8 @@ const Layout = ({ children }) => {
     const { t } = useTranslation();
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isDowntimeModalOpen, setIsDowntimeModalOpen] = useState(false);
-    const [hasGlobalDowntime, setHasGlobalDowntime] = useState(false);
+    const [downtimeMachines, setDowntimeMachines] = useState([]);
+    const [isConnected, setIsConnected] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -59,12 +60,19 @@ const Layout = ({ children }) => {
     useEffect(() => {
         const socket = io();
         
+        socket.on('connect', () => setIsConnected(true));
+        socket.on('disconnect', () => setIsConnected(false));
+        
         socket.on('machine_update', (update) => {
             if (update.state === 'downtime') {
-                setHasGlobalDowntime(true);
+                setDowntimeMachines(prev => {
+                    if (!prev.find(m => m.id === update.machine_id)) {
+                        return [...prev, { id: update.machine_id, time: new Date() }];
+                    }
+                    return prev;
+                });
             } else {
-                // Reset when all machines are running again
-                setHasGlobalDowntime(false);
+                setDowntimeMachines(prev => prev.filter(m => m.id !== update.machine_id));
             }
         });
         
@@ -108,9 +116,12 @@ const Layout = ({ children }) => {
     );
 
     return (
-        <div className="flex h-screen overflow-hidden bg-gradient-to-br from-primary to-black text-white">
+        <div className="flex h-screen overflow-hidden bg-gradient-to-br from-primary to-black text-white relative">
+            {/* Global Connection Header Bar */}
+            <div className={`absolute top-0 left-0 w-full h-[2px] z-50 ${isConnected ? 'bg-success shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-danger animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]'}`} />
+
             {/* Ultra-Slim Sidebar (Antigravity Style) */}
-            <aside className="w-20 glass-panel m-4 flex flex-col items-center py-6 shadow-2xl relative z-40 border border-white/5">
+            <aside className={`w-20 glass-panel m-4 flex flex-col items-center py-6 shadow-2xl relative z-40 transition-all duration-500 ${isFullscreen ? 'border-accent/30 shadow-[0_0_30px_rgba(0,116,217,0.1)]' : 'border-white/5'}`}>
                 <div className="mb-8 p-1">
                     <img src="/logo.png" alt="SSI Logo" className="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(0,116,217,0.3)]" />
                 </div>
@@ -145,7 +156,7 @@ const Layout = ({ children }) => {
                         </div>
                     </button>
 
-                    <LanguageSwitcher mini={true} />
+                    <LanguageSwitcher />
 
                     <div className="w-8 h-[1px] bg-white/10" />
 
@@ -175,8 +186,19 @@ const Layout = ({ children }) => {
                     </button>
 
                     {/* User Profile Initial (Subtle hint) */}
-                    <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center border border-accent/30 text-[10px] font-bold text-accent uppercase tracking-tighter">
+                    <div className="group relative w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center border border-accent/30 text-[10px] font-bold text-accent uppercase tracking-tighter cursor-pointer hover:bg-accent/30 transition-colors">
                         {user?.username?.substring(0, 2)}
+                        
+                        {/* User Popover */}
+                        <div className="absolute left-14 bottom-0 p-4 bg-gray-900 border border-white/10 rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:left-12 transition-all duration-300 z-50 min-w-[200px]">
+                            <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Logged In As</p>
+                            <p className="text-white font-bold text-lg leading-tight">{user?.username}</p>
+                            <div className="mt-2 pt-2 border-t border-white/10 flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${user?.role === 'manager' ? 'bg-purple-500' : 'bg-blue-500'}`} />
+                                <span className="text-xs text-gray-300 uppercase tracking-wider">{user?.role}</span>
+                            </div>
+                            <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-b border-white/10 rotate-45" />
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -187,23 +209,23 @@ const Layout = ({ children }) => {
                     {children}
                 </div>
 
-                {/* Running Warning Text Marquee */}
-                {hasGlobalDowntime && (
-                    <div className="glass-panel py-2 px-4 bg-red-500/10 border-red-500/20 overflow-hidden flex items-center shrink-0">
-                        <div className="animate-marquee inline-block">
-                            <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4">
-                                {t('common.abnormality_warning')}
+                {/* Specific Downtime Alert Bar */}
+                {downtimeMachines.length > 0 && (
+                    <div className="glass-panel py-3 px-6 bg-danger/10 border-danger/30 flex items-center justify-between shrink-0 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                        <div className="flex items-center gap-4">
+                            <AlertTriangle className="text-danger animate-pulse" size={20} />
+                            <span className="text-sm font-bold text-white tracking-wide">
+                                ⚠️ Machine <span className="text-danger font-mono bg-danger/20 px-2 py-0.5 rounded mx-1">M{downtimeMachines[0].id}</span> is DOWN
                             </span>
-                            <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
-                                {t('common.abnormality_warning')}
-                            </span>
-                            <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
-                                {t('common.abnormality_warning')}
-                            </span>
-                            <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
-                                {t('common.abnormality_warning')}
+                            <span className="text-xs text-gray-400 border-l border-white/20 pl-4">
+                                Please check immediately or record manual downtime reason.
                             </span>
                         </div>
+                        {downtimeMachines.length > 1 && (
+                            <span className="text-xs bg-danger/20 text-danger px-2 py-1 rounded font-bold">
+                                +{downtimeMachines.length - 1} OTHER(S) DOWN
+                            </span>
+                        )}
                     </div>
                 )}
             </main>

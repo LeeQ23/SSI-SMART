@@ -14,6 +14,7 @@ import ProductionProgressChart from '../components/ProductionProgressChart';
 import { AlertTriangle, Settings } from 'lucide-react';
 import DowntimeModal from '../components/DowntimeModal';
 import EditSessionModal from '../components/EditSessionModal';
+import AnimatedNumber from '../components/AnimatedNumber';
 
 const DigitalClock = ({ formatDateDisplay }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -23,10 +24,18 @@ const DigitalClock = ({ formatDateDisplay }) => {
         return () => clearInterval(timer);
     }, []);
 
+    const timeStr = formatDateDisplay(currentTime); // "dd/mm/yyyy HH:MM"
+    const timePart = timeStr.split(' ')[1] || ''; // "HH:MM"
+    const [hh, mm] = timePart.split(':');
+    const datePart = timeStr.split(' ')[0] || ''; // "dd/mm/yyyy"
+
     return (
-        <p className="text-2xl font-mono font-bold text-white leading-none mt-1">
-            {formatDateDisplay(currentTime)}
-        </p>
+        <div className="text-right">
+            <p className="text-2xl font-mono font-bold text-white leading-none mt-1 tabular-nums">
+                {hh}<span className="animate-pulse">:</span>{mm}
+            </p>
+            <p className="text-[10px] text-gray-500 font-mono mt-0.5">{datePart}</p>
+        </div>
     );
 };
 
@@ -124,7 +133,7 @@ const Dashboard = () => {
                 <div className="text-danger text-xl font-bold">Connection Error</div>
                 <p className="text-gray-400">Unable to fetch dashboard data. Retrying...</p>
                 <button
-                    onClick={fetchData}
+                    onClick={() => refetch()}
                     className="px-4 py-2 bg-accent text-white rounded hover:bg-accent/80 transition-colors"
                 >
                     Retry Now
@@ -153,7 +162,7 @@ const Dashboard = () => {
                 onClose={() => setIsEditModalOpen(false)}
                 currentData={null}
                 machineId={machineId || 1}
-                onSessionCaptured={fetchData}
+                onSessionCaptured={() => refetch()}
             />
         </div>
     );
@@ -162,37 +171,36 @@ const Dashboard = () => {
         <div className="space-y-6">
             {/* Top Info Header Row */}
             <div className="grid grid-cols-2 lg:grid-cols-7 gap-4">
-                <div className="glass-panel p-3 border-l-2 border-l-accent flex flex-col items-center justify-center text-center">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Product ID</p>
-                    <p className="text-lg font-bold text-white leading-none mt-1">{data.product_id}</p>
+                <div className="glass-panel-raised p-4 border-l-4 border-l-accent flex flex-col justify-center">
+                    <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.product_id', 'PRODUCT ID')}</h3>
+                    <div className="text-xl font-black text-white">{data.product_id || '-'}</div>
                 </div>
-                <div className="glass-panel p-3 border-l-2 border-l-accent/50 flex flex-col items-center justify-center text-center">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Lot Number</p>
-                    <p className="text-lg font-bold text-white leading-none mt-1">{data.lot_number || '-'}</p>
+                <div className="glass-panel p-4 flex flex-col justify-center">
+                    <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.lot_number', 'LOT NUMBER')}</h3>
+                    <div className="text-lg font-bold text-gray-200">{data.lot_number || '-'}</div>
                 </div>
-                <div className="glass-panel p-3 flex flex-col items-center justify-center text-center">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Target</p>
-                    <p className="text-2xl font-bold text-white leading-none mt-1">{data.target}</p>
+                <div className="glass-panel p-4 flex flex-col justify-center">
+                    <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.target', 'TARGET')}</h3>
+                    <div className="text-lg font-bold text-accent tabular-nums">{data.target}</div>
                 </div>
-                <div className="glass-panel p-3 border-l-2 border-l-accent/50 flex flex-col items-center justify-center">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Shift</p>
-                    <p className="text-2xl font-bold text-accent leading-none mt-1">{data.shift}</p>
+                <div className="glass-panel p-4 flex flex-col justify-center">
+                    <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.shift', 'SHIFT')}</h3>
+                    <div className="text-lg font-bold text-gray-200">{data.shift}</div>
                 </div>
-                <div className="glass-panel p-3 flex flex-col items-center justify-center text-center">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Machine ID</p>
+                <div className="glass-panel p-4 flex flex-col justify-center relative overflow-hidden">
+                    <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.machine_id', 'MACHINE')}</h3>
                     <MachineSelector
                         selectedId={machineId || 1}
                         onChange={(id) => navigate(`/dashboard/${id}`)}
-                        className="bg-transparent border-none p-0 h-auto text-2xl font-bold text-white text-center w-full"
+                        className="bg-transparent border-none p-0 h-auto text-xl font-bold text-white w-full outline-none focus:ring-0"
                     />
                 </div>
-                <div className="glass-panel p-3 flex flex-col items-center justify-center text-center">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Operator</p>
-                    <p className="text-lg font-bold text-white leading-none mt-1">{data.operator}</p>
-                    <p className="text-xs text-gray-400 mt-1">{data.operator_nim}</p>
+                <div className="glass-panel p-4 flex flex-col justify-center">
+                    <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.operator', 'OPERATOR')}</h3>
+                    <div className="text-lg font-bold text-gray-200 truncate">{data.operator}</div>
                 </div>
-                <div className="glass-panel p-3 bg-accent/5 flex flex-col items-center justify-center text-center">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">DATE & TIME</p>
+                <div className="glass-panel-recessed p-4 flex flex-col justify-center items-end bg-black/20">
+                    <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">SYSTEM TIME</h3>
                     <DigitalClock formatDateDisplay={formatDateDisplay} />
                 </div>
             </div>
@@ -204,32 +212,42 @@ const Dashboard = () => {
                         <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                             <CheckCircle size={32} />
                         </div>
-                        <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-1">TOTAL OK</h3>
-                        <div className="text-5xl font-bold text-success leading-none">
-                            {data.good}
+                        <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-1">{t('dashboard.total_ok', 'TOTAL OK')}</h3>
+                        <div className="flex items-baseline justify-center gap-2 mt-2">
+                            <div className="text-5xl font-bold text-success leading-none drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] tabular-nums">
+                                <AnimatedNumber value={data.good} />
+                            </div>
+                            <span className="text-xl text-gray-500 font-bold tabular-nums">/ {data.target}</span>
                         </div>
                     </div>
                     <div className="glass-panel p-4 flex flex-col items-center justify-center relative overflow-hidden group h-[120px]">
                         <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                             <XCircle size={32} />
                         </div>
-                        <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-1">TOTAL NG</h3>
-                        <div className="text-5xl font-bold text-danger leading-none">
-                            {data.ng}
+                        <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-1">{t('dashboard.total_ng', 'TOTAL NG')}</h3>
+                        <div className="flex items-baseline justify-center gap-2 mt-2">
+                            <div className="text-5xl font-bold text-danger leading-none drop-shadow-[0_0_15px_rgba(239,68,68,0.3)] tabular-nums">
+                                <AnimatedNumber value={data.ng} />
+                            </div>
+                            <span className="text-xl text-gray-500 font-bold tabular-nums">/ {data.target}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Progress % Box */}
                 <div className="glass-panel p-6 flex flex-col items-center justify-center bg-accent/5 ring-1 ring-accent/20 h-[236px]">
-                    <h3 className="text-gray-400 text-sm uppercase tracking-widest mb-4">PRODUCTION PROGRESS %</h3>
-                    <div className="text-7xl font-black text-white drop-shadow-md">
-                        {((data.good / data.target) * 100).toFixed(1)}%
+                    <h3 className="text-gray-400 text-sm uppercase tracking-widest mb-4">{t('dashboard.progress', 'PRODUCTION PROGRESS %')}</h3>
+                    <div className="text-7xl font-black text-white drop-shadow-md tabular-nums">
+                        <AnimatedNumber value={data.target > 0 ? ((data.good / data.target) * 100) : 0} decimals={1} suffix="%" />
                     </div>
-                    <div className="w-full bg-white/5 h-2 rounded-full mt-6 overflow-hidden">
+                    <div className="w-full bg-white/5 h-4 rounded-full mt-6 overflow-hidden">
                         <div
-                            className="bg-accent h-full transition-all duration-1000 shadow-[0_0_10px_#0074D9]"
-                            style={{ width: `${Math.min((data.good / data.target) * 100, 100)}%` }}
+                            className={`h-full transition-all duration-1000 ${
+                                (data.target > 0 ? ((data.good / data.target) * 100) : 0) >= 80 ? 'bg-success shadow-[0_0_10px_rgba(16,185,129,0.5)]' :
+                                (data.target > 0 ? ((data.good / data.target) * 100) : 0) >= 50 ? 'bg-warning shadow-[0_0_10px_rgba(255,220,0,0.5)]' :
+                                'bg-danger shadow-[0_0_10px_rgba(239,68,68,0.5)]'
+                            }`}
+                            style={{ width: `${data.target > 0 ? Math.min((data.good / data.target) * 100, 100) : 0}%` }}
                         />
                     </div>
                 </div>
@@ -245,49 +263,82 @@ const Dashboard = () => {
                                         <Pie
                                             data={oeeData}
                                             cx="50%"
-                                            cy="50%"
-                                            innerRadius={45}
-                                            outerRadius={55}
-                                            fill="#8884d8"
-                                            paddingAngle={5}
+                                            cy="100%"
+                                            startAngle={180}
+                                            endAngle={0}
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={0}
                                             dataKey="value"
-                                            startAngle={90}
-                                            endAngle={-270}
+                                            stroke="none"
                                         >
-                                            {oeeData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                                            ))}
+                                            <Cell key="cell-0" fill={
+                                                Number(data.oee) >= 85 ? '#10b981' : 
+                                                Number(data.oee) >= 60 ? '#f59e0b' : 
+                                                '#ef4444'
+                                            } />
+                                            <Cell key="cell-1" fill="#1e293b" />
                                         </Pie>
                                     </PieChart>
                                 </ResponsiveContainer>
-                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                    <span className="text-3xl font-bold">{Number(data.oee).toFixed(1)}%</span>
+                                <div className="absolute bottom-0 w-full flex flex-col items-center justify-center pointer-events-none pb-2">
+                                    <span className={`text-3xl font-black tabular-nums drop-shadow-md ${
+                                        Number(data.oee) >= 85 ? 'text-success' : 
+                                        Number(data.oee) >= 60 ? 'text-warning' : 
+                                        'text-danger'
+                                    }`}>
+                                        {Number(data.oee).toFixed(1)}%
+                                    </span>
                                 </div>
                             </div>
                         </div>
                         <div className="w-px h-24 bg-white/10" />
                         <div className="flex-1 text-center">
-                            <Clock size={24} className="mx-auto mb-2 text-warning opacity-50" />
-                            <h3 className="text-gray-400 text-xs uppercase tracking-wider mb-1">{t('dashboard.cycle_time')}</h3>
-                            <div className="text-4xl font-bold text-warning">
-                                {Number(data.avgCycleTime).toFixed(1)}s
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1 uppercase">Target: 12.0s</div>
+                            {(() => {
+                                const act = Number(data.avgCycleTime);
+                                const tgt = Number(data.targetCycleTime || 12.0);
+                                const colorClass = act <= tgt ? 'text-success' : (act <= tgt * 1.2 ? 'text-warning' : 'text-danger');
+                                return (
+                                    <>
+                                        <Clock size={24} className={`mx-auto mb-2 ${colorClass} opacity-50`} />
+                                        <h3 className="text-gray-400 text-xs uppercase tracking-wider mb-1">{t('dashboard.cycle_time')}</h3>
+                                        <div className={`text-4xl font-bold tabular-nums ${colorClass}`}>
+                                            {act.toFixed(1)}s
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-1 uppercase tabular-nums">Target: {tgt.toFixed(1)}s</div>
+                                    </>
+                                );
+                            })()}
                         </div>
                     </div>
-                    {/* A/P/Q percentages row */}
-                    <div className="bg-white/5 border-t border-white/10 grid grid-cols-3 py-3 text-center">
-                        <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Availability</p>
-                            <p className="text-lg font-bold text-white">{data.availability}%</p>
+                    {/* A/P/Q Linear Bullet Bars */}
+                    <div className="bg-black/20 border-t border-white/10 p-3 space-y-3">
+                        {/* Availability */}
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter w-20 text-right">{t('dashboard.availability', 'Availability')}</span>
+                            <div className="flex-1 bg-white/5 h-3 rounded-full relative overflow-hidden">
+                                <div className="absolute left-[85%] top-0 bottom-0 w-0.5 bg-white/50 z-10" />
+                                <div className="bg-emerald-400 h-full shadow-[0_0_8px_rgba(52,211,153,0.5)] transition-all" style={{ width: `${data.availability}%` }}></div>
+                            </div>
+                            <span className="text-[10px] font-mono text-emerald-400 w-10">{data.availability}%</span>
                         </div>
-                        <div className="border-x border-white/10">
-                            <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Performance</p>
-                            <p className="text-lg font-bold text-white">{data.performance}%</p>
+                        {/* Performance */}
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter w-20 text-right">{t('dashboard.performance', 'Performance')}</span>
+                            <div className="flex-1 bg-white/5 h-3 rounded-full relative overflow-hidden">
+                                <div className="absolute left-[85%] top-0 bottom-0 w-0.5 bg-white/50 z-10" />
+                                <div className="bg-blue-400 h-full shadow-[0_0_8px_rgba(96,165,250,0.5)] transition-all" style={{ width: `${data.performance}%` }}></div>
+                            </div>
+                            <span className="text-[10px] font-mono text-blue-400 w-10">{data.performance}%</span>
                         </div>
-                        <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold tracking-tighter">Quality</p>
-                            <p className="text-lg font-bold text-white">{data.quality}%</p>
+                        {/* Quality */}
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter w-20 text-right">{t('dashboard.quality', 'Quality')}</span>
+                            <div className="flex-1 bg-white/5 h-3 rounded-full relative overflow-hidden">
+                                <div className="absolute left-[85%] top-0 bottom-0 w-0.5 bg-white/50 z-10" />
+                                <div className="bg-purple-400 h-full shadow-[0_0_8px_rgba(192,132,252,0.5)] transition-all" style={{ width: `${data.quality}%` }}></div>
+                            </div>
+                            <span className="text-[10px] font-mono text-purple-400 w-10">{data.quality}%</span>
                         </div>
                     </div>
                 </div>
@@ -310,22 +361,7 @@ const Dashboard = () => {
                         target={data.target}
                         shiftName={data.shift}
                     />
-                    <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
-                        <button
-                            onClick={() => setIsEditModalOpen(true)}
-                            className="w-full py-3 bg-accent/10 hover:bg-accent/20 text-accent rounded-xl border border-accent/20 transition-all flex items-center justify-center gap-2 font-bold group"
-                        >
-                            <Settings size={18} className="group-hover:rotate-90 transition-transform duration-500" />
-                            EDIT SESSION (Product, Operator, Shift)
-                        </button>
-                        <button
-                            onClick={() => setIsDowntimeModalOpen(true)}
-                            className="w-full py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 rounded-xl border border-amber-500/20 transition-all flex items-center justify-center gap-2 font-bold group"
-                        >
-                            <AlertTriangle size={18} className="group-hover:scale-110 transition-transform" />
-                            RECORD MANUAL DOWNTIME (Alt + D)
-                        </button>
-                    </div>
+                    <div className="mt-6 border-t border-white/5" />
                 </div>
 
                 {/* 1/3 Status Timeline Card */}
@@ -343,15 +379,26 @@ const Dashboard = () => {
                         height={200}
                     />
                     <div className="space-y-4 mt-8">
+                        {/* Run/Down Ratio Visual Bar */}
+                        <div className="w-full h-2 bg-white/5 rounded-full flex overflow-hidden">
+                            <div 
+                                className="h-full bg-success transition-all duration-1000" 
+                                style={{ width: `${(data.runningTime / (data.runningTime + data.downtime || 1)) * 100}%` }} 
+                            />
+                            <div 
+                                className="h-full bg-danger transition-all duration-1000" 
+                                style={{ width: `${(data.downtime / (data.runningTime + data.downtime || 1)) * 100}%` }} 
+                            />
+                        </div>
                         <div className="flex items-center justify-between p-3 bg-white/5 rounded">
                             <span className="text-sm text-gray-400 uppercase tracking-tighter">{t('dashboard.running')}</span>
-                            <span className="text-lg font-bold text-green-400">
+                            <span className="text-lg font-bold text-success tabular-nums">
                                 {formatTime(data.runningTime)}
                             </span>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-white/5 rounded">
                             <span className="text-sm text-gray-400 uppercase tracking-tighter">{t('dashboard.downtime')}</span>
-                            <span className="text-lg font-bold text-red-400">
+                            <span className="text-lg font-bold text-danger tabular-nums">
                                 {formatTime(data.downtime)}
                             </span>
                         </div>
@@ -360,6 +407,24 @@ const Dashboard = () => {
             </div>
 
             {error && <ErrorToast message={error.message} />}
+
+            {/* Floating Action Buttons */}
+            <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+                <button
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="w-14 h-14 bg-accent hover:bg-blue-600 text-white rounded-full shadow-lg shadow-accent/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
+                    title="Edit Session (Product, Operator, Shift)"
+                >
+                    <Settings size={24} className="group-hover:rotate-90 transition-transform duration-500" />
+                </button>
+                <button
+                    onClick={() => setIsDowntimeModalOpen(true)}
+                    className="w-14 h-14 bg-warning hover:bg-yellow-500 text-black rounded-full shadow-lg shadow-warning/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
+                    title="Record Manual Downtime (Alt + D)"
+                >
+                    <AlertTriangle size={24} className="group-hover:scale-110 transition-transform" />
+                </button>
+            </div>
 
             <DowntimeModal
                 isOpen={isDowntimeModalOpen}

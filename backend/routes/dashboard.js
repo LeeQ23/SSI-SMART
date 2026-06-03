@@ -5,6 +5,7 @@ const authenticateToken = require('../utils/auth');
 const { getShift } = require('../utils/shift');
 const { initMachineState } = require('../stateManager');
 const { calculateSessionStats } = require('../services/statsService');
+const settingsManager = require('../settingsManager');
 
 // Data API - Detailed view for one machine (Shift-based counts, with Session info)
 router.get('/', authenticateToken, async (req, res) => {
@@ -80,6 +81,7 @@ router.get('/', authenticateToken, async (req, res) => {
             availability: stats.availability,
             performance: stats.performance,
             quality: stats.quality,
+            targetCycleTime: settingsManager.getSetting('IDEAL_CYCLE_TIME'),
             timeline: stateLogs,
             productionEvents: bucketedEvents,
             session_start: session ? session.start_time : currentShift.start

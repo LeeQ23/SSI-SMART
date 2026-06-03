@@ -26,23 +26,6 @@ const LogoLoader = ({ message }) => {
                 </div>
             )}
 
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                @keyframes spin-slow {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-                @keyframes pulse-gentle {
-                    0%, 100% { transform: scale(1); opacity: 0.8; }
-                    50% { transform: scale(1.05); opacity: 1; }
-                }
-                .animate-spin-slow {
-                    animation: spin-slow 1.5s linear infinite;
-                }
-                .animate-pulse-gentle {
-                    animation: pulse-gentle 2s ease-in-out infinite;
-                }
-            `}} />
         </div>
     );
 };

@@ -77,63 +77,67 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
 
                 <form onSubmit={handleFormSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Product ID</label>
+                            <div className="group">
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Product ID</label>
                                 <input
                                     type="text"
                                     value={formData.product_id}
                                     onChange={(e) => setFormData({...formData, product_id: e.target.value})}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                                    autoFocus
+                                    className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent"
                                     placeholder="e.g., SI-283"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Lot Number</label>
+                            <div className="group">
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Lot Number</label>
                                 <input
                                     type="text"
                                     value={formData.lot_number}
                                     onChange={(e) => setFormData({...formData, lot_number: e.target.value})}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                                    className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent"
                                     placeholder="e.g., L-10293"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Target Qty</label>
+                            <div className="group">
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Target Qty</label>
                                 <input
                                     type="number"
                                     value={formData.target_qty}
                                     onChange={(e) => setFormData({...formData, target_qty: e.target.value})}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                                    className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent"
                                     placeholder="4320"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Shift Name</label>
-                                <input
-                                    type="text"
+                            <div className="group">
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Shift Name</label>
+                                <select
                                     value={formData.shift_name}
                                     onChange={(e) => setFormData({...formData, shift_name: e.target.value})}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-1 focus:ring-accent"
-                                    placeholder="Morning"
-                                />
+                                    className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent appearance-none bg-gray-900"
+                                >
+                                    <option value="" disabled>Select Shift</option>
+                                    <option value="Morning">Morning</option>
+                                    <option value="Afternoon">Afternoon</option>
+                                    <option value="Night">Night</option>
+                                </select>
                             </div>
-                            <div className="col-span-2">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Operator Name</label>
+                            <div className="col-span-2 group">
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Operator Name</label>
                                 <input
                                     type="text"
                                     value={formData.operator_name}
                                     onChange={(e) => setFormData({...formData, operator_name: e.target.value})}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                                    className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent"
                                     placeholder="Operator Name"
                                 />
                             </div>
-                            <div className="col-span-2">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Operator NIM</label>
+                            <div className="col-span-2 group">
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Operator NIM</label>
                                 <input
                                     type="text"
                                     value={formData.operator_nim}
                                     onChange={(e) => setFormData({...formData, operator_nim: e.target.value})}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                                    className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent"
                                     placeholder="NIM / ID"
                                 />
                             </div>

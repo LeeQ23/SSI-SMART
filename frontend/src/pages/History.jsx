@@ -183,7 +183,16 @@ const History = () => {
             </thead>
             <tbody className="divide-y divide-white/5">
               {history.map((row, idx) => (
-                <tr key={idx} className="hover:bg-accent/5 transition-colors group">
+                <tr 
+                  key={idx} 
+                  className={`transition-colors group ${
+                    Number(row.oee) < 50 
+                      ? 'bg-danger/10 hover:bg-danger/20 border-l-2 border-l-danger' 
+                      : Number(row.oee) < 80 
+                        ? 'bg-warning/5 hover:bg-warning/10 border-l-2 border-l-warning'
+                        : 'hover:bg-accent/5 border-l-2 border-l-transparent'
+                  }`}
+                >
                   <td className="p-4">
                     <span className="px-2 py-1 rounded bg-accent/10 text-accent text-xs font-mono border border-accent/20">
                       {row.machine_code}
@@ -213,13 +222,19 @@ const History = () => {
                         <div className="text-[10px] text-gray-500 ml-5">{row.operator_nim}</div>
                      </div>
                   </td>
-                  <td className="p-4 font-mono text-success text-center font-bold text-base">{row.good_count}</td>
-                  <td className="p-4 font-mono text-danger text-center font-bold text-base">{row.ng_count}</td>
+                  <td className="p-4 font-mono text-success text-center font-bold text-base tabular-nums">{row.good_count}</td>
+                  <td className="p-4 font-mono text-danger text-center font-bold text-base tabular-nums">{row.ng_count}</td>
                   <td className="p-4 font-mono text-gray-400 text-center text-xs">
                      {formatDuration(row.running_duration_sec + row.downtime_duration_sec)}
                   </td>
                   <td className="p-4 text-center">
-                    <div className="inline-flex items-center justify-center bg-accent/10 border border-accent/20 rounded-lg px-3 py-1 text-accent font-bold font-mono">
+                    <div className={`inline-flex items-center justify-center border rounded-lg px-3 py-1 font-bold font-mono ${
+                        Number(row.oee) >= 80 
+                            ? 'bg-success/10 border-success/20 text-success' 
+                            : Number(row.oee) >= 50
+                                ? 'bg-warning/10 border-warning/20 text-warning'
+                                : 'bg-danger/10 border-danger/20 text-danger shadow-[0_0_10px_rgba(239,68,68,0.3)]'
+                    }`}>
                         {row.oee}%
                     </div>
                   </td>
@@ -250,7 +265,7 @@ const History = () => {
         </div>
       )}
 
-      {error && <ErrorToast />}
+      {error && <ErrorToast message={error} />}
     </div>
   );
 };

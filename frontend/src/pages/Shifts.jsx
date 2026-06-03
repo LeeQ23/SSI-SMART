@@ -1,3 +1,7 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useTranslation } from 'react-i18next';
+import { Clock, Save } from 'lucide-react';
 import LogoLoader from '../components/LogoLoader';
 
 const Shifts = () => {

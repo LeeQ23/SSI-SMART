@@ -1,139 +1,129 @@
-import React, { useMemo } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ScatterChart, Scatter, ZAxis, Cell, ComposedChart } from 'recharts';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const StatusTimelineChart = React.memo(({ timeline = [], height = 320 }) => {
+const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
     const { t } = useTranslation();
+    const [hoveredSegment, setHoveredSegment] = useState(null);
 
     const chartData = useMemo(() => {
-        if (!timeline || timeline.length === 0) return [];
+        if (!timeline || timeline.length === 0) return { segments: [], totalDuration: 0, minTime: 0, maxTime: 0 };
 
-        return timeline.map(t => ({
-            timestamp: new Date(t.timestamp).getTime(),
-            timeDisplay: new Date(t.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-            dateDisplay: new Date(t.timestamp).toLocaleDateString([], { month: 'short', day: '2-digit', year: 'numeric' }),
-            statusVal: t.state === 'running' ? 1 : 0,
-            downtimeVal: t.state !== 'running' ? 1 : 0,
-            state: t.state
-        }));
+        const segments = [];
+        const timestamps = timeline.map(t => new Date(t.timestamp).getTime());
+        const minTime = Math.min(...timestamps);
+        
+        // If the last event is still ongoing, extend it to 'now'
+        const maxTime = Math.max(new Date().getTime(), Math.max(...timestamps));
+        const totalDuration = maxTime - minTime;
+
+        for (let i = 0; i < timeline.length; i++) {
+            const current = timeline[i];
+            const startTime = new Date(current.timestamp).getTime();
+            const endTime = i < timeline.length - 1 ? new Date(timeline[i + 1].timestamp).getTime() : maxTime;
+            
+            const durationMs = endTime - startTime;
+            const widthPercent = (durationMs / totalDuration) * 100;
+
+            if (widthPercent > 0) {
+                segments.push({
+                    state: current.state,
+                    startTime,
+                    endTime,
+                    widthPercent,
+                    durationMs
+                });
+            }
+        }
+
+        return { segments, totalDuration, minTime, maxTime };
     }, [timeline]);
 
-    if (chartData.length === 0) {
+    if (chartData.segments.length === 0) {
         return (
-            <div style={{ height }} className="flex items-center justify-center text-gray-500 italic border border-white/10 rounded-lg">
+            <div style={{ height: 120 }} className="flex items-center justify-center text-gray-500 italic border border-white/10 rounded-lg">
                 No timeline data available for this period.
             </div>
         );
     }
 
-    const CustomTooltip = ({ active, payload }) => {
-        if (active && payload && payload.length) {
-            const data = payload[0].payload;
-            return (
-                <div className="bg-gray-900/90 backdrop-blur-md border border-white/10 p-3 rounded-xl shadow-2xl text-sm min-w-[150px]">
-                    <p className="text-gray-400 mb-2 border-b border-white/10 pb-1">{data.dateDisplay} | <span className="text-white font-mono">{data.timeDisplay}</span></p>
-                    <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-xs">
-                        {data.state === 'running' ? (
-                            <><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span><span className="text-green-400">RUNNING</span></>
-                        ) : (
-                            <><span className="w-2 h-2 rounded-full bg-red-500"></span><span className="text-red-400">DOWNTIME</span></>
-                        )}
-                    </div>
-                </div>
-            );
-        }
-        return null;
+    const formatTime = (ts) => {
+        const d = new Date(ts);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     };
 
-    const ticks = useMemo(() => {
-        if (chartData.length === 0) return [];
-        const timestamps = chartData.map(d => d.timestamp);
-        
-        let min = timestamps[0];
-        let max = timestamps[0];
-        for (let i = 1; i < timestamps.length; i++) {
-            if (timestamps[i] < min) min = timestamps[i];
-            if (timestamps[i] > max) max = timestamps[i];
-        }
+    const formatDate = (ts) => {
+        const d = new Date(ts);
+        return d.toLocaleDateString([], { month: 'short', day: '2-digit' });
+    };
 
-        const start = new Date(min);
-        start.setMinutes(start.getMinutes() >= 30 ? 30 : 0, 0, 0);
-
-        const result = [];
-        let current = start.getTime();
-        while (current <= max) {
-            result.push(current);
-            current += 30 * 60 * 1000;
-        }
-        return result;
-    }, [chartData]);
+    const formatDuration = (ms) => {
+        const totalMinutes = Math.floor(ms / 60000);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        if (hours > 0) return `${hours}h ${minutes}m`;
+        return `${minutes}m`;
+    };
 
     return (
-        <div className="w-full">
-            <div style={{ height }}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                        <defs>
-                            <linearGradient id="colorStatus" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#10B981" stopOpacity={0.6} />
-                                <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
-                            </linearGradient>
-                            <linearGradient id="colorDowntime" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#EF4444" stopOpacity={0.6} />
-                                <stop offset="95%" stopColor="#EF4444" stopOpacity={0.0} />
-                            </linearGradient>
-                            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                                <feGaussianBlur stdDeviation="4" result="blur" />
-                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                            </filter>
-                        </defs>
-                        <XAxis
-                            dataKey="timestamp"
-                            type="number"
-                            domain={['auto', 'auto']}
-                            ticks={ticks}
-                            tickFormatter={(unixTime) => new Date(unixTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                            stroke="#64748b"
-                            fontSize={11}
-                            tickLine={false}
-                            axisLine={false}
-                            dy={10}
-                        />
-                        <YAxis hide domain={[0, 1.3]} />
-                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '5 5' }} />
+        <div className="w-full relative py-6">
+            {/* The Gantt Strip */}
+            <div 
+                className="w-full bg-white/5 rounded-full overflow-hidden flex shadow-inner relative"
+                style={{ height }}
+            >
+                {chartData.segments.map((seg, idx) => {
+                    const isRunning = seg.state === 'running';
+                    const bgColor = isRunning ? 'bg-emerald-500' : 'bg-red-500';
+                    const glowClass = isRunning ? 'shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'shadow-[0_0_10px_rgba(239,68,68,0.5)]';
 
-                        <Area
-                            type="stepAfter"
-                            dataKey="statusVal"
-                            stroke="#10B981"
-                            fill="url(#colorStatus)"
-                            strokeWidth={3}
-                            isAnimationActive={true}
-                            animationDuration={1500}
-                            filter="url(#glow)"
+                    return (
+                        <div
+                            key={idx}
+                            style={{ width: `${seg.widthPercent}%` }}
+                            className={`h-full ${bgColor} ${glowClass} opacity-80 hover:opacity-100 transition-opacity cursor-pointer border-r border-black/20 last:border-0`}
+                            onMouseEnter={() => setHoveredSegment(seg)}
+                            onMouseLeave={() => setHoveredSegment(null)}
                         />
-                        <Area
-                            type="stepAfter"
-                            dataKey="downtimeVal"
-                            stroke="#EF4444"
-                            fill="url(#colorDowntime)"
-                            strokeWidth={3}
-                            isAnimationActive={true}
-                            animationDuration={1500}
-                            filter="url(#glow)"
-                        />
-                    </ComposedChart>
-                </ResponsiveContainer>
+                    );
+                })}
             </div>
 
+            {/* X-Axis Labels (Start and End) */}
+            <div className="flex justify-between text-xs text-gray-500 mt-3 font-mono">
+                <div>{formatDate(chartData.minTime)} {formatTime(chartData.minTime)}</div>
+                <div>{formatDate(chartData.maxTime)} {formatTime(chartData.maxTime)}</div>
+            </div>
+
+            {/* Legend */}
             <div className="flex flex-wrap gap-8 mt-6 justify-center text-xs font-bold text-gray-400 uppercase tracking-widest">
                 <div className="flex items-center gap-3">
-                    <span className="w-4 h-4 bg-emerald-500/20 border border-emerald-500 rounded-sm shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> RUNNING
+                    <span className="w-4 h-4 bg-emerald-500/80 rounded-sm shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> RUNNING
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className="w-4 h-4 bg-red-500/20 border border-red-500 rounded-sm shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span> DOWNTIME
+                    <span className="w-4 h-4 bg-red-500/80 rounded-sm shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span> DOWNTIME
                 </div>
             </div>
+
+            {/* Floating Glassmorphism Tooltip */}
+            {hoveredSegment && (
+                <div className="absolute top-[-80px] left-1/2 transform -translate-x-1/2 bg-gray-900/95 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-2xl text-sm min-w-[220px] pointer-events-none z-50">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+                        <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-xs">
+                            {hoveredSegment.state === 'running' ? (
+                                <><span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span className="text-emerald-400">RUNNING</span></>
+                            ) : (
+                                <><span className="w-2 h-2 rounded-full bg-red-500"></span><span className="text-red-400">DOWNTIME</span></>
+                            )}
+                        </div>
+                        <span className="text-gray-400 font-mono text-xs">{formatDuration(hoveredSegment.durationMs)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-300 font-mono text-xs">
+                        <span>{formatTime(hoveredSegment.startTime)}</span>
+                        <span className="text-gray-600">→</span>
+                        <span>{formatTime(hoveredSegment.endTime)}</span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 });

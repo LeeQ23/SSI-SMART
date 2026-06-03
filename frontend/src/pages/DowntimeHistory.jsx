@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Clock, Calendar, Hash, User, MessageSquare, Download, RefreshCw } from 'lucide-react';
 import MachineSelector from '../components/MachineSelector';
 import LogoLoader from '../components/LogoLoader';
+import ErrorToast from '../components/ErrorToast';
 
 const DowntimeHistory = () => {
     const { t } = useTranslation();
@@ -141,18 +142,14 @@ const DowntimeHistory = () => {
                     </button>
                     <button
                         onClick={downloadCSV}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors whitespace-nowrap text-sm font-bold text-white shadow-lg"
+                        className="flex items-center gap-2 px-6 py-2 bg-success hover:bg-success/80 rounded-xl transition-all whitespace-nowrap text-sm font-bold shadow-lg shadow-success/10"
                     >
-                        <Download size={18} /> Export CSV
+                        <Download size={18} /> EXPORT CSV
                     </button>
                 </div>
             </div>
 
-            {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
-                    {error}
-                </div>
-            )}
+            {error && <ErrorToast message={error} />}
 
             <div className="glass-panel overflow-hidden">
                 <div className="overflow-x-auto">

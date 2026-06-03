@@ -20,9 +20,9 @@ class ErrorBoundary extends React.Component {
             return (
                 <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-red-900/20 border border-red-500/30 rounded-xl">
                     <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
-                    <h2 className="text-xl font-bold text-red-400 mb-2">Something went wrong</h2>
+                    <h2 className="text-xl font-bold text-red-400 mb-2">Display Module Error</h2>
                     <p className="text-sm text-red-200/70 text-center max-w-md">
-                        {this.state.error?.message || "An unexpected error occurred in this widget."}
+                        A rendering error occurred in this dashboard section. Your production data is safe. Click below to reload the module.
                     </p>
                     <button 
                         onClick={() => this.setState({ hasError: false, error: null })}

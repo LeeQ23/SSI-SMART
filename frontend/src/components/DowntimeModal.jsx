@@ -116,7 +116,7 @@ const DowntimeModal = ({ isOpen, onClose, initialMachineId }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">
                             Select Machine
                         </label>
                         <MachineSelector
@@ -126,16 +126,17 @@ const DowntimeModal = ({ isOpen, onClose, initialMachineId }) => {
                         {isActive && <p className="text-[10px] text-accent mt-1 italic">Selecting another machine will show its downtime status</p>}
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                    <div className="group">
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">
                             Reason for Downtime
                         </label>
                         <textarea
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             disabled={isActive}
+                            autoFocus={!isActive}
                             placeholder="e.g., Maintenance, Toilet Break, Tooling change..."
-                            className={`w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-accent transition-all h-24 resize-none ${isActive ? 'opacity-70 grayscale-[0.5]' : ''}`}
+                            className={`glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent transition-all h-24 resize-none ${isActive ? 'opacity-50 grayscale pointer-events-none' : ''}`}
                         />
                     </div>
 

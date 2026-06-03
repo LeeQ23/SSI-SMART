@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, Search, Clock, Calendar } from 'lucide-react';
+import { AlertCircle, Search, Clock, Calendar, BarChart3 } from 'lucide-react';
 import MachineSelector from '../components/MachineSelector';
 import StatusTimelineChart from '../components/StatusTimelineChart';
 import ErrorToast from '../components/ErrorToast';
@@ -32,29 +31,7 @@ const Analytics = () => {
         enabled: shouldFetch && !!start && !!end,
     });
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1
-            }
-        }
-    };
 
-    const itemVariants = {
-        hidden: { y: 20, opacity: 0, scale: 0.95 },
-        visible: {
-            y: 0,
-            opacity: 1,
-            scale: 1,
-            transition: {
-                type: "spring",
-                stiffness: 100,
-                damping: 15
-            }
-        }
-    };
 
     const formatTime = (seconds) => {
         const h = Math.floor(seconds / 3600);
@@ -89,6 +66,8 @@ const Analytics = () => {
         
         setStart(formatForInput(s));
         setEnd(formatForInput(e));
+        setShouldFetch(true);
+        setTimeout(() => refetch(), 0);
     };
 
     const handleAnalyze = (e) => {
@@ -166,7 +145,17 @@ const Analytics = () => {
                 </form>
             </div>
 
-            {error && <ErrorToast />}
+            {error && <ErrorToast message={error?.message} isRetrying={false} />}
+
+            {!loading && !data && !error && (
+                <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                    <div className="p-6 bg-white/5 rounded-full mb-6">
+                        <BarChart3 size={48} className="opacity-30" />
+                    </div>
+                    <p className="text-lg font-medium text-gray-400">Select a date range and click Analyze</p>
+                    <p className="text-sm text-gray-600 mt-1">Production insights will appear here</p>
+                </div>
+            )}
 
             {loading ? (
                 <div className="space-y-6 animate-pulse">
@@ -194,39 +183,47 @@ const Analytics = () => {
                     </div>
                 </div>
             ) : data && (
-                <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="space-y-6"
-                >
+                <div className="space-y-6">
                     {/* Top Row: Metrics + Donut */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <motion.div variants={itemVariants} className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-green-500/50 transition-colors">
+                        <div className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-green-500/50 transition-colors">
                             <div className="absolute top-0 left-0 w-full h-1 bg-green-500 shadow-[0_0_10px_#10B981]"></div>
                             <h3 className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">{t('dashboard.good')}</h3>
-                            <div className="text-5xl font-bold text-green-400 drop-shadow-[0_0_15px_rgba(74,222,128,0.4)]">
+                            <div className="text-5xl font-bold text-green-400 drop-shadow-[0_0_15px_rgba(74,222,128,0.4)] tabular-nums">
                                 <AnimatedNumber value={data.metrics.good} />
                             </div>
-                        </motion.div>
-                        <motion.div variants={itemVariants} className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-red-500/50 transition-colors">
+                            <p className="text-[10px] text-gray-500 mt-2 font-mono">
+                                {data.metrics.good + data.metrics.ng > 0 
+                                    ? ((data.metrics.good / (data.metrics.good + data.metrics.ng)) * 100).toFixed(1) 
+                                    : '0.0'}% yield
+                            </p>
+                        </div>
+                        <div className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-red-500/50 transition-colors">
                             <div className="absolute top-0 left-0 w-full h-1 bg-red-500 shadow-[0_0_10px_#EF4444]"></div>
                             <h3 className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">{t('dashboard.ng')}</h3>
-                            <div className="text-5xl font-bold text-red-400 drop-shadow-[0_0_15px_rgba(248,113,113,0.4)]">
+                            <div className="text-5xl font-bold text-red-400 drop-shadow-[0_0_15px_rgba(248,113,113,0.4)] tabular-nums">
                                 <AnimatedNumber value={data.metrics.ng} />
                             </div>
-                        </motion.div>
-                        <motion.div variants={itemVariants} className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-accent/50 transition-colors">
+                            <p className="text-[10px] text-gray-500 mt-2 font-mono">
+                                {data.metrics.good + data.metrics.ng > 0 
+                                    ? ((data.metrics.ng / (data.metrics.good + data.metrics.ng)) * 100).toFixed(1) 
+                                    : '0.0'}% defect rate
+                            </p>
+                        </div>
+                        <div className="glass-panel p-6 flex flex-col justify-center items-center relative overflow-hidden group hover:border-accent/50 transition-colors">
                             <div className="absolute top-0 left-0 w-full h-1 bg-accent shadow-[0_0_10px_#60A5FA]"></div>
                             <h3 className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">{t('dashboard.oee')}</h3>
-                            <div className="text-5xl font-bold text-accent drop-shadow-[0_0_15px_rgba(96,165,250,0.4)]">
+                            <div className="text-5xl font-bold text-accent drop-shadow-[0_0_15px_rgba(96,165,250,0.4)] tabular-nums">
                                 <AnimatedNumber value={data.metrics.oee} decimals={1} suffix="%" />
                             </div>
-                        </motion.div>
+                            <p className="text-[10px] text-gray-500 mt-2 font-mono">
+                                A:{data.metrics.availability || '—'}% · P:{data.metrics.performance || '—'}% · Q:{data.metrics.quality || '—'}%
+                            </p>
+                        </div>
                         
-                        <motion.div variants={itemVariants} className="glass-panel p-4 flex flex-col items-center justify-center relative min-h-[140px]">
-                            <h3 className="text-gray-400 text-[10px] font-bold tracking-widest uppercase absolute top-4 left-4">Ratio</h3>
-                            <div className="h-full w-full mt-4">
+                        <div className="glass-panel p-4 flex flex-col items-center justify-center relative min-h-[140px]">
+                            <h3 className="text-gray-400 text-[10px] font-bold tracking-widest uppercase mb-2">RUN RATIO</h3>
+                            <div className="h-24 w-full relative mt-2">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
@@ -234,9 +231,13 @@ const Analytics = () => {
                                                 { name: 'Running', value: Number(data.metrics.runTime) || 1 }, // Ensure it renders if 0
                                                 { name: 'Downtime', value: Number(data.metrics.downTime) }
                                             ]}
-                                            innerRadius="60%"
-                                            outerRadius="85%"
-                                            paddingAngle={4}
+                                            cx="50%"
+                                            cy="100%"
+                                            startAngle={180}
+                                            endAngle={0}
+                                            innerRadius={50}
+                                            outerRadius={70}
+                                            paddingAngle={0}
                                             dataKey="value"
                                             stroke="none"
                                             isAnimationActive={true}
@@ -251,7 +252,7 @@ const Analytics = () => {
                                                     return (
                                                         <div className="bg-gray-900/95 border border-white/10 p-2 rounded shadow-xl text-xs backdrop-blur-md">
                                                             <span className="text-gray-300">{payload[0].name}: </span>
-                                                            <span className="font-bold text-white">{formatTime(val)}</span>
+                                                            <span className="font-bold text-white tabular-nums">{formatTime(val)}</span>
                                                         </div>
                                                     );
                                                 }
@@ -260,17 +261,25 @@ const Analytics = () => {
                                         />
                                     </PieChart>
                                 </ResponsiveContainer>
+                                {/* Center label */}
+                                <div className="absolute bottom-0 w-full flex flex-col items-center justify-center pointer-events-none pb-1">
+                                    <span className="text-2xl font-bold text-white tabular-nums drop-shadow-md">
+                                        {data.metrics.runTime + data.metrics.downTime > 0
+                                            ? Math.round((data.metrics.runTime / (data.metrics.runTime + data.metrics.downTime)) * 100)
+                                            : 0}%
+                                    </span>
+                                </div>
                             </div>
-                        </motion.div>
+                        </div>
                     </div>
 
                     {/* Bottom Row: Timeline + Table */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Timeline */}
-                        <motion.div variants={itemVariants} className="glass-panel p-6 lg:col-span-2 flex flex-col">
+                        <div className="glass-panel p-6 lg:col-span-2 flex flex-col">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-lg font-bold text-white tracking-wide flex items-center gap-2">
-                                    <Clock size={18} className="text-accent" /> {t('dashboard.status')} Timeline
+                                    <Clock size={18} className="text-accent" /> {t('dashboard.status')}
                                 </h3>
                                 <div className="flex gap-4 text-xs font-bold tracking-widest bg-white/5 px-4 py-1.5 rounded-full border border-white/10">
                                     <span className="text-green-400">RUN: <AnimatedNumber value={data.metrics.runTime} isTime={true} /></span>
@@ -284,14 +293,14 @@ const Analytics = () => {
                                     height={300}
                                 />
                             </div>
-                        </motion.div>
+                        </div>
 
                         {/* Downtime Events List */}
-                        <motion.div variants={itemVariants} className="glass-panel flex flex-col overflow-hidden max-h-[500px]">
+                        <div className="glass-panel flex flex-col overflow-hidden max-h-[500px]">
                             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5 backdrop-blur-md">
                                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">Downtime Log</h3>
-                                <span className="px-2 py-0.5 rounded bg-red-500/20 border border-red-500/50 text-red-400 text-xs font-bold">
-                                    {data.pagination?.totalEvents || data.downtimeEvents?.length || 0} Events
+                                <span className="px-2 py-0.5 rounded bg-red-500/20 border border-red-500/50 text-red-400 text-xs font-bold tabular-nums">
+                                    {data.pagination?.totalEvents || data.downtimeEvents?.length || 0} Total Events
                                 </span>
                             </div>
                             <div className="overflow-y-auto flex-1 custom-scrollbar">
@@ -347,8 +356,8 @@ const Analytics = () => {
                             {/* Pagination Controls */}
                             {data.pagination && data.pagination.totalPages > 1 && (
                                 <div className="p-3 border-t border-white/10 flex justify-between items-center bg-black/20">
-                                    <span className="text-[10px] text-gray-400 font-mono">
-                                        PG {data.pagination.currentPage} / {data.pagination.totalPages}
+                                    <span className="text-[10px] text-gray-400 font-mono tracking-widest">
+                                        SHOWING {(data.pagination.currentPage - 1) * 20 + 1}-{Math.min(data.pagination.currentPage * 20, data.pagination.totalEvents)} OF {data.pagination.totalEvents}
                                     </span>
                                     <div className="flex gap-1">
                                         <button
@@ -368,9 +377,9 @@ const Analytics = () => {
                                     </div>
                                 </div>
                             )}
-                        </motion.div>
+                        </div>
                     </div>
-                </motion.div>
+                </div>
             )}
         </div>
     );

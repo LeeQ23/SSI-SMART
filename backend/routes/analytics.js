@@ -50,6 +50,41 @@ router.get('/', authenticateToken, async (req, res) => {
             timestamp: l.timestamp
         }));
 
+        // Bucket timeline for large date ranges to keep chart performant
+        if (stateLogs.length > 0) {
+            const rangeMs = new Date(end).getTime() - new Date(start).getTime();
+            const rangeHrs = rangeMs / (1000 * 60 * 60);
+
+            let bucketMs = 0;
+            if (rangeHrs > 24 * 30) bucketMs = 4 * 60 * 60 * 1000;  // > 1 month: 4h buckets
+            else if (rangeHrs > 24 * 7) bucketMs = 60 * 60 * 1000;   // > 1 week: 1h buckets
+            else if (rangeHrs > 24) bucketMs = 15 * 60 * 1000;       // > 1 day: 15m buckets
+
+            if (bucketMs > 0) {
+                const startMs = new Date(start).getTime();
+                const endMs = new Date(end).getTime();
+                const bucketedTimeline = [];
+
+                for (let t = startMs; t < endMs; t += bucketMs) {
+                    const bucketEnd = t + bucketMs;
+                    const logsInBucket = stateLogs.filter(l => {
+                        const ts = new Date(l.timestamp).getTime();
+                        return ts >= t && ts < bucketEnd;
+                    });
+
+                    if (logsInBucket.length > 0) {
+                        const runCount = logsInBucket.filter(l => l.state === 'running').length;
+                        const majorityState = runCount >= logsInBucket.length / 2 ? 'running' : 'downtime';
+                        bucketedTimeline.push({
+                            state: majorityState,
+                            timestamp: new Date(t)
+                        });
+                    }
+                }
+                timeline = bucketedTimeline;
+            }
+        }
+
         let runTimeSec = 0;
         let downTimeSec = 0;
         let oee = 0, availability = 0, performance = 0, quality = 0;

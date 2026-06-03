@@ -4,7 +4,7 @@ const Digit = ({ digit }) => {
     return (
         <div className="relative inline-block h-[1.1em] overflow-hidden tabular-nums leading-[1.1em] min-w-[0.6em] text-center">
             <AnimatePresence mode="popLayout">
-                <motion.div
+                <motion.span
                     key={digit}
                     initial={{ y: "100%", opacity: 0 }}
                     animate={{ y: "0%", opacity: 1 }}
@@ -15,9 +15,10 @@ const Digit = ({ digit }) => {
                         damping: 25,
                         opacity: { duration: 0.1 }
                     }}
+                    style={{ display: 'inline-block' }}
                 >
                     {digit}
-                </motion.div>
+                </motion.span>
             </AnimatePresence>
         </div>
     );
