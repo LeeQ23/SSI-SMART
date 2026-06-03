@@ -281,7 +281,7 @@ const Analytics = () => {
                             <div className="flex-1 min-h-[300px]">
                                 <StatusTimelineChart
                                     timeline={data.timeline}
-                                    height="100%"
+                                    height={300}
                                 />
                             </div>
                         </motion.div>
