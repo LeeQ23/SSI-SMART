@@ -5,8 +5,9 @@ const authenticateToken = require('../utils/auth');
 const socketManager = require('../socketManager');
 
 router.post('/edit', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'manager') return res.status(403).json({ error: 'Manager access required' });
+
     const { 
-        password, 
         machine_id, 
         product_id, 
         target_qty, 
@@ -15,10 +16,6 @@ router.post('/edit', authenticateToken, async (req, res) => {
         operator_nim,
         lot_number 
     } = req.body;
-
-    if (password !== 'admin123') {
-        return res.status(401).json({ error: 'Incorrect password' });
-    }
 
     if (!machine_id || !product_id || !target_qty || !shift_name || !operator_name || !operator_nim || !lot_number) {
         return res.status(400).json({ error: 'All fields are required' });

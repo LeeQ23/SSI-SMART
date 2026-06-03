@@ -5,6 +5,8 @@ const cors = require('cors');
 const config = require('./config');
 const socketManager = require('./socketManager');
 const settingsManager = require('./settingsManager');
+const rateLimit = require('express-rate-limit');
+const { syncAllMachineStates } = require('./stateManager');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,11 +14,22 @@ const server = http.createServer(app);
 // Initialize Socket.io
 socketManager.init(server);
 
-app.use(cors());
+// Let frontend run on 3000 or same origin
+app.use(cors({ origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://YOUR_SERVER_IP:3000'] }));
 app.use(express.json());
 
-// Load dynamic settings from database on startup
+// Load dynamic settings and state from database on startup
 settingsManager.loadSettings();
+syncAllMachineStates();
+
+// Rate limiting for auth and hardware endpoints
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000 // limit each IP to 1000 requests per windowMs
+});
+app.use('/api/login', limiter);
+app.use('/api/signal', limiter);
+app.use('/api/machine-status', limiter);
 
 // Import Routes
 const authRoutes = require('./routes/auth');

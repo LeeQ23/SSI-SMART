@@ -3,6 +3,8 @@ const router = express.Router();
 const pool = require('../database');
 const config = require('../config');
 const authenticateToken = require('../utils/auth');
+const settingsManager = require('../settingsManager');
+const { calculateSessionStats } = require('../services/statsService');
 
 router.get('/', authenticateToken, async (req, res) => {
     const { start, end } = req.query;
@@ -31,7 +33,6 @@ router.get('/', authenticateToken, async (req, res) => {
         const good = Number(eventRows.find(r => r.signal_type === 'good')?.count || 0);
         const ng = Number(eventRows.find(r => r.signal_type === 'ng')?.count || 0);
 
-        // 2. Get Machine State Logs
         let stateQuery = 'SELECT state, timestamp FROM machine_logs WHERE timestamp BETWEEN ? AND ?';
         let stateParams = [start, end];
         if (machine_id) {
@@ -41,32 +42,46 @@ router.get('/', authenticateToken, async (req, res) => {
         stateQuery += ' ORDER BY timestamp ASC';
         const [stateLogs] = await pool.query(stateQuery, stateParams);
 
-        let runTimeSec = 0;
-        let downTimeSec = 0;
         let timeline = stateLogs.map(l => ({
             state: l.state,
             timestamp: l.timestamp
         }));
 
-        // Calculate durations
-        if (stateLogs.length > 0) {
-            for (let i = 0; i < stateLogs.length - 1; i++) {
-                const s = new Date(stateLogs[i].timestamp);
-                const e = new Date(stateLogs[i + 1].timestamp);
-                const duration = (e - s) / 1000;
-                if (stateLogs[i].state === 'running') runTimeSec += duration;
-                else downTimeSec += duration;
+        let runTimeSec = 0;
+        let downTimeSec = 0;
+        let oee = 0, availability = 0, performance = 0, quality = 0;
+
+        // If specific machine selected, use standard statsService logic
+        if (machine_id) {
+            const stats = await calculateSessionStats(machine_id, start, end);
+            runTimeSec = stats.runningTime;
+            downTimeSec = stats.downtime;
+            oee = stats.oee;
+            availability = stats.availability;
+            performance = stats.performance;
+            quality = stats.quality;
+        } else {
+            // Global calculation across all machines
+            if (timeline.length > 0) {
+                for (let i = 0; i < timeline.length - 1; i++) {
+                    const s = new Date(stateLogs[i].timestamp);
+                    const e = new Date(stateLogs[i + 1].timestamp);
+                    const duration = (e - s) / 1000;
+                    if (stateLogs[i].state === 'running') runTimeSec += duration;
+                    else downTimeSec += duration;
+                }
             }
+            const totalTime = runTimeSec + downTimeSec;
+            const totalParts = good + ng;
+            const idealCycleTime = settingsManager.getSetting('IDEAL_CYCLE_TIME') || config.IDEAL_CYCLE_TIME;
+            const availCalc = totalTime > 0 ? runTimeSec / totalTime : 0;
+            const perfCalc = runTimeSec > 0 ? (totalParts * idealCycleTime) / runTimeSec : 0;
+            const qualCalc = totalParts > 0 ? good / totalParts : 0;
+            oee = (Math.min(availCalc * perfCalc * qualCalc, 1) * 100).toFixed(1);
+            availability = (availCalc * 100).toFixed(1);
+            performance = (perfCalc * 100).toFixed(1);
+            quality = (qualCalc * 100).toFixed(1);
         }
-
-        const totalTime = runTimeSec + downTimeSec;
-        const totalParts = good + ng;
-
-        // Correct OEE calculation
-        const availability = totalTime > 0 ? runTimeSec / totalTime : 0;
-        const performance = runTimeSec > 0 ? (totalParts * config.IDEAL_CYCLE_TIME) / runTimeSec : 0;
-        const quality = totalParts > 0 ? good / totalParts : 0;
-        const oee = availability * performance * quality;
 
         // 3. Get Production Event Logs (for tiny dots in timeline)
         let eventLogQuery = 'SELECT signal_type, timestamp FROM production_events WHERE timestamp BETWEEN ? AND ?';
@@ -91,17 +106,17 @@ router.get('/', authenticateToken, async (req, res) => {
             downtimeLogQuery += ' AND d.machine_id = ?';
             downtimeLogParams.push(machine_id);
         }
-        downtimeLogQuery += ' ORDER BY d.start_time DESC';
+        downtimeLogQuery += ' ORDER BY d.start_time DESC LIMIT 100';
         const [downtimeEvents] = await pool.query(downtimeLogQuery, downtimeLogParams);
 
         res.json({
             metrics: {
                 good,
                 ng,
-                oee: (oee * 100).toFixed(1),
-                availability: (availability * 100).toFixed(1),
-                performance: (performance * 100).toFixed(1),
-                quality: (quality * 100).toFixed(1),
+                oee,
+                availability,
+                performance,
+                quality,
                 runTime: runTimeSec,
                 downTime: downTimeSec
             },

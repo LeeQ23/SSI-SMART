@@ -6,7 +6,7 @@ module.exports = {
     init: (httpServer) => {
         io = new Server(httpServer, {
             cors: {
-                origin: "*", // Allow all for dev, restrict in prod
+                origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://YOUR_SERVER_IP:3000'],
                 methods: ["GET", "POST"]
             }
         });

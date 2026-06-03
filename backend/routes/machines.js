@@ -20,6 +20,9 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // 1. Signal Endpoint (From IR Sensors or Relay Contacts)
 router.post('/signal', async (req, res) => {
+    const apiKey = req.headers['x-api-key'];
+    if (apiKey !== config.FIRMWARE_API_KEY) return res.sendStatus(401);
+
     const { type, machine_id = 1 } = req.body; 
 
     if (!type || (type !== 'good' && type !== 'ng')) {
@@ -37,11 +40,13 @@ router.post('/signal', async (req, res) => {
 
         // Update in-memory count for dashboard efficiency
         const mState = initMachineState(machine_id);
+        // Calculate timeSinceSignal BEFORE updating lastSignalTime
+        const timeSinceSignal = Date.now() - mState.lastSignalTime;
+        
         mState.lastSignalTime = Date.now();
         if (type === 'good') mState.good++;
         else mState.ng++;
 
-        const timeSinceSignal = Date.now() - mState.lastSignalTime;
         const currentThreshold = settingsManager.getSetting('CURRENT_THRESHOLD') || config.CURRENT_THRESHOLD;
         const isRunningTarget = (mState.current > currentThreshold) || (timeSinceSignal <= 60000);
         const newState = isRunningTarget ? 'running' : 'downtime';
@@ -64,6 +69,9 @@ router.post('/signal', async (req, res) => {
 
 // 2. Machine Status Endpoint (From PZEM)
 router.post('/machine-status', async (req, res) => {
+    const apiKey = req.headers['x-api-key'];
+    if (apiKey !== config.FIRMWARE_API_KEY) return res.sendStatus(401);
+
     const { current, machine_id = 1 } = req.body;
 
     if (current === undefined) return res.sendStatus(400);

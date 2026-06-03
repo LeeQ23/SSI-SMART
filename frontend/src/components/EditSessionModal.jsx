@@ -3,8 +3,6 @@ import axios from 'axios';
 import { Settings, X, Save, ShieldCheck, AlertCircle } from 'lucide-react';
 
 const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCaptured }) => {
-    const [step, setStep] = useState('password'); // 'password' | 'form'
-    const [password, setPassword] = useState('');
     const [formData, setFormData] = useState({
         product_id: '',
         lot_number: '',
@@ -18,8 +16,6 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
 
     useEffect(() => {
         if (isOpen) {
-            setStep('password');
-            setPassword('');
             setError(null);
             if (currentData) {
                 setFormData({
@@ -33,16 +29,6 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
             }
         }
     }, [isOpen, currentData]);
-
-    const handlePasswordSubmit = (e) => {
-        e.preventDefault();
-        if (password === 'admin123') {
-            setStep('form');
-            setError(null);
-        } else {
-            setError('Incorrect password');
-        }
-    };
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
@@ -58,7 +44,6 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
 
         try {
             await axios.post('/api/session/edit', {
-                password,
                 machine_id: machineId,
                 ...formData
             });
@@ -90,45 +75,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                     <h2 className="text-xl font-bold">Update Parameters</h2>
                 </div>
 
-                {step === 'password' ? (
-                    <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                        <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg flex items-start gap-3 mb-4">
-                            <ShieldCheck className="text-amber-500 mt-0.5" size={18} />
-                            <p className="text-xs text-amber-200/80 leading-relaxed">
-                                Updating active parameters requires technician authorization. Please enter the administration password to proceed.
-                            </p>
-                        </div>
-                        
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
-                                Administration Password
-                            </label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Enter password..."
-                                autoFocus
-                                className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-accent transition-all"
-                            />
-                        </div>
-
-                        {error && (
-                            <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-                                <AlertCircle size={16} />
-                                {error}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            className="w-full bg-accent hover:bg-accent/80 text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98]"
-                        >
-                            UNLOCk PARAMETERS
-                        </button>
-                    </form>
-                ) : (
-                    <form onSubmit={handleFormSubmit} className="space-y-4">
+                <form onSubmit={handleFormSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Product ID</label>
@@ -207,8 +154,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                             <Save size={18} />
                             {loading ? 'UPDATING...' : 'UPDATE PARAMETERS'}
                         </button>
-                    </form>
-                )}
+                </form>
             </div>
         </div>
     );

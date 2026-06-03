@@ -4,7 +4,7 @@ const pool = require('../database');
 const authenticateToken = require('../utils/auth');
 const socketManager = require('../socketManager');
 
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     const { id, operator_name, operator_nim, product_id, inspection_type, criteria, start_time, end_time, total_ok, total_ng, status } = req.body;
     
     try {

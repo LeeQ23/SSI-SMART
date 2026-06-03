@@ -1,3 +1,6 @@
+const pool = require('./database');
+const { getShift } = require('./utils/shift');
+
 // In-memory state for real-time calculation (persisted to DB periodically)
 let machinesState = {};
 
@@ -25,8 +28,33 @@ const getAllMachineStates = () => {
     return machinesState;
 };
 
+const syncAllMachineStates = async () => {
+    try {
+        const currentShift = await getShift();
+        const [rows] = await pool.query(`
+            SELECT 
+                machine_id,
+                COUNT(CASE WHEN signal_type = 'good' THEN 1 END) as good,
+                COUNT(CASE WHEN signal_type = 'ng' THEN 1 END) as ng
+            FROM production_events
+            WHERE timestamp >= ?
+            GROUP BY machine_id
+        `, [currentShift.start]);
+
+        rows.forEach(row => {
+            const mState = initMachineState(row.machine_id);
+            mState.good = row.good;
+            mState.ng = row.ng;
+        });
+        console.log("State Manager: Synced production counts from database.");
+    } catch (e) {
+        console.error("State Manager: Failed to sync counts.", e);
+    }
+};
+
 module.exports = {
     initMachineState,
     getMachineState,
-    getAllMachineStates
+    getAllMachineStates,
+    syncAllMachineStates
 };

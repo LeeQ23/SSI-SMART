@@ -47,7 +47,8 @@ router.post('/users', authenticateToken, async (req, res) => {
 });
 
 // Seed Endpoint (for demo)
-router.post('/seed', async (req, res) => {
+router.post('/seed', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'manager') return res.sendStatus(403);
     const hashedPassword = await bcrypt.hash('pass123', 10);
     await pool.query('INSERT IGNORE INTO users (username, password, role) VALUES (?, ?, ?)', ['admin', hashedPassword, 'manager']);
     await pool.query('INSERT IGNORE INTO users (username, password, role) VALUES (?, ?, ?)', ['op1', hashedPassword, 'operator']);

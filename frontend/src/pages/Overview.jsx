@@ -66,7 +66,7 @@ const Overview = () => {
             socket.close();
             clearInterval(retryInterval);
         };
-    }, [error]);
+    }, []);
 
     if (loading && machines.length === 0) return <LogoLoader />;
     // Removed early error return

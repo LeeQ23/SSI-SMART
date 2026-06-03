@@ -13,6 +13,7 @@ const Layout = ({ children }) => {
     const { t } = useTranslation();
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isDowntimeModalOpen, setIsDowntimeModalOpen] = useState(false);
+    const [hasGlobalDowntime, setHasGlobalDowntime] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -53,6 +54,21 @@ const Layout = ({ children }) => {
             document.removeEventListener('fullscreenchange', handleFullscreenChange);
         };
     }, [user, navigate]);
+
+    useEffect(() => {
+        const socket = window.io ? window.io() : null; // Use existing global socket if any
+        if (!socket) return;
+        
+        socket.on('machine_update', (update) => {
+            if (update.state === 'downtime') {
+                setHasGlobalDowntime(true);
+            }
+        });
+        
+        return () => {
+            if (socket) socket.off('machine_update');
+        };
+    }, []);
 
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
@@ -169,22 +185,24 @@ const Layout = ({ children }) => {
                 </div>
 
                 {/* Running Warning Text Marquee */}
-                <div className="glass-panel py-2 px-4 bg-red-500/10 border-red-500/20 overflow-hidden flex items-center shrink-0">
-                    <div className="animate-marquee inline-block">
-                        <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4">
-                            {t('common.abnormality_warning')}
-                        </span>
-                        <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
-                            {t('common.abnormality_warning')}
-                        </span>
-                        <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
-                            {t('common.abnormality_warning')}
-                        </span>
-                        <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
-                            {t('common.abnormality_warning')}
-                        </span>
+                {hasGlobalDowntime && (
+                    <div className="glass-panel py-2 px-4 bg-red-500/10 border-red-500/20 overflow-hidden flex items-center shrink-0">
+                        <div className="animate-marquee inline-block">
+                            <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4">
+                                {t('common.abnormality_warning')}
+                            </span>
+                            <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
+                                {t('common.abnormality_warning')}
+                            </span>
+                            <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
+                                {t('common.abnormality_warning')}
+                            </span>
+                            <span className="text-sm font-bold text-red-400 uppercase tracking-[0.2em] px-4" aria-hidden="true">
+                                {t('common.abnormality_warning')}
+                            </span>
+                        </div>
                     </div>
-                </div>
+                )}
             </main>
 
             <DowntimeModal

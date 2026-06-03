@@ -39,6 +39,7 @@ router.get('/', authenticateToken, async (req, res) => {
             shift: currentShift.name,
             operator: session ? session.operator_name : '-',
             operator_nim: session ? session.operator_nim : '-',
+            lot_number: session ? session.lot_number : '-',
             machine_id: machine_id,
             good: stats.good,
             ng: stats.ng,

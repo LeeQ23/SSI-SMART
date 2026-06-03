@@ -11,4 +11,11 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
+pool.on('error', (err) => {
+  console.error('MySQL Pool Error:', err);
+  if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+    console.error('Database connection was closed or lost. The pool will attempt to automatically reconnect.');
+  }
+});
+
 module.exports = pool;

@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require('../database');
 const authenticateToken = require('../utils/auth');
 
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
     try {
         const [shifts] = await pool.query('SELECT * FROM shifts');
         res.json(shifts);
