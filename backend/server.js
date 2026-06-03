@@ -39,31 +39,31 @@ app.use('/api/machines', machineRoutes);
 app.use('/api/session', sessionRoutes);
 app.use('/api/downtime', downtimeRoutes);
 // downtimeRoutes also handles /api/downtimes via GET /
-app.get('/api/downtimes', (req, res) => {
+app.get('/api/downtimes', (req, res, next) => {
     // Redirect logic to /api/downtime
     req.url = '/';
-    app.handle(req, res, downtimeRoutes);
+    downtimeRoutes(req, res, next);
 });
 app.use('/api/inspections', inspectionRoutes);
 app.use('/api/shifts', shiftRoutes);
 app.use('/api/settings', settingsRoutes);
 
 // --- Legacy Route Bindings (To prevent breaking firmware) ---
-app.post('/api/signal', (req, res) => {
+app.post('/api/signal', (req, res, next) => {
     req.url = '/signal';
-    app.handle(req, res, machineRoutes);
+    machineRoutes(req, res, next);
 });
-app.post('/api/machine-status', (req, res) => {
+app.post('/api/machine-status', (req, res, next) => {
     req.url = '/machine-status';
-    app.handle(req, res, machineRoutes);
+    machineRoutes(req, res, next);
 });
-app.post('/api/current', (req, res) => {
+app.post('/api/current', (req, res, next) => {
     req.url = '/machine-status';
-    app.handle(req, res, machineRoutes);
+    machineRoutes(req, res, next);
 });
-app.get('/api/history', (req, res) => {
+app.get('/api/history', (req, res, next) => {
     req.url = '/history';
-    app.handle(req, res, analyticsRoutes);
+    analyticsRoutes(req, res, next);
 });
 
 // Initialize Background Jobs
