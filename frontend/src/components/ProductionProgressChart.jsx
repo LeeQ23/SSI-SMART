@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-    LineChart,
-    Line,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -10,11 +8,77 @@ import {
     Legend,
     ResponsiveContainer,
     Area,
+    Line,
     ComposedChart
 } from 'recharts';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+
+// Custom Tooltip to show Ahead/Behind status
+const CustomTooltip = ({ active, payload, label, targetTotal }) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        const timeStr = new Date(label).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const good = data.good || 0;
+        const ng = data.ng || 0;
+        const target = Math.round(data.targetLine || 0);
+        
+        let statusColor = "text-gray-400";
+        let statusText = "On Target";
+        let StatusIcon = Minus;
+        
+        if (data.good !== null && data.targetLine !== undefined) {
+            const diff = good - target;
+            if (diff > 0) {
+                statusColor = "text-green-400";
+                statusText = `Ahead by +${diff}`;
+                StatusIcon = TrendingUp;
+            } else if (diff < 0) {
+                statusColor = "text-red-400";
+                statusText = `Behind by ${diff}`;
+                StatusIcon = TrendingDown;
+            }
+        }
+
+        return (
+            <div className="bg-gray-900/95 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-2xl min-w-[200px]">
+                <p className="text-gray-300 font-bold mb-3 border-b border-white/10 pb-2">{timeStr}</p>
+                
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">Target (Ideal):</span>
+                        <span className="text-blue-400 font-bold">{target}</span>
+                    </div>
+                    {data.good !== null && (
+                        <>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-400 text-sm">Actual Good:</span>
+                                <span className="text-green-400 font-bold">{good}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-400 text-sm">Actual NG:</span>
+                                <span className="text-red-400 font-bold">{ng}</span>
+                            </div>
+                            
+                            <div className={`mt-3 pt-2 border-t border-white/5 flex items-center justify-between ${statusColor}`}>
+                                <span className="text-xs uppercase tracking-wider font-bold">Status</span>
+                                <div className="flex items-center gap-1 font-bold">
+                                    <StatusIcon size={14} />
+                                    <span>{statusText}</span>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
 
 const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftName = 'Morning' }) => {
     const { t } = useTranslation();
+    
     const chartData = useMemo(() => {
         let startHour = 7;
         let endHour = 17;
@@ -30,48 +94,56 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
 
         const shiftStartTs = startOfToday.getTime() + (startHour * 3600 * 1000);
         const shiftEndTs = startOfToday.getTime() + (endHour * 3600 * 1000);
+        const totalDuration = shiftEndTs - shiftStartTs;
 
-        // Filter and sort events within this shift
+        // Filter events for this shift
         const shiftEvents = events
-            .map(e => ({ ...e, ts: new Date(e.timestamp).getTime() }))
+            .map(e => ({ type: e.signal_type, ts: new Date(e.timestamp).getTime() }))
             .filter(e => e.ts >= shiftStartTs && e.ts <= shiftEndTs)
             .sort((a, b) => a.ts - b.ts);
 
-        // Generate data points
         const points = [];
+        const BUCKET_SIZE_MS = 5 * 60 * 1000; // 5-minute bucketing for performance
 
-        // 1. Shift Start
-        points.push({ ts: shiftStartTs, good: 0, ng: 0, targetLine: 0 });
-
-        // 2. Event points
         let cumGood = 0;
         let cumNG = 0;
-        shiftEvents.forEach(e => {
-            if (e.signal_type === 'good') cumGood++;
-            if (e.signal_type === 'ng') cumNG++;
+        let eventIndex = 0;
+        
+        const endTimeToRender = Math.min(now.getTime(), shiftEndTs);
 
-            // Only add if not in future
-            if (e.ts <= now.getTime()) {
-                points.push({
-                    ts: e.ts,
-                    good: cumGood,
-                    ng: cumNG,
-                    targetLine: (target / (shiftEndTs - shiftStartTs)) * (e.ts - shiftStartTs)
-                });
+        // Generate data points by buckets
+        for (let bucketTime = shiftStartTs; bucketTime <= endTimeToRender; bucketTime += BUCKET_SIZE_MS) {
+            // Add all events that happened before this bucket time
+            while (eventIndex < shiftEvents.length && shiftEvents[eventIndex].ts <= bucketTime) {
+                if (shiftEvents[eventIndex].type === 'good') cumGood++;
+                if (shiftEvents[eventIndex].type === 'ng') cumNG++;
+                eventIndex++;
             }
-        });
 
-        // 3. Current time point (tracker end)
+            points.push({
+                ts: bucketTime,
+                good: cumGood,
+                ng: cumNG,
+                targetLine: (target / totalDuration) * (bucketTime - shiftStartTs)
+            });
+        }
+
+        // Always add the current exact moment if we are mid-shift to show live edge
         if (now.getTime() > shiftStartTs && now.getTime() < shiftEndTs) {
+            while (eventIndex < shiftEvents.length && shiftEvents[eventIndex].ts <= now.getTime()) {
+                if (shiftEvents[eventIndex].type === 'good') cumGood++;
+                if (shiftEvents[eventIndex].type === 'ng') cumNG++;
+                eventIndex++;
+            }
             points.push({
                 ts: now.getTime(),
                 good: cumGood,
                 ng: cumNG,
-                targetLine: (target / (shiftEndTs - shiftStartTs)) * (now.getTime() - shiftStartTs)
+                targetLine: (target / totalDuration) * (now.getTime() - shiftStartTs)
             });
         }
 
-        // 4. Shift End Target Line (to ensure ideal path spans the full width)
+        // Add the final target point so the ideal line stretches all the way to the end
         points.push({
             ts: shiftEndTs,
             good: null,
@@ -79,12 +151,17 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
             targetLine: target
         });
 
-        // Add display time and percentage
-        return points.sort((a, b) => a.ts - b.ts).map(p => ({
-            ...p,
-            timeDisplay: new Date(p.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            percent: p.good !== null ? ((p.good / target) * 100).toFixed(1) : null
-        }));
+        // Ensure sorted and unique times
+        const uniquePoints = [];
+        const seen = new Set();
+        points.sort((a, b) => a.ts - b.ts).forEach(p => {
+            if (!seen.has(p.ts)) {
+                seen.add(p.ts);
+                uniquePoints.push(p);
+            }
+        });
+
+        return uniquePoints;
     }, [events, target, shiftName]);
 
     // Calculate ticks for every hour
@@ -109,8 +186,21 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
     return (
         <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                    {/* Visual Definitions for Glowing Gradients */}
+                    <defs>
+                        <linearGradient id="colorGood" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorNG" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
+                            <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                        </linearGradient>
+                    </defs>
+
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    
                     <XAxis
                         dataKey="ts"
                         type="number"
@@ -118,72 +208,68 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
                         ticks={ticks}
                         tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                         stroke="#94a3b8"
-                        fontSize={13}
+                        fontSize={12}
                         tickLine={false}
                         axisLine={false}
-                        label={{ value: t('dashboard.time'), position: 'insideBottomRight', offset: -10, fill: '#94a3b8', fontSize: 11, fontWeight: 'bold' }}
+                        tickMargin={10}
                     />
+                    
                     <YAxis
-                        yAxisId="left"
                         stroke="#94a3b8"
-                        fontSize={13}
+                        fontSize={12}
                         tickLine={false}
                         axisLine={false}
-                        domain={[0, target]}
-                        label={{ value: t('dashboard.target'), angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 11, fontWeight: 'bold', offset: 15 }}
+                        domain={[0, Math.max(target, chartData[chartData.length-1]?.good || 0)]}
+                        tickMargin={10}
                     />
-                    <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        stroke="#94a3b8"
-                        fontSize={13}
-                        tickLine={false}
-                        axisLine={false}
-                        domain={[0, 100]}
-                        label={{ value: t('dashboard.percent'), angle: 90, position: 'insideRight', fill: '#94a3b8', fontSize: 11, fontWeight: 'bold', offset: 15 }}
-                    />
-                    <Tooltip
-                        contentStyle={{ backgroundColor: '#001F3F', border: '1px solid #0074D920', borderRadius: '8px' }}
-                        itemStyle={{ fontSize: '12px' }}
-                        labelFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                        cursor={{ stroke: '#0074D9', strokeWidth: 1, strokeDasharray: '5 5' }}
-                    />
-                    <Legend verticalAlign="top" height={36} />
 
-                    <Area
-                        yAxisId="left"
-                        type="monotone"
+                    <Tooltip content={<CustomTooltip targetTotal={target} />} />
+                    
+                    <Legend 
+                        verticalAlign="top" 
+                        height={36} 
+                        iconType="circle"
+                        wrapperStyle={{ fontSize: '12px', color: '#cbd5e1' }}
+                    />
+
+                    {/* Ideal Target Line (Dashed) */}
+                    <Line
+                        type="linear"
                         dataKey="targetLine"
-                        stroke="none"
-                        fill="#0074D905"
-                        name="Ideal Path"
-                        connectNulls={true}
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={false}
+                        name="Target Path"
                         isAnimationActive={false}
                     />
 
-                    <Line
-                        yAxisId="left"
-                        type="monotone"
+                    {/* Actual Good Production (Glowing Area) */}
+                    <Area
+                        type="stepAfter"
                         dataKey="good"
-                        stroke="#22c55e"
+                        stroke="#10b981"
                         strokeWidth={3}
-                        dot={false}
-                        activeDot={{ r: 4 }}
-                        name="Good"
+                        fillOpacity={1}
+                        fill="url(#colorGood)"
+                        name="Good Parts"
                         connectNulls={false}
-                        isAnimationActive={false}
+                        isAnimationActive={true}
+                        animationDuration={1000}
                     />
-                    <Line
-                        yAxisId="left"
-                        type="monotone"
+
+                    {/* NG Production (Glowing Area) */}
+                    <Area
+                        type="stepAfter"
                         dataKey="ng"
                         stroke="#ef4444"
                         strokeWidth={2}
-                        dot={false}
-                        activeDot={{ r: 3 }}
-                        name="NG"
+                        fillOpacity={1}
+                        fill="url(#colorNG)"
+                        name="NG Parts"
                         connectNulls={false}
-                        isAnimationActive={false}
+                        isAnimationActive={true}
+                        animationDuration={1000}
                     />
                 </ComposedChart>
             </ResponsiveContainer>
