@@ -368,7 +368,7 @@ const Dashboard = () => {
                 onClose={() => setIsEditModalOpen(false)}
                 currentData={data}
                 machineId={machineId || 1}
-                onSessionCaptured={fetchData}
+                onSessionCaptured={refetch}
             />
         </div>
     );
