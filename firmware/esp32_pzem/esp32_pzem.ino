@@ -66,6 +66,7 @@ void sendDataToServer(float current) {
     HTTPClient http;
     http.begin(serverUrl);
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("x-api-key", "YOUR_API_KEY"); // Added for security
 
     // JSON Payload
     // Format: {"current": 1.23}

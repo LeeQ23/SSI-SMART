@@ -126,6 +126,7 @@ bool sendSignal(String type) {
   HTTPClient http;
   http.begin(serverUrl);
   http.addHeader("Content-Type", "application/json");
+  http.addHeader("x-api-key", "YOUR_API_KEY"); // Added for security
 
   // Payload: {"type": "good", "machine_id": 7}
   String jsonPayload = "{\"type\": \"" + type + "\", \"machine_id\": " + String(machineId) + "}";
