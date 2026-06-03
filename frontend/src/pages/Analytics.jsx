@@ -16,13 +16,15 @@ const Analytics = () => {
     const [end, setEnd] = useState('');
     const [selectedMachine, setSelectedMachine] = useState('');
     
+    const [page, setPage] = useState(1);
+    
     // We only want to fetch when the user clicks "Analyze"
     const [shouldFetch, setShouldFetch] = useState(false);
 
     const { data, isLoading: loading, error, refetch } = useQuery({
-        queryKey: ['analytics', start, end, selectedMachine],
+        queryKey: ['analytics', start, end, selectedMachine, page],
         queryFn: async () => {
-            const url = `/api/analytics?start=${start}&end=${end}${selectedMachine ? `&machine_id=${selectedMachine}` : ''}`;
+            const url = `/api/analytics?start=${start}&end=${end}${selectedMachine ? `&machine_id=${selectedMachine}` : ''}&page=${page}&limit=20`;
             const res = await axios.get(url);
             return res.data;
         },
@@ -63,9 +65,8 @@ const Analytics = () => {
     const handleAnalyze = (e) => {
         e.preventDefault();
         if (start && end) {
+            setPage(1); // Reset to page 1 on new search
             setShouldFetch(true);
-            // If already enabled but parameters changed, it will fetch automatically due to queryKey change.
-            // But if it's the same key and we just want to force a refresh, we can call refetch()
             setTimeout(() => refetch(), 0);
         }
     };
@@ -233,6 +234,31 @@ const Analytics = () => {
                                 </tbody>
                             </table>
                         </div>
+                        
+                        {/* Pagination Controls */}
+                        {data.pagination && data.pagination.totalPages > 1 && (
+                            <div className="p-4 border-t border-white/10 flex justify-between items-center bg-white/5">
+                                <span className="text-sm text-gray-400">
+                                    Showing page {data.pagination.currentPage} of {data.pagination.totalPages}
+                                </span>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                                        disabled={page === 1}
+                                        className="px-4 py-1.5 rounded bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors"
+                                    >
+                                        Previous
+                                    </button>
+                                    <button
+                                        onClick={() => setPage(p => Math.min(data.pagination.totalPages, p + 1))}
+                                        disabled={page === data.pagination.totalPages}
+                                        className="px-4 py-1.5 rounded bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </motion.div>
                 </motion.div>
             )}

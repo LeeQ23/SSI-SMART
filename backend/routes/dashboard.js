@@ -26,6 +26,34 @@ router.get('/', authenticateToken, async (req, res) => {
             ORDER BY timestamp ASC
         `, [machine_id, currentShift.start]);
 
+        // Bucket events into 5-minute intervals to reduce payload
+        const BUCKET_SIZE_MS = 5 * 60 * 1000;
+        let bucketedEvents = [];
+        
+        if (eventLogs.length > 0) {
+            const startOfToday = new Date(now);
+            startOfToday.setHours(0, 0, 0, 0);
+            const graphStartTs = startOfToday.getTime();
+            const endTimeToRender = now.getTime();
+            
+            let cumGood = 0;
+            let cumNG = 0;
+            let eventIndex = 0;
+            
+            for (let bucketTime = graphStartTs; bucketTime <= endTimeToRender; bucketTime += BUCKET_SIZE_MS) {
+                while (eventIndex < eventLogs.length && new Date(eventLogs[eventIndex].timestamp).getTime() <= bucketTime) {
+                    if (eventLogs[eventIndex].signal_type === 'good') cumGood++;
+                    else cumNG++;
+                    eventIndex++;
+                }
+                bucketedEvents.push({
+                    time: bucketTime,
+                    good: cumGood,
+                    ng: cumNG
+                });
+            }
+        }
+
         const [stateLogs] = await pool.query(`
             SELECT state, timestamp 
             FROM machine_logs 
@@ -53,7 +81,7 @@ router.get('/', authenticateToken, async (req, res) => {
             performance: stats.performance,
             quality: stats.quality,
             timeline: stateLogs,
-            productionEvents: eventLogs,
+            productionEvents: bucketedEvents,
             session_start: session ? session.start_time : currentShift.start
         });
     } catch (e) {

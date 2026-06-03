@@ -99,54 +99,31 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
         const shiftEndTs = startOfToday.getTime() + (endHour * 3600 * 1000);
         const totalDuration = shiftEndTs - shiftStartTs;
 
-        // Filter events for this day
-        const shiftEvents = events
-            .map(e => ({ type: e.signal_type, ts: new Date(e.timestamp).getTime() }))
-            .filter(e => e.ts >= graphStartTs && e.ts <= graphEndTs)
-            .sort((a, b) => a.ts - b.ts);
-
         const points = [];
-        const BUCKET_SIZE_MS = 5 * 60 * 1000; // 5-minute bucketing for performance
+        
+        // Ensure events is an array and has items
+        if (Array.isArray(events)) {
+            events.forEach(bucket => {
+                const bucketTime = bucket.time;
+                let targetAtBucket = null;
+                
+                if (bucketTime >= shiftStartTs && bucketTime <= shiftEndTs) {
+                    const fraction = (bucketTime - shiftStartTs) / totalDuration;
+                    targetAtBucket = fraction * target;
+                } else if (bucketTime > shiftEndTs) {
+                    targetAtBucket = target;
+                } else {
+                    targetAtBucket = 0;
+                }
 
-        let cumGood = 0;
-        let cumNG = 0;
-        let eventIndex = 0;
-        const endTimeToRender = Math.min(now.getTime(), graphEndTs);
-
-        // Generate data points by buckets across the whole 24 hours
-        for (let bucketTime = graphStartTs; bucketTime <= endTimeToRender; bucketTime += BUCKET_SIZE_MS) {
-            // Add all events that happened before this bucket time
-            while (eventIndex < shiftEvents.length && shiftEvents[eventIndex].ts <= bucketTime) {
-                if (shiftEvents[eventIndex].type === 'good') cumGood++;
-                if (shiftEvents[eventIndex].type === 'ng') cumNG++;
-                eventIndex++;
-            }
-
-            // Calculate target line ONLY if within the shift window
-            let targetLineVal = null;
-            if (bucketTime >= shiftStartTs && bucketTime <= shiftEndTs) {
-                targetLineVal = (target / totalDuration) * (bucketTime - shiftStartTs);
-            } else if (bucketTime > shiftEndTs) {
-                targetLineVal = target;
-            } else {
-                targetLineVal = 0;
-            }
-
-            points.push({
-                ts: bucketTime,
-                good: cumGood,
-                ng: cumNG,
-                targetLine: targetLineVal
+                points.push({
+                    ts: bucketTime,
+                    good: bucket.good,
+                    ng: bucket.ng,
+                    targetLine: targetAtBucket
+                });
             });
         }
-
-        // Add the very start of the day if missed
-        points.push({
-            ts: graphStartTs,
-            good: null,
-            ng: null,
-            targetLine: 0
-        });
 
         // Add the very end of the day to stretch the X-axis across 24h
         points.push({

@@ -8,6 +8,9 @@ const { calculateSessionStats } = require('../services/statsService');
 
 router.get('/', authenticateToken, async (req, res) => {
     const { start, end } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
 
     if (!start || !end) {
         return res.status(400).send('Start and End dates required');
@@ -93,7 +96,8 @@ router.get('/', authenticateToken, async (req, res) => {
         eventLogQuery += ' ORDER BY timestamp ASC';
         const [productionEvents] = await pool.query(eventLogQuery, eventLogParams);
 
-        // 4. Get Downtime Events for this period (Requested by user)
+        // 4. Get Downtime Events for this period with Pagination
+        let downtimeCountQuery = 'SELECT COUNT(*) as total FROM downtimes d WHERE d.start_time BETWEEN ? AND ?';
         let downtimeLogQuery = `
             SELECT d.*, m.code as machine_code, u.username as operator_name
             FROM downtimes d
@@ -102,11 +106,20 @@ router.get('/', authenticateToken, async (req, res) => {
             WHERE d.start_time BETWEEN ? AND ?
         `;
         let downtimeLogParams = [start, end];
+        
         if (machine_id) {
+            downtimeCountQuery += ' AND d.machine_id = ?';
             downtimeLogQuery += ' AND d.machine_id = ?';
             downtimeLogParams.push(machine_id);
         }
-        downtimeLogQuery += ' ORDER BY d.start_time DESC LIMIT 100';
+
+        const [countResult] = await pool.query(downtimeCountQuery, downtimeLogParams);
+        const totalEvents = countResult[0].total;
+        const totalPages = Math.ceil(totalEvents / limit);
+
+        downtimeLogQuery += ' ORDER BY d.start_time DESC LIMIT ? OFFSET ?';
+        downtimeLogParams.push(limit, offset);
+        
         const [downtimeEvents] = await pool.query(downtimeLogQuery, downtimeLogParams);
 
         res.json({
@@ -122,7 +135,13 @@ router.get('/', authenticateToken, async (req, res) => {
             },
             timeline,
             productionEvents,
-            downtimeEvents
+            downtimeEvents,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalEvents,
+                limit
+            }
         });
 
     } catch (e) {
