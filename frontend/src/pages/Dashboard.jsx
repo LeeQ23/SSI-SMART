@@ -359,7 +359,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {error && <ErrorToast message={error.message} onRetry={refetch} />}
+            {error && <ErrorToast message={error.message} />}
 
             <DowntimeModal
                 isOpen={isDowntimeModalOpen}

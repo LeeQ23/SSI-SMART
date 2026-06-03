@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,7 @@ const Overview = () => {
     const [machines, setMachines] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const errorRef = useRef(null);
     const navigate = useNavigate();
     const { t } = useTranslation();
 
@@ -21,9 +22,11 @@ const Overview = () => {
             setMachines(res.data);
             setLoading(false);
             setError(null);
+            errorRef.current = null;
         } catch (err) {
             console.error("Error fetching machines overview", err);
             setError("Sync error");
+            errorRef.current = "Sync error";
             setLoading(false);
         }
     };
@@ -57,7 +60,7 @@ const Overview = () => {
         });
 
         const retryInterval = setInterval(() => {
-            if (error) {
+            if (errorRef.current) {
                 fetchMachines();
             }
         }, 3000);

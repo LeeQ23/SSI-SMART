@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
 import { LayoutDashboard, History, Users, LogOut, Clock, LineChart, LayoutGrid, Maximize, Minimize, AlertTriangle, Settings as SettingsIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import LanguageSwitcher from './LanguageSwitcher';
 import DowntimeModal from './DowntimeModal';
 
@@ -56,17 +57,19 @@ const Layout = ({ children }) => {
     }, [user, navigate]);
 
     useEffect(() => {
-        const socket = window.io ? window.io() : null; // Use existing global socket if any
-        if (!socket) return;
+        const socket = io();
         
         socket.on('machine_update', (update) => {
             if (update.state === 'downtime') {
                 setHasGlobalDowntime(true);
+            } else {
+                // Reset when all machines are running again
+                setHasGlobalDowntime(false);
             }
         });
         
         return () => {
-            if (socket) socket.off('machine_update');
+            socket.disconnect();
         };
     }, []);
 
