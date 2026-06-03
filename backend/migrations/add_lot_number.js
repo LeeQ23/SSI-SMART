@@ -1,17 +1,7 @@
-const mysql = require('mysql2/promise');
-const config = require('../config');
+const pool = require('../database');
 
 async function migrate() {
     console.log("Starting Migration: Adding lot_number to session tables...");
-    const pool = mysql.createPool({
-        host: config.DB_HOST,
-        user: config.DB_USER,
-        password: config.DB_PASSWORD,
-        database: config.DB_NAME,
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0
-    });
 
     try {
         // 1. Add to active_sessions
@@ -39,10 +29,10 @@ async function migrate() {
         }
 
         console.log("Migration COMPLETED successfully!");
+        process.exit(0);
     } catch (err) {
         console.error("Migration ERROR:", err);
-    } finally {
-        await pool.end();
+        process.exit(1);
     }
 }
 
