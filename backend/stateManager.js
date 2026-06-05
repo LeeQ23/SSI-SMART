@@ -3,6 +3,7 @@ const { getShift } = require('./utils/shift');
 
 // In-memory state for real-time calculation (persisted to DB periodically)
 let machinesState = {};
+let activeShiftId = null;
 
 // Helper to initialize machine state if not exists
 const initMachineState = (id) => {
@@ -28,9 +29,22 @@ const getAllMachineStates = () => {
     return machinesState;
 };
 
+const checkAndResetShift = (currentShiftId) => {
+    if (activeShiftId !== null && activeShiftId !== currentShiftId) {
+        for (const id in machinesState) {
+            machinesState[id].good = 0;
+            machinesState[id].ng = 0;
+        }
+        console.log(`State Manager: Shift changed from ${activeShiftId} to ${currentShiftId}. Resetting all in-memory counts to 0.`);
+    }
+    activeShiftId = currentShiftId;
+};
+
 const syncAllMachineStates = async () => {
     try {
         const currentShift = await getShift();
+        checkAndResetShift(currentShift.id);
+        
         const [rows] = await pool.query(`
             SELECT 
                 machine_id,
@@ -56,5 +70,6 @@ module.exports = {
     initMachineState,
     getMachineState,
     getAllMachineStates,
-    syncAllMachineStates
+    syncAllMachineStates,
+    checkAndResetShift
 };

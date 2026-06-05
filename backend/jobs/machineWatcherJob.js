@@ -1,12 +1,21 @@
 const pool = require('../database');
 const config = require('../config');
-const { getAllMachineStates } = require('../stateManager');
+const { getAllMachineStates, checkAndResetShift } = require('../stateManager');
 const socketManager = require('../socketManager');
 const settingsManager = require('../settingsManager');
+const { getShift } = require('../utils/shift');
 
 const initMachineWatcher = () => {
-    setInterval(() => {
+    setInterval(async () => {
         const now = Date.now();
+        
+        try {
+            const currentShift = await getShift();
+            checkAndResetShift(currentShift.id);
+        } catch (e) {
+            console.error("Machine Watcher: Error checking shift", e);
+        }
+
         const machinesState = getAllMachineStates();
         
         for (const [id, mState] of Object.entries(machinesState)) {

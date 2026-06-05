@@ -4,7 +4,7 @@ const pool = require('../database');
 const config = require('../config');
 const authenticateToken = require('../utils/auth');
 const { getShift } = require('../utils/shift');
-const { initMachineState } = require('../stateManager');
+const { initMachineState, checkAndResetShift } = require('../stateManager');
 const socketManager = require('../socketManager');
 const settingsManager = require('../settingsManager');
 
@@ -31,6 +31,7 @@ router.post('/signal', async (req, res) => {
 
     try {
         const shift = await getShift();
+        checkAndResetShift(shift.id);
         await pool.query('INSERT INTO production_events (signal_type, shift_id, machine_id) VALUES (?, ?, ?)', [type, shift.id, machine_id]);
 
         const io = socketManager.getIO();
