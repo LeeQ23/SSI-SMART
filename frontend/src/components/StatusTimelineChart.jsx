@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
     const { t } = useTranslation();
     const [hoveredSegment, setHoveredSegment] = useState(null);
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     const chartData = useMemo(() => {
         if (!timeline || timeline.length === 0) return { segments: [], totalDuration: 0, minTime: 0, maxTime: 0 };
@@ -81,7 +82,13 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
                             key={idx}
                             style={{ width: `${seg.widthPercent}%` }}
                             className={`h-full ${bgColor} ${glowClass} opacity-80 hover:opacity-100 transition-opacity cursor-pointer border-r border-black/20 last:border-0`}
-                            onMouseEnter={() => setHoveredSegment(seg)}
+                            onMouseEnter={(e) => {
+                                setHoveredSegment(seg);
+                                setMousePos({ x: e.clientX, y: e.clientY });
+                            }}
+                            onMouseMove={(e) => {
+                                setMousePos({ x: e.clientX, y: e.clientY });
+                            }}
                             onMouseLeave={() => setHoveredSegment(null)}
                         />
                     );
@@ -104,9 +111,16 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
                 </div>
             </div>
 
-            {/* Floating Glassmorphism Tooltip */}
+            {/* Floating Glassmorphism Tooltip (Viewport Fixed to escape overflow-hidden) */}
             {hoveredSegment && (
-                <div className="absolute top-[-80px] left-1/2 transform -translate-x-1/2 bg-gray-900/95 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-2xl text-sm min-w-[220px] pointer-events-none z-50">
+                <div 
+                    className="fixed bg-gray-900/95 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-2xl text-sm min-w-[220px] pointer-events-none z-[9999]"
+                    style={{
+                        left: `${mousePos.x}px`,
+                        top: `${mousePos.y - 100}px`,
+                        transform: 'translateX(-50%)'
+                    }}
+                >
                     <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
                         <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-xs">
                             {hoveredSegment.state === 'running' ? (
