@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import LanguageSwitcher from './LanguageSwitcher';
 import DowntimeModal from './DowntimeModal';
+import MobileBottomNav from './MobileBottomNav';
+import { ROUTES } from '../config/navigation';
 
 const Layout = ({ children }) => {
     const { user, logout } = useAuth();
@@ -120,25 +122,31 @@ const Layout = ({ children }) => {
             {/* Global Connection Header Bar */}
             <div className={`absolute top-0 left-0 w-full h-[2px] z-50 ${isConnected ? 'bg-success shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-danger animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]'}`} />
 
-            {/* Ultra-Slim Sidebar (Antigravity Style) */}
-            <aside className={`w-20 glass-panel m-4 flex flex-col items-center py-6 shadow-2xl relative z-40 transition-all duration-500 ${isFullscreen ? 'border-accent/30 shadow-[0_0_30px_rgba(0,116,217,0.1)]' : 'border-white/5'}`}>
+            {/* Ultra-Slim Sidebar (Antigravity Style) - Desktop Only */}
+            <aside className={`hidden md:flex w-20 glass-panel m-4 flex-col items-center py-6 shadow-2xl relative z-40 transition-all duration-500 ${isFullscreen ? 'border-accent/30 shadow-[0_0_30px_rgba(0,116,217,0.1)]' : 'border-white/5'}`}>
                 <div className="mb-8 p-1">
                     <img src="/logo.png" alt="SSI Logo" className="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(0,116,217,0.3)]" />
                 </div>
 
                 <nav className="flex-1 flex flex-col items-center gap-3 w-full">
-                    <NavItem to="/" icon={LayoutGrid} label={t('nav.overview')} shortcut="1" />
-                    <NavItem to="/dashboard/1" icon={LayoutDashboard} label={t('nav.detail_view')} shortcut="2" />
+                    {ROUTES.map((route, idx) => {
+                        if (route.isDivider) {
+                            if (!route.rolesAllowed.includes(user?.role || 'operator')) return null;
+                            return <div key={idx} className="w-8 h-[1px] bg-white/10 my-2" />;
+                        }
 
-                    {user?.role === 'manager' && (
-                        <>
-                            <div className="w-8 h-[1px] bg-white/10 my-2" />
-                            <NavItem to="/history" icon={History} label={t('nav.history')} shortcut="3" />
-                            <NavItem to="/analytics" icon={LineChart} label={t('nav.analytics')} shortcut="4" />
-                            <NavItem to="/downtime-history" icon={Clock} label="Downtime History" shortcut="H" />
-                            <NavItem to="/settings" icon={SettingsIcon} label="Settings" shortcut="5" />
-                        </>
-                    )}
+                        if (!route.rolesAllowed.includes(user?.role || 'operator')) return null;
+
+                        return (
+                            <NavItem 
+                                key={idx}
+                                to={route.path} 
+                                icon={route.icon} 
+                                label={t(route.labelKey) !== route.labelKey ? t(route.labelKey) : route.labelKey} 
+                                shortcut={route.shortcut} 
+                            />
+                        );
+                    })}
                 </nav>
 
                 <div className="mt-auto flex flex-col items-center gap-4 w-full px-2">
@@ -204,8 +212,8 @@ const Layout = ({ children }) => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden p-4">
-                <div className="flex-1 glass-panel p-6 overflow-y-auto mb-4">
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden p-4 pb-24 md:pb-4">
+                <div className="flex-1 glass-panel p-6 overflow-y-auto mb-4 custom-scrollbar">
                     {children}
                 </div>
 
@@ -234,6 +242,9 @@ const Layout = ({ children }) => {
                 isOpen={isDowntimeModalOpen}
                 onClose={() => setIsDowntimeModalOpen(false)}
             />
+
+            {/* Mobile Bottom Navigation */}
+            <MobileBottomNav />
         </div>
     );
 };

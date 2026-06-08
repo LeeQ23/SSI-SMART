@@ -354,11 +354,15 @@ const Dashboard = () => {
                             <span className="text-red-400">● NG</span>
                         </div>
                     </div>
-                    <ProductionProgressChart
-                        events={data.productionEvents}
-                        target={data.target}
-                        shiftName={data.shift}
-                    />
+                    <div className="overflow-x-auto custom-scrollbar pb-4">
+                        <div className="min-w-[600px]">
+                            <ProductionProgressChart
+                                events={data.productionEvents}
+                                target={data.target}
+                                shiftName={data.shift}
+                            />
+                        </div>
+                    </div>
                     <div className="mt-6 border-t border-white/5" />
                 </div>
 
@@ -371,11 +375,15 @@ const Dashboard = () => {
                             <span className="font-bold uppercase tracking-widest text-[8px]">{data.state}</span>
                         </div>
                     </div>
-                    <StatusTimelineChart
-                        timeline={data.timeline}
-                        productionEvents={data.productionEvents}
-                        height={200}
-                    />
+                    <div className="overflow-x-auto custom-scrollbar pb-4">
+                        <div className="min-w-[600px]">
+                            <StatusTimelineChart
+                                timeline={data.timeline}
+                                productionEvents={data.productionEvents}
+                                height={200}
+                            />
+                        </div>
+                    </div>
                     <div className="space-y-4 mt-8">
                         {/* Run/Down Ratio Visual Bar */}
                         <div className="w-full h-2 bg-white/5 rounded-full flex overflow-hidden">
@@ -406,8 +414,8 @@ const Dashboard = () => {
 
             {error && <ErrorToast message={error.message} />}
 
-            {/* Floating Action Buttons */}
-            <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+            {/* Floating Action Buttons - Desktop Only (Mobile uses BottomNav) */}
+            <div className="fixed bottom-6 right-6 z-50 hidden md:flex flex-col gap-3">
                 <button
                     onClick={() => setIsEditModalOpen(true)}
                     className="w-14 h-14 bg-accent hover:bg-blue-600 text-white rounded-full shadow-lg shadow-accent/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
