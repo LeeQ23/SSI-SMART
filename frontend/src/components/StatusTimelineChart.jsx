@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
@@ -111,8 +112,8 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
                 </div>
             </div>
 
-            {/* Floating Glassmorphism Tooltip (Viewport Fixed to escape overflow-hidden) */}
-            {hoveredSegment && (
+            {/* Floating Glassmorphism Tooltip (Portal to body to escape backdrop-filter traps) */}
+            {hoveredSegment && createPortal(
                 <div 
                     className="fixed bg-gray-900/95 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-2xl text-sm min-w-[220px] pointer-events-none z-[9999]"
                     style={{
@@ -136,7 +137,8 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
                         <span className="text-gray-600">→</span>
                         <span>{formatTime(hoveredSegment.endTime)}</span>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

@@ -192,7 +192,7 @@ router.get('/history', authenticateToken, async (req, res) => {
             SELECT ps.*, m.code as machine_code
             FROM production_sessions ps
             JOIN machines m ON ps.machine_id = m.id
-            WHERE 1=1
+            WHERE ps.shift_name IN ('Day Shift', 'Night Shift')
         `;
         let params = [];
         if (machine_id) {
