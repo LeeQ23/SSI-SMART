@@ -115,7 +115,7 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
             {/* Floating Glassmorphism Tooltip (Portal to body to escape backdrop-filter traps) */}
             {hoveredSegment && createPortal(
                 <div 
-                    className="fixed bg-gray-900/95 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-2xl text-sm min-w-[220px] pointer-events-none z-[9999]"
+                    className="fixed bg-gray-900/95 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-2xl text-sm min-w-[280px] pointer-events-none z-[9999]"
                     style={{
                         left: `${mousePos.x}px`,
                         top: `${mousePos.y - 100}px`,
@@ -132,10 +132,10 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
                         </div>
                         <span className="text-gray-400 font-mono text-xs">{formatDuration(hoveredSegment.durationMs)}</span>
                     </div>
-                    <div className="flex justify-between text-gray-300 font-mono text-xs">
-                        <span>{formatTime(hoveredSegment.startTime)}</span>
-                        <span className="text-gray-600">→</span>
-                        <span>{formatTime(hoveredSegment.endTime)}</span>
+                    <div className="flex justify-between items-center text-gray-300 font-mono text-xs mt-1">
+                        <span className="whitespace-nowrap">{formatDate(hoveredSegment.startTime)} {formatTime(hoveredSegment.startTime)}</span>
+                        <span className="text-gray-600 mx-2">→</span>
+                        <span className="whitespace-nowrap">{formatDate(hoveredSegment.endTime)} {formatTime(hoveredSegment.endTime)}</span>
                     </div>
                 </div>,
                 document.body
