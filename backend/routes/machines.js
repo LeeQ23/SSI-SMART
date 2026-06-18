@@ -102,4 +102,24 @@ router.post('/machine-status', async (req, res) => {
     res.sendStatus(200);
 });
 
+// 3. USR-M100 Edge Computing Endpoint (Modbus RTU to JSON)
+router.post('/usr-gateway', async (req, res) => {
+    // USR-M100 might use query params if custom headers aren't supported
+    const apiKey = req.headers['x-api-key'] || req.query.api_key;
+    if (apiKey !== config.FIRMWARE_API_KEY) {
+        console.warn('USR-M100 Gateway auth failed. Provided key:', apiKey);
+        return res.sendStatus(401);
+    }
+
+    console.log('\n--- USR-M100 EDGE COMPUTING PAYLOAD RECEIVED ---');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log(JSON.stringify(req.body, null, 2));
+    console.log('------------------------------------------------\n');
+
+    // TODO: Map Modbus JSON to 'good'/'ng'/'running' once the structure is known
+    
+    // Always return 200 OK so the gateway knows it was received
+    res.sendStatus(200);
+});
+
 module.exports = router;
