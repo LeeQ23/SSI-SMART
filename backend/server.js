@@ -74,6 +74,10 @@ app.post('/api/current', (req, res, next) => {
     req.url = '/machine-status';
     machineRoutes(req, res, next);
 });
+app.post('/api/usr-gateway', (req, res, next) => {
+    req.url = '/usr-gateway';
+    machineRoutes(req, res, next);
+});
 app.get('/api/history', (req, res, next) => {
     req.url = '/history';
     analyticsRoutes(req, res, next);

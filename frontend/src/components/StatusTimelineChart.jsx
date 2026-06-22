@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
+const StatusTimelineChart = React.memo(({ timeline = [], height = 60, startRange, endRange }) => {
     const { t } = useTranslation();
     const [hoveredSegment, setHoveredSegment] = useState(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -12,17 +12,25 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
 
         const segments = [];
         const timestamps = timeline.map(t => new Date(t.timestamp).getTime());
-        const minTime = Math.min(...timestamps);
         
-        // If the last event is still ongoing, extend it to 'now'
-        const maxTime = Math.max(new Date().getTime(), Math.max(...timestamps));
+        // Use explicitly requested bounds if provided, otherwise fallback to data bounds
+        const minTime = startRange ? new Date(startRange).getTime() : Math.min(...timestamps);
+        const maxTime = endRange ? new Date(endRange).getTime() : Math.max(new Date().getTime(), Math.max(...timestamps));
+        
         const totalDuration = maxTime - minTime;
 
         for (let i = 0; i < timeline.length; i++) {
             const current = timeline[i];
-            const startTime = new Date(current.timestamp).getTime();
-            const endTime = i < timeline.length - 1 ? new Date(timeline[i + 1].timestamp).getTime() : maxTime;
             
+            // Constrain start and end times to the viewable window
+            let startTime = new Date(current.timestamp).getTime();
+            let endTime = i < timeline.length - 1 ? new Date(timeline[i + 1].timestamp).getTime() : maxTime;
+            
+            startTime = Math.max(startTime, minTime);
+            endTime = Math.min(endTime, maxTime);
+            
+            if (startTime >= maxTime || endTime <= minTime) continue; // Out of bounds
+
             const durationMs = endTime - startTime;
             const widthPercent = (durationMs / totalDuration) * 100;
 
@@ -38,7 +46,7 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60 }) => {
         }
 
         return { segments, totalDuration, minTime, maxTime };
-    }, [timeline]);
+    }, [timeline, startRange, endRange]);
 
     if (chartData.segments.length === 0) {
         return (

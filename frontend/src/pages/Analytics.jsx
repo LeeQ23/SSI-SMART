@@ -270,6 +270,23 @@ const Analytics = () => {
                                     </span>
                                 </div>
                             </div>
+                            {/* Running & Downtime totals in hh:mm:ss */}
+                            <div className="w-full mt-2 space-y-1 text-[10px] font-mono tracking-wide">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-green-400 flex items-center gap-1">
+                                        <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                                        Running
+                                    </span>
+                                    <span className="text-green-300 font-bold tabular-nums">{formatTime(data.metrics.runTime)}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-red-400 flex items-center gap-1">
+                                        <span className="inline-block w-2 h-2 rounded-full bg-red-500"></span>
+                                        Downtime
+                                    </span>
+                                    <span className="text-red-300 font-bold tabular-nums">{formatTime(data.metrics.downTime)}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -290,6 +307,8 @@ const Analytics = () => {
                             <div className="flex-1 min-h-[300px]">
                                 <StatusTimelineChart
                                     timeline={data.timeline}
+                                    startRange={start}
+                                    endRange={end}
                                     height={300}
                                 />
                             </div>
