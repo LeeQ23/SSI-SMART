@@ -147,8 +147,8 @@ const Dashboard = () => {
     if (!data || data.noActiveSession) return (
         <div className="flex flex-col items-center justify-center p-20 gap-6">
             <div className="text-white text-xl text-center">
-                No active production session found for this machine.
-                <p className="text-gray-500 mt-2 text-sm uppercase tracking-widest font-normal">Please start a new session to begin tracking performance.</p>
+                {t('dashboard.no_active_session', 'No active production session found for this machine.')}
+                <p className="text-gray-500 mt-2 text-sm uppercase tracking-widest font-normal">{t('dashboard.please_start_session', 'Please start a new session to begin tracking performance.')}</p>
             </div>
             
             {user?.role === 'manager' && (
@@ -157,7 +157,7 @@ const Dashboard = () => {
                     className="px-8 py-4 bg-accent text-white rounded-xl font-bold flex items-center gap-3 shadow-lg shadow-accent/20 active:scale-95 transition-all"
                 >
                     <Settings size={20} />
-                    START PRODUCTION SESSION
+                    {t('dashboard.start_production_session', 'START PRODUCTION SESSION')}
                 </button>
             )}
 
@@ -204,7 +204,7 @@ const Dashboard = () => {
                     <div className="text-lg font-bold text-gray-200 truncate">{data.operator}</div>
                 </div>
                 <div className="glass-panel-recessed p-4 flex flex-col justify-center items-end bg-black/20 flex-[1.5] min-w-[140px] shrink-0">
-                    <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">SYSTEM TIME</h3>
+                    <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.system_time', 'SYSTEM TIME')}</h3>
                     <DigitalClock formatDateDisplay={formatDateDisplay} />
                 </div>
             </div>
@@ -424,7 +424,7 @@ const Dashboard = () => {
                     <button
                         onClick={() => setIsEditModalOpen(true)}
                         className="w-14 h-14 bg-accent hover:bg-blue-600 text-white rounded-full shadow-lg shadow-accent/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
-                        title="Edit Session (Product, Operator, Shift)"
+                        title={t('dashboard.edit_session', 'Edit Session')}
                     >
                         <Settings size={24} className="group-hover:rotate-90 transition-transform duration-500" />
                     </button>
@@ -432,7 +432,7 @@ const Dashboard = () => {
                 <button
                     onClick={() => setIsDowntimeModalOpen(true)}
                     className="w-14 h-14 bg-warning hover:bg-yellow-500 text-black rounded-full shadow-lg shadow-warning/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
-                    title="Record Manual Downtime (Alt + D)"
+                    title={t('dashboard.record_manual_downtime', 'Record Manual Downtime')}
                 >
                     <AlertTriangle size={24} className="group-hover:scale-110 transition-transform" />
                 </button>

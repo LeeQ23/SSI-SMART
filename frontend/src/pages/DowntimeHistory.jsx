@@ -116,7 +116,7 @@ const DowntimeHistory = () => {
                         />
                     </div>
                     <div className="flex items-center gap-2 text-white">
-                        <span className="text-gray-400 text-sm">From</span>
+                        <span className="text-gray-400 text-sm">{t('history.from', 'From')}</span>
                         <input
                             type="date"
                             className="glass-input p-2 rounded text-sm text-white bg-white/5 border-white/10"
@@ -125,7 +125,7 @@ const DowntimeHistory = () => {
                         />
                     </div>
                     <div className="flex items-center gap-2 text-white">
-                        <span className="text-gray-400 text-sm">To</span>
+                        <span className="text-gray-400 text-sm">{t('history.to', 'To')}</span>
                         <input
                             type="date"
                             className="glass-input p-2 rounded text-sm text-white bg-white/5 border-white/10"
@@ -174,9 +174,9 @@ const DowntimeHistory = () => {
                                 >
                                     End Time {sortField === 'end_time' && (sortDir === 'ASC' ? '▲' : '▼')}
                                 </th>
-                                <th className="p-4">Duration</th>
-                                <th className="p-4">Operator</th>
-                                <th className="p-4">Reason</th>
+                                <th className="p-4">{t('history.duration', 'Duration')}</th>
+                                <th className="p-4">{t('dashboard.operator', 'Operator')}</th>
+                                <th className="p-4">{t('modals.reason', 'Reason')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/10">
@@ -194,7 +194,7 @@ const DowntimeHistory = () => {
                                         {formatDate(d.start_time)}
                                     </td>
                                     <td className="p-4 text-sm font-medium text-gray-300">
-                                        {d.end_time ? formatDate(d.end_time) : <span className="text-accent italic font-bold">Currently Active</span>}
+                                        {d.end_time ? formatDate(d.end_time) : <span className="text-accent italic font-bold">{t('analytics.currently_active', 'Currently Active')}</span>}
                                     </td>
                                     <td className="p-4 text-sm">
                                         <span className={`font-mono font-bold ${d.end_time ? 'text-gray-400' : 'text-accent'}`}>
@@ -222,7 +222,7 @@ const DowntimeHistory = () => {
                 {downtimes.length === 0 && (
                     <div className="p-20 text-center flex flex-col items-center justify-center space-y-4">
                         <Calendar size={48} className="text-gray-700" />
-                        <div className="text-gray-500 font-medium">No downtime events recorded yet.</div>
+                        <div className="text-gray-500 font-medium">{t('analytics.no_downtime_events', 'No downtime events recorded yet.')}</div>
                     </div>
                 )}
             </div>

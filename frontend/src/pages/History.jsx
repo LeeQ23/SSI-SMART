@@ -127,7 +127,7 @@ const History = () => {
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-gray-400 text-sm">From</span>
+            <span className="text-gray-400 text-sm">{t('history.from', 'From')}</span>
             <input
               type="date"
               className="glass-input p-2 rounded text-sm text-white"
@@ -136,7 +136,7 @@ const History = () => {
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-gray-400 text-sm">To</span>
+            <span className="text-gray-400 text-sm">{t('history.to', 'To')}</span>
             <input
               type="date"
               className="glass-input p-2 rounded text-sm text-white"
@@ -147,7 +147,7 @@ const History = () => {
           <button
             onClick={fetchHistory}
             className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/10"
-            title="Refresh"
+            title={t('history.refresh', 'Refresh')}
           >
             <RefreshCw size={18} className={loading && history.length > 0 ? 'animate-spin' : ''} />
           </button>
@@ -155,7 +155,7 @@ const History = () => {
             onClick={downloadCSV}
             className="flex items-center gap-2 px-6 py-2 bg-success hover:bg-success/80 rounded-xl transition-all whitespace-nowrap text-sm font-bold shadow-lg shadow-success/10"
           >
-            <Download size={18} /> EXPORT CSV
+            <Download size={18} /> {t('history.export_csv', 'EXPORT CSV')}
           </button>
         </div>
       </div>
@@ -165,19 +165,19 @@ const History = () => {
           <table className="w-full text-left">
             <thead className="bg-white/5 text-gray-400 uppercase text-[10px] font-bold tracking-[0.2em] border-b border-white/10">
               <tr>
-                <th className="p-4">Machine</th>
+                <th className="p-4">{t('dashboard.machine_id', 'Machine')}</th>
                 <th
                   className="p-4 cursor-pointer hover:text-white transition-colors"
                   onClick={() => handleSort('start_time')}
                 >
-                  Session Start {sortField === 'start_time' && (sortDir === 'ASC' ? '▲' : '▼')}
+                  {t('history.session_start', 'Session Start')} {sortField === 'start_time' && (sortDir === 'ASC' ? '▲' : '▼')}
                 </th>
-                <th className="p-4">Shift</th>
-                <th className="p-4">Product ID</th>
-                <th className="p-4">Operator</th>
-                <th className="p-4 text-center">Good</th>
-                <th className="p-4 text-center">NG</th>
-                <th className="p-4 text-center">Duration</th>
+                <th className="p-4">{t('dashboard.shift', 'Shift')}</th>
+                <th className="p-4">{t('dashboard.product_id', 'Product ID')}</th>
+                <th className="p-4">{t('dashboard.operator', 'Operator')}</th>
+                <th className="p-4 text-center">{t('dashboard.total_ok', 'Good')}</th>
+                <th className="p-4 text-center">{t('dashboard.total_ng', 'NG')}</th>
+                <th className="p-4 text-center">{t('history.duration', 'Duration')}</th>
                 <th className="p-4 text-center text-accent">OEE %</th>
               </tr>
             </thead>
@@ -200,7 +200,7 @@ const History = () => {
                   </td>
                   <td className="p-4">
                     <div className="text-white text-sm font-medium">{formatDateTime(row.start_time)}</div>
-                    <div className="text-gray-500 text-[10px] mt-0.5 font-mono uppercase">Ends: {formatDateTime(row.end_time)}</div>
+                    <div className="text-gray-500 text-[10px] mt-0.5 font-mono uppercase">{t('history.ends', 'Ends')}: {formatDateTime(row.end_time)}</div>
                   </td>
                   <td className="p-4">
                     <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[9px] font-bold uppercase border border-blue-500/20">
@@ -248,7 +248,7 @@ const History = () => {
              <div className="p-4 bg-white/5 rounded-full">
                 <Calendar size={48} className="opacity-20" />
              </div>
-             <p className="italic text-sm">No production sessions found matching the filters.</p>
+             <p className="italic text-sm">{t('history.no_sessions', 'No production sessions found matching the filters.')}</p>
           </div>
         )}
       </div>
@@ -260,7 +260,7 @@ const History = () => {
             disabled={loading}
             className="px-10 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all font-bold text-gray-300 hover:text-white disabled:opacity-50 tracking-widest text-xs"
           >
-            {loading ? 'LOADING...' : 'LOAD MORE DATA'}
+            {loading ? t('history.loading', 'LOADING...') : t('history.load_more_data', 'LOAD MORE DATA')}
           </button>
         </div>
       )}

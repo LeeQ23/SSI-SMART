@@ -87,10 +87,10 @@ const Analytics = () => {
             {/* Controls */}
             <div className="glass-panel p-6 space-y-4">
                 <div className="flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
-                    <span className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Calendar size={16} /> Quick Filters:</span>
-                    <button onClick={() => setQuickDate('today')} className="px-3 py-1 rounded-full text-xs font-bold border border-white/20 hover:border-accent hover:text-accent transition-colors">Today</button>
-                    <button onClick={() => setQuickDate('yesterday')} className="px-3 py-1 rounded-full text-xs font-bold border border-white/20 hover:border-accent hover:text-accent transition-colors">Yesterday</button>
-                    <button onClick={() => setQuickDate('this_week')} className="px-3 py-1 rounded-full text-xs font-bold border border-white/20 hover:border-accent hover:text-accent transition-colors">This Week</button>
+                    <span className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Calendar size={16} /> {t('analytics.quick_filters', 'Quick Filters:')}</span>
+                    <button onClick={() => setQuickDate('today')} className="px-3 py-1 rounded-full text-xs font-bold border border-white/20 hover:border-accent hover:text-accent transition-colors">{t('analytics.today', 'Today')}</button>
+                    <button onClick={() => setQuickDate('yesterday')} className="px-3 py-1 rounded-full text-xs font-bold border border-white/20 hover:border-accent hover:text-accent transition-colors">{t('analytics.yesterday', 'Yesterday')}</button>
+                    <button onClick={() => setQuickDate('this_week')} className="px-3 py-1 rounded-full text-xs font-bold border border-white/20 hover:border-accent hover:text-accent transition-colors">{t('analytics.this_week', 'This Week')}</button>
                 </div>
                 
                 <form onSubmit={handleAnalyze} className="flex flex-wrap gap-4 items-end">
@@ -103,7 +103,7 @@ const Analytics = () => {
                     />
                 </div>
                 <div>
-                    <label className="block text-gray-400 mb-2 text-sm uppercase tracking-wider">Start Date/Time</label>
+                    <label className="block text-gray-400 mb-2 text-sm uppercase tracking-wider">{t('analytics.start_datetime', 'Start Date/Time')}</label>
                     <input
                         type="datetime-local"
                         value={start}
@@ -113,7 +113,7 @@ const Analytics = () => {
                     />
                 </div>
                 <div>
-                    <label className="block text-gray-400 mb-2 text-sm uppercase tracking-wider">End Date/Time</label>
+                    <label className="block text-gray-400 mb-2 text-sm uppercase tracking-wider">{t('analytics.end_datetime', 'End Date/Time')}</label>
                     <input
                         type="datetime-local"
                         value={end}
@@ -152,8 +152,8 @@ const Analytics = () => {
                     <div className="p-6 bg-white/5 rounded-full mb-6">
                         <BarChart3 size={48} className="opacity-30" />
                     </div>
-                    <p className="text-lg font-medium text-gray-400">Select a date range and click Analyze</p>
-                    <p className="text-sm text-gray-600 mt-1">Production insights will appear here</p>
+                    <p className="text-lg font-medium text-gray-400">{t('analytics.select_date', 'Select a date range and click Analyze')}</p>
+                    <p className="text-sm text-gray-600 mt-1">{t('analytics.insights_appear_here', 'Production insights will appear here')}</p>
                 </div>
             )}
 
@@ -222,7 +222,7 @@ const Analytics = () => {
                         </div>
                         
                         <div className="glass-panel p-4 flex flex-col items-center justify-center relative min-h-[140px]">
-                            <h3 className="text-gray-400 text-[10px] font-bold tracking-widest uppercase mb-2">RUN RATIO</h3>
+                            <h3 className="text-gray-400 text-[10px] font-bold tracking-widest uppercase mb-2">{t('analytics.run_ratio', 'RUN RATIO')}</h3>
                             <div className="h-24 w-full relative mt-2">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
@@ -317,18 +317,18 @@ const Analytics = () => {
                         {/* Downtime Events List */}
                         <div className="glass-panel flex flex-col overflow-hidden max-h-[500px]">
                             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5 backdrop-blur-md">
-                                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Downtime Log</h3>
+                                <h3 className="text-sm font-bold text-white uppercase tracking-wider">{t('analytics.downtime_log', 'Downtime Log')}</h3>
                                 <span className="px-2 py-0.5 rounded bg-red-500/20 border border-red-500/50 text-red-400 text-xs font-bold tabular-nums">
-                                    {data.pagination?.totalEvents || data.downtimeEvents?.length || 0} Total Events
+                                    {data.pagination?.totalEvents || data.downtimeEvents?.length || 0} {t('analytics.total_events', 'Total Events')}
                                 </span>
                             </div>
                             <div className="overflow-y-auto flex-1 custom-scrollbar">
                                 <table className="w-full text-left text-xs">
                                     <thead className="bg-black/20 text-gray-400 uppercase text-[9px] font-bold tracking-widest sticky top-0 z-10 backdrop-blur-md">
                                         <tr>
-                                            <th className="p-3">Time</th>
-                                            <th className="p-3">Reason</th>
-                                            <th className="p-3 text-right">Status</th>
+                                            <th className="p-3">{t('dashboard.time', 'Time')}</th>
+                                            <th className="p-3">{t('modals.reason', 'Reason')}</th>
+                                            <th className="p-3 text-right">{t('analytics.status', 'Status')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
@@ -348,14 +348,14 @@ const Analytics = () => {
                                                 </td>
                                                 <td className="p-3 text-right">
                                                     {d.end_time ? (
-                                                        <span className="text-[10px] text-gray-500 font-mono">Resolved</span>
+                                                        <span className="text-[10px] text-gray-500 font-mono">{t('analytics.resolved', 'Resolved')}</span>
                                                     ) : (
                                                         <div className="flex items-center justify-end gap-1.5">
                                                             <span className="relative flex h-2 w-2">
                                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                                                             </span>
-                                                            <span className="text-red-400 font-bold text-[10px] uppercase tracking-wider">Ongoing</span>
+                                                            <span className="text-red-400 font-bold text-[10px] uppercase tracking-wider">{t('analytics.ongoing', 'Ongoing')}</span>
                                                         </div>
                                                     )}
                                                 </td>
@@ -364,7 +364,7 @@ const Analytics = () => {
                                         {(!data.downtimeEvents || data.downtimeEvents.length === 0) && (
                                             <tr>
                                                 <td colSpan="3" className="p-8 text-center text-gray-500 italic">
-                                                    No downtime recorded.
+                                                    {t('analytics.no_downtime', 'No downtime recorded.')}
                                                 </td>
                                             </tr>
                                         )}

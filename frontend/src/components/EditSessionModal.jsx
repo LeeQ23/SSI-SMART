@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Settings, X, Save, ShieldCheck, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCaptured }) => {
+    const { t } = useTranslation();
     const [formData, setFormData] = useState({
         product_id: '',
         lot_number: '',
@@ -72,13 +74,13 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                     <div className="p-2 bg-accent/20 rounded-lg text-accent">
                         <Settings size={24} />
                     </div>
-                    <h2 className="text-xl font-bold">Update Parameters</h2>
+                    <h2 className="text-xl font-bold">{t('modals.update_parameters', 'Update Parameters')}</h2>
                 </div>
 
                 <form onSubmit={handleFormSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="group">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Product ID</label>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">{t('dashboard.product_id', 'Product ID')}</label>
                                 <input
                                     type="text"
                                     value={formData.product_id}
@@ -89,7 +91,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                                 />
                             </div>
                             <div className="group">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Lot Number</label>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">{t('dashboard.lot_number', 'Lot Number')}</label>
                                 <input
                                     type="text"
                                     value={formData.lot_number}
@@ -99,7 +101,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                                 />
                             </div>
                             <div className="group">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Target Qty</label>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">{t('dashboard.target', 'Target Qty')}</label>
                                 <input
                                     type="number"
                                     value={formData.target_qty}
@@ -109,20 +111,20 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                                 />
                             </div>
                             <div className="group">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Shift Name</label>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">{t('dashboard.shift', 'Shift Name')}</label>
                                 <select
                                     value={formData.shift_name}
                                     onChange={(e) => setFormData({...formData, shift_name: e.target.value})}
                                     className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent appearance-none bg-gray-900"
                                 >
-                                    <option value="" disabled>Select Shift</option>
-                                    <option value="Morning">Morning</option>
-                                    <option value="Afternoon">Afternoon</option>
-                                    <option value="Night">Night</option>
+                                    <option value="" disabled>{t('modals.select_shift', 'Select Shift')}</option>
+                                    <option value="Morning">{t('modals.shift_morning', 'Morning')}</option>
+                                    <option value="Afternoon">{t('modals.shift_afternoon', 'Afternoon')}</option>
+                                    <option value="Night">{t('modals.shift_night', 'Night')}</option>
                                 </select>
                             </div>
                             <div className="col-span-2 group">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Operator Name</label>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">{t('dashboard.operator', 'Operator Name')}</label>
                                 <input
                                     type="text"
                                     value={formData.operator_name}
@@ -132,7 +134,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                                 />
                             </div>
                             <div className="col-span-2 group">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">Operator NIM</label>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">{t('modals.operator_nim', 'Operator NIM')}</label>
                                 <input
                                     type="text"
                                     value={formData.operator_nim}
@@ -156,7 +158,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                             className="w-full bg-success hover:bg-success/80 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] mt-2 disabled:opacity-50"
                         >
                             <Save size={18} />
-                            {loading ? 'UPDATING...' : 'UPDATE PARAMETERS'}
+                            {loading ? t('modals.updating', 'UPDATING...') : t('modals.update_parameters_btn', 'UPDATE PARAMETERS')}
                         </button>
                 </form>
             </div>

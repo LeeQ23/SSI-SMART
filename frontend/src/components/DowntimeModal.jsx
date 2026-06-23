@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { Clock, Play, Square, X, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import MachineSelector from './MachineSelector';
 
 const DowntimeModal = ({ isOpen, onClose, initialMachineId }) => {
+    const { t } = useTranslation();
     const [machineId, setMachineId] = useState(initialMachineId || 1);
     const [reason, setReason] = useState('');
     const [isActive, setIsActive] = useState(false);
@@ -125,31 +127,31 @@ const DowntimeModal = ({ isOpen, onClose, initialMachineId }) => {
                             <div className="p-2 bg-accent/20 rounded-lg text-accent">
                                 <Clock size={24} />
                             </div>
-                            <h2 className="text-xl font-bold">Manual Downtime</h2>
+                            <h2 className="text-xl font-bold">{t('modals.manual_downtime', 'Manual Downtime')}</h2>
                         </div>
 
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">
-                                    Select Machine
+                                    {t('modals.select_machine', 'Select Machine')}
                                 </label>
                                 <MachineSelector
                                     selectedId={machineId}
                                     onChange={(id) => setMachineId(id)}
                                 />
-                                {isActive && <p className="text-[10px] text-accent mt-1 italic">Selecting another machine will show its downtime status</p>}
+                                {isActive && <p className="text-[10px] text-accent mt-1 italic">{t('modals.selecting_another_machine', 'Selecting another machine will show its downtime status')}</p>}
                             </div>
 
                             <div className="group">
                                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">
-                                    Reason for Downtime
+                                    {t('modals.reason', 'Reason for Downtime')}
                                 </label>
                                 <textarea
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
                                     disabled={isActive}
                                     autoFocus={!isActive}
-                                    placeholder="e.g., Maintenance, Toilet Break, Tooling change..."
+                                    placeholder={t('modals.reason_placeholder', 'e.g., Maintenance, Toilet Break, Tooling change...')}
                                     className={`glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent transition-all h-24 resize-none ${isActive ? 'opacity-50 grayscale pointer-events-none' : ''}`}
                                 />
                             </div>
@@ -163,7 +165,7 @@ const DowntimeModal = ({ isOpen, onClose, initialMachineId }) => {
 
                             {isActive && (
                                 <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center space-y-2">
-                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">Active Duration</p>
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">{t('modals.active_duration', 'Active Duration')}</p>
                                     <p className="text-5xl font-mono font-bold text-accent drop-shadow-[0_0_10px_rgba(0,116,217,0.5)]">
                                         {formatElapsedTime(elapsedTime)}
                                     </p>
@@ -178,7 +180,7 @@ const DowntimeModal = ({ isOpen, onClose, initialMachineId }) => {
                                         className="w-full bg-accent hover:bg-accent/80 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-accent/20 active:scale-[0.98]"
                                     >
                                         <Play size={20} fill="currentColor" />
-                                        START DOWNTIME
+                                        {t('modals.start_downtime', 'START DOWNTIME')}
                                     </button>
                                 ) : (
                                     <button
@@ -187,7 +189,7 @@ const DowntimeModal = ({ isOpen, onClose, initialMachineId }) => {
                                         className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-red-500/20 active:scale-[0.98]"
                                     >
                                         <Square size={20} fill="currentColor" />
-                                        FINISH DOWNTIME
+                                        {t('modals.finish_downtime', 'FINISH DOWNTIME')}
                                     </button>
                                 )}
                             </div>
