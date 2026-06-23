@@ -99,7 +99,18 @@
         "showing": "表示中",
         "of": "の",
         "currently_active": "現在アクティブ",
-        "no_downtime_events": "記録されたダウンタイムイベントはまだありません。"
+        "no_downtime_events": "記録されたダウンタイムイベントはまだありません。",
+        "hourly_target": "時間目標",
+        "actual_good": "実良品数",
+        "actual_ng": "実不良品数",
+        "on_target": "目標達成",
+        "ahead_by": "+{{count}} リード",
+        "behind_by": "{{count}} 遅れ",
+        "good_parts": "良品数",
+        "ng_parts": "不良品数",
+        "running": "稼働中",
+        "downtime": "停止中",
+        "no_data": "この期間のタイムラインデータはありません。"
     },
     "login": {
         "welcome": "おかえりなさい",

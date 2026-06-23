@@ -99,7 +99,18 @@
         "showing": "SHOWING",
         "of": "OF",
         "currently_active": "Currently Active",
-        "no_downtime_events": "No downtime events recorded yet."
+        "no_downtime_events": "No downtime events recorded yet.",
+        "hourly_target": "Hourly Target",
+        "actual_good": "Actual Good",
+        "actual_ng": "Actual NG",
+        "on_target": "On Target",
+        "ahead_by": "Ahead by +{{count}}",
+        "behind_by": "Behind by {{count}}",
+        "good_parts": "Good Parts",
+        "ng_parts": "NG Parts",
+        "running": "RUNNING",
+        "downtime": "DOWNTIME",
+        "no_data": "No timeline data available for this period."
     },
     "login": {
         "welcome": "Welcome Back",

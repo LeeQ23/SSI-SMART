@@ -14,6 +14,7 @@ import {
 import { Minus, TrendingUp, TrendingDown } from 'lucide-react';
 
 const CustomTooltip = ({ active, payload, label }) => {
+    const { t } = useTranslation();
     if (active && payload && payload.length) {
         const data = payload[0].payload;
         const timeStr = new Date(data.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -24,18 +25,15 @@ const CustomTooltip = ({ active, payload, label }) => {
         const target = Math.round(data.targetHourly || 0);
         
         let statusColor = "text-gray-400";
-        let statusText = "On Target";
-        let StatusIcon = Minus;
+        let statusText = t('analytics.on_target', 'On Target');
         
         const diff = good - target;
         if (diff > 0) {
             statusColor = "text-green-400";
-            statusText = `Ahead by +${diff}`;
-            StatusIcon = TrendingUp;
+            statusText = t('analytics.ahead_by', { count: diff, defaultValue: `Ahead by +{{count}}` });
         } else if (diff < 0) {
             statusColor = "text-red-400";
-            statusText = `Behind by ${diff}`;
-            StatusIcon = TrendingDown;
+            statusText = t('analytics.behind_by', { count: diff, defaultValue: `Behind by {{count}}` });
         }
 
         return (
@@ -43,23 +41,22 @@ const CustomTooltip = ({ active, payload, label }) => {
                 <p className="text-gray-300 font-bold mb-3 border-b border-white/10 pb-2">{timeStr} - {endTimeStr}</p>
                 
                 <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                        <span className="text-gray-400 text-sm">Hourly Target:</span>
+                    <div className="flex justify-between items-center mb-1">
+                        <span className="text-gray-400 text-sm">{t('analytics.hourly_target', 'Hourly Target:')}</span>
                         <span className="text-blue-400 font-bold">{target}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-gray-400 text-sm">Actual Good:</span>
+                    <div className="flex justify-between items-center mb-1">
+                        <span className="text-gray-400 text-sm">{t('analytics.actual_good', 'Actual Good:')}</span>
                         <span className="text-green-400 font-bold">{good}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-gray-400 text-sm">Actual NG:</span>
+                        <span className="text-gray-400 text-sm">{t('analytics.actual_ng', 'Actual NG:')}</span>
                         <span className="text-red-400 font-bold">{ng}</span>
                     </div>
                     
-                    <div className={`mt-3 pt-2 border-t border-white/5 flex items-center justify-between ${statusColor}`}>
-                        <span className="text-xs uppercase tracking-wider font-bold">Status</span>
-                        <div className="flex items-center gap-1 font-bold">
-                            <StatusIcon size={14} />
+                    <div className="flex justify-between items-center mt-3 pt-2 border-t border-white/10">
+                        <span className="text-xs uppercase tracking-wider font-bold">{t('analytics.status', 'Status')}</span>
+                        <div className={`flex items-center gap-1 text-xs font-bold ${statusColor}`}>
                             <span>{statusText}</span>
                         </div>
                     </div>
@@ -74,7 +71,6 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
     const { t } = useTranslation();
     
     const chartData = useMemo(() => {
-        // Fixed 24-hour cycle per user request
         const startHour = 0;
         const endHour = 24;
 
@@ -88,14 +84,12 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
             const bucketStart = startOfToday.getTime() + (h * 3600 * 1000);
             const bucketEnd = startOfToday.getTime() + ((h + 1) * 3600 * 1000);
             
-            // Find cumulative values at start and end of this hour
             let cumStartGood = 0;
             let cumStartNg = 0;
             let cumEndGood = 0;
             let cumEndNg = 0;
 
             if (events && events.length > 0) {
-                // Find closest event before or exactly at bucketStart
                 const beforeStart = events.filter(e => e.time <= bucketStart);
                 if (beforeStart.length > 0) {
                     const lastBeforeStart = beforeStart[beforeStart.length - 1];
@@ -103,7 +97,6 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
                     cumStartNg = lastBeforeStart.ng;
                 }
 
-                // Find closest event before or exactly at bucketEnd
                 const beforeEnd = events.filter(e => e.time <= bucketEnd);
                 if (beforeEnd.length > 0) {
                     const lastBeforeEnd = beforeEnd[beforeEnd.length - 1];
@@ -174,7 +167,6 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
                         wrapperStyle={{ fontSize: '12px', color: '#cbd5e1' }}
                     />
 
-                    {/* Hourly Target Line */}
                     <Line
                         type="stepAfter"
                         dataKey="targetHourly"
@@ -182,16 +174,15 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
                         strokeWidth={2}
                         strokeDasharray="5 5"
                         dot={false}
-                        name="Hourly Target"
+                        name={t('analytics.hourly_target', 'Hourly Target')}
                         isAnimationActive={false}
                     />
 
-                    {/* Stacked Bars */}
                     <Bar 
                         dataKey="goodHourly" 
                         stackId="a" 
                         fill="url(#colorGoodBar)" 
-                        name="Good Parts" 
+                        name={t('analytics.good_parts', 'Good Parts')} 
                         radius={[0, 0, 4, 4]} 
                         isAnimationActive={true}
                         animationDuration={1000}
@@ -200,7 +191,7 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
                         dataKey="ngHourly" 
                         stackId="a" 
                         fill="url(#colorNGBar)" 
-                        name="NG Parts" 
+                        name={t('analytics.ng_parts', 'NG Parts')} 
                         radius={[4, 4, 0, 0]} 
                         isAnimationActive={true}
                         animationDuration={1000}

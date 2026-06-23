@@ -99,7 +99,18 @@
         "showing": "MENAMPILKAN",
         "of": "DARI",
         "currently_active": "Sedang Aktif",
-        "no_downtime_events": "Belum ada acara waktu henti yang tercatat."
+        "no_downtime_events": "Belum ada acara waktu henti yang tercatat.",
+        "hourly_target": "Target Per Jam",
+        "actual_good": "Aktual Baik",
+        "actual_ng": "Aktual NG",
+        "on_target": "Sesuai Target",
+        "ahead_by": "Mendahului +{{count}}",
+        "behind_by": "Tertinggal {{count}}",
+        "good_parts": "Komponen Baik",
+        "ng_parts": "Komponen NG",
+        "running": "BERJALAN",
+        "downtime": "WAKTU HENTI",
+        "no_data": "Tidak ada data linimasa untuk periode ini."
     },
     "login": {
         "welcome": "Selamat Datang Kembali",

@@ -51,7 +51,7 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60, startRange
     if (chartData.segments.length === 0) {
         return (
             <div style={{ height: 120 }} className="flex items-center justify-center text-gray-500 italic border border-white/10 rounded-lg">
-                No timeline data available for this period.
+                {t('analytics.no_data', 'No timeline data available for this period.')}
             </div>
         );
     }
@@ -112,11 +112,13 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60, startRange
 
             {/* Legend */}
             <div className="flex flex-wrap gap-8 mt-6 justify-center text-xs font-bold text-gray-400 uppercase tracking-widest">
-                <div className="flex items-center gap-3">
-                    <span className="w-4 h-4 bg-emerald-500/80 rounded-sm shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> RUNNING
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#10B981] rounded-sm"></div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('analytics.running', 'RUNNING')}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                    <span className="w-4 h-4 bg-red-500/80 rounded-sm shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span> DOWNTIME
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#EF4444] rounded-sm"></div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('analytics.downtime', 'DOWNTIME')}</span>
                 </div>
             </div>
 
