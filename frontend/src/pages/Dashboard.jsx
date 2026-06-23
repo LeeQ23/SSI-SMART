@@ -15,6 +15,7 @@ import { AlertTriangle, Settings } from 'lucide-react';
 import DowntimeModal from '../components/DowntimeModal';
 import EditSessionModal from '../components/EditSessionModal';
 import AnimatedNumber from '../components/AnimatedNumber';
+import { useAuth } from '../context/AuthContext';
 
 const DigitalClock = ({ formatDateDisplay }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -41,6 +42,7 @@ const DigitalClock = ({ formatDateDisplay }) => {
 
 const Dashboard = () => {
     const { t } = useTranslation();
+    const { user } = useAuth();
     const { machineId } = useParams();
     const navigate = useNavigate();
     const [socket, setSocket] = useState(null);
@@ -149,13 +151,15 @@ const Dashboard = () => {
                 <p className="text-gray-500 mt-2 text-sm uppercase tracking-widest font-normal">Please start a new session to begin tracking performance.</p>
             </div>
             
-            <button
-                onClick={() => setIsEditModalOpen(true)}
-                className="px-8 py-4 bg-accent text-white rounded-xl font-bold flex items-center gap-3 shadow-lg shadow-accent/20 active:scale-95 transition-all"
-            >
-                <Settings size={20} />
-                START PRODUCTION SESSION
-            </button>
+            {user?.role === 'manager' && (
+                <button
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="px-8 py-4 bg-accent text-white rounded-xl font-bold flex items-center gap-3 shadow-lg shadow-accent/20 active:scale-95 transition-all"
+                >
+                    <Settings size={20} />
+                    START PRODUCTION SESSION
+                </button>
+            )}
 
             <EditSessionModal
                 isOpen={isEditModalOpen}
@@ -416,13 +420,15 @@ const Dashboard = () => {
 
             {/* Floating Action Buttons - Desktop Only (Mobile uses BottomNav) */}
             <div className="fixed bottom-6 right-6 z-50 hidden md:flex flex-col gap-3">
-                <button
-                    onClick={() => setIsEditModalOpen(true)}
-                    className="w-14 h-14 bg-accent hover:bg-blue-600 text-white rounded-full shadow-lg shadow-accent/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
-                    title="Edit Session (Product, Operator, Shift)"
-                >
-                    <Settings size={24} className="group-hover:rotate-90 transition-transform duration-500" />
-                </button>
+                {user?.role === 'manager' && (
+                    <button
+                        onClick={() => setIsEditModalOpen(true)}
+                        className="w-14 h-14 bg-accent hover:bg-blue-600 text-white rounded-full shadow-lg shadow-accent/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
+                        title="Edit Session (Product, Operator, Shift)"
+                    >
+                        <Settings size={24} className="group-hover:rotate-90 transition-transform duration-500" />
+                    </button>
+                )}
                 <button
                     onClick={() => setIsDowntimeModalOpen(true)}
                     className="w-14 h-14 bg-warning hover:bg-yellow-500 text-black rounded-full shadow-lg shadow-warning/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"

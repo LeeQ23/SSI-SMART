@@ -43,8 +43,13 @@ const calculateSessionStats = async (machine_id, start_time, end_time) => {
         else downtime += durationSinceLast;
     }
 
-    const availability = (runningTime + downtime) > 0 ? (runningTime / (runningTime + downtime)) : 0;
-    const idealCycleTime = settingsManager.getSetting('IDEAL_CYCLE_TIME') || config.IDEAL_CYCLE_TIME;
+    const sTime = new Date(start_time);
+    const eTime = new Date(end_time);
+    const queriedDurationSec = Math.max((eTime - sTime) / 1000, runningTime + downtime); // Ensure we don't divide by zero
+    const plannedProductionTimeSec = queriedDurationSec * (1270 / 1440); // 1270 mins planned out of 1440 mins
+
+    const availability = plannedProductionTimeSec > 0 ? (runningTime / plannedProductionTimeSec) : 0;
+    const idealCycleTime = 8.5; // Specifically for 200A1 machine
     const performance = runningTime > 0 ? ((idealCycleTime * totalCount) / runningTime) : 0;
     const quality = totalCount > 0 ? (good / totalCount) : 0;
     const oee = (availability * performance * quality) * 100;

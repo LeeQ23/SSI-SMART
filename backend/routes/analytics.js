@@ -109,10 +109,15 @@ router.get('/', authenticateToken, async (req, res) => {
                     else downTimeSec += duration;
                 }
             }
-            const totalTime = runTimeSec + downTimeSec;
             const totalParts = good + ng;
-            const idealCycleTime = settingsManager.getSetting('IDEAL_CYCLE_TIME') || config.IDEAL_CYCLE_TIME;
-            const availCalc = totalTime > 0 ? runTimeSec / totalTime : 0;
+
+            const startD = new Date(start);
+            const endD = new Date(end);
+            const queriedDurationSec = Math.max((endD - startD) / 1000, runTimeSec + downTimeSec);
+            const plannedProductionTimeSec = queriedDurationSec * (1270 / 1440); // 1270 mins planned out of 1440 mins
+
+            const idealCycleTime = 8.5; // Specifically for 200A1 machine
+            const availCalc = plannedProductionTimeSec > 0 ? runTimeSec / plannedProductionTimeSec : 0;
             const perfCalc = runTimeSec > 0 ? (totalParts * idealCycleTime) / runTimeSec : 0;
             const qualCalc = totalParts > 0 ? good / totalParts : 0;
             oee = (Math.min(availCalc * perfCalc * qualCalc, 1) * 100).toFixed(1);
