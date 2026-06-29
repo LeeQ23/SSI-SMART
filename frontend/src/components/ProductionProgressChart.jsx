@@ -17,8 +17,9 @@ const CustomTooltip = ({ active, payload, label }) => {
     const { t } = useTranslation();
     if (active && payload && payload.length) {
         const data = payload[0].payload;
-        const timeStr = new Date(data.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const endTimeStr = new Date(data.ts + 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const safeDate = (ts) => typeof ts === 'string' ? new Date(ts.replace(' ', 'T')) : new Date(ts);
+        const timeStr = safeDate(data.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const endTimeStr = safeDate(data.ts + 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
         const good = data.goodHourly || 0;
         const ng = data.ngHourly || 0;
@@ -110,7 +111,7 @@ const ProductionProgressChart = React.memo(({ events = [], target = 1000, shiftN
 
             hourlyBuckets.push({
                 ts: bucketStart,
-                timeLabel: new Date(bucketStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+                timeLabel: (typeof bucketStart === 'string' ? new Date(bucketStart.replace(' ', 'T')) : new Date(bucketStart)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
                 goodHourly,
                 ngHourly,
                 targetHourly: targetPerHour

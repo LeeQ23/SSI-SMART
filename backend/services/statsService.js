@@ -27,8 +27,17 @@ const calculateSessionStats = async (machine_id, start_time, end_time) => {
 
     let runningTime = 0;
     let downtime = 0;
+    const sTime = new Date(start_time);
+    const eTime = new Date(end_time);
+    
     if (stateLogs.length > 0) {
         let prevTs = new Date(stateLogs[0].timestamp);
+        
+        // Assume downtime from start_time until the first log
+        const initialDuration = (prevTs - sTime) / 1000;
+        if (initialDuration > 0) {
+            downtime += initialDuration;
+        }
         
         for (let i = 0; i < stateLogs.length - 1; i++) {
             const currentTs = new Date(stateLogs[i + 1].timestamp);
@@ -37,14 +46,17 @@ const calculateSessionStats = async (machine_id, start_time, end_time) => {
             else downtime += duration;
             prevTs = currentTs;
         }
-        const eTime = new Date(end_time);
+        
         const durationSinceLast = (eTime - prevTs) / 1000;
-        if (stateLogs[stateLogs.length - 1].state === 'running') runningTime += durationSinceLast;
-        else downtime += durationSinceLast;
+        if (durationSinceLast > 0) {
+            if (stateLogs[stateLogs.length - 1].state === 'running') runningTime += durationSinceLast;
+            else downtime += durationSinceLast;
+        }
+    } else {
+        // If no state logs exist at all, assume it's been in downtime the entire time
+        downtime = Math.max(0, (eTime - sTime) / 1000);
     }
 
-    const sTime = new Date(start_time);
-    const eTime = new Date(end_time);
     const queriedDurationSec = Math.max((eTime - sTime) / 1000, runningTime + downtime); // Ensure we don't divide by zero
     const plannedProductionTimeSec = queriedDurationSec * (1270 / 1440); // 1270 mins planned out of 1440 mins
 

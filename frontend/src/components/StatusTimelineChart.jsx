@@ -10,12 +10,17 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60, startRange
     const chartData = useMemo(() => {
         if (!timeline || timeline.length === 0) return { segments: [], totalDuration: 0, minTime: 0, maxTime: 0 };
 
+        const safeDate = (ts) => {
+            if (typeof ts === 'string') return new Date(ts.replace(' ', 'T'));
+            return new Date(ts);
+        };
+
         const segments = [];
-        const timestamps = timeline.map(t => new Date(t.timestamp).getTime());
+        const timestamps = timeline.map(t => safeDate(t.timestamp).getTime());
         
         // Use explicitly requested bounds if provided, otherwise fallback to data bounds
-        const minTime = startRange ? new Date(startRange).getTime() : Math.min(...timestamps);
-        const maxTime = endRange ? new Date(endRange).getTime() : Math.max(new Date().getTime(), Math.max(...timestamps));
+        const minTime = startRange ? safeDate(startRange).getTime() : Math.min(...timestamps);
+        const maxTime = endRange ? safeDate(endRange).getTime() : Math.max(new Date().getTime(), Math.max(...timestamps));
         
         const totalDuration = maxTime - minTime;
 
@@ -23,8 +28,8 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60, startRange
             const current = timeline[i];
             
             // Constrain start and end times to the viewable window
-            let startTime = new Date(current.timestamp).getTime();
-            let endTime = i < timeline.length - 1 ? new Date(timeline[i + 1].timestamp).getTime() : maxTime;
+            let startTime = safeDate(current.timestamp).getTime();
+            let endTime = i < timeline.length - 1 ? safeDate(timeline[i + 1].timestamp).getTime() : maxTime;
             
             startTime = Math.max(startTime, minTime);
             endTime = Math.min(endTime, maxTime);
@@ -57,12 +62,12 @@ const StatusTimelineChart = React.memo(({ timeline = [], height = 60, startRange
     }
 
     const formatTime = (ts) => {
-        const d = new Date(ts);
+        const d = typeof ts === 'string' ? new Date(ts.replace(' ', 'T')) : new Date(ts);
         return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     };
 
     const formatDate = (ts) => {
-        const d = new Date(ts);
+        const d = typeof ts === 'string' ? new Date(ts.replace(' ', 'T')) : new Date(ts);
         return d.toLocaleDateString([], { month: 'short', day: '2-digit' });
     };
 

@@ -332,14 +332,16 @@ const Analytics = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
-                                        {data.downtimeEvents?.map((d, idx) => (
+                                        {data.downtimeEvents?.map((d, idx) => {
+                                            const safeDate = (ts) => typeof ts === 'string' ? new Date(ts.replace(' ', 'T')) : new Date(ts);
+                                            return (
                                             <tr key={idx} className="hover:bg-white/10 transition-colors group">
                                                 <td className="p-3 text-gray-300">
                                                     <div className="font-mono text-white group-hover:text-accent transition-colors">
-                                                        {new Date(d.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {safeDate(d.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </div>
                                                     <div className="text-[9px] text-gray-500 mt-0.5">
-                                                        {new Date(d.start_time).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                                        {safeDate(d.start_time).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                                                     </div>
                                                 </td>
                                                 <td className="p-3">
@@ -360,7 +362,8 @@ const Analytics = () => {
                                                     )}
                                                 </td>
                                             </tr>
-                                        ))}
+                                            );
+                                        })}
                                         {(!data.downtimeEvents || data.downtimeEvents.length === 0) && (
                                             <tr>
                                                 <td colSpan="3" className="p-8 text-center text-gray-500 italic">
