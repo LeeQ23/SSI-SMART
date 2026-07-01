@@ -418,8 +418,8 @@ const Dashboard = () => {
 
             {error && <ErrorToast message={error.message} />}
 
-            {/* Floating Action Buttons - Desktop Only (Mobile uses BottomNav) */}
-            <div className="fixed bottom-6 right-6 z-50 hidden md:flex flex-col gap-3">
+            {/* Floating Action Buttons */}
+            <div className="fixed bottom-24 md:bottom-6 right-6 z-50 flex flex-col gap-3">
                 {user?.role === 'manager' && (
                     <button
                         onClick={() => setIsEditModalOpen(true)}
@@ -431,7 +431,7 @@ const Dashboard = () => {
                 )}
                 <button
                     onClick={() => setIsDowntimeModalOpen(true)}
-                    className="w-14 h-14 bg-warning hover:bg-yellow-500 text-black rounded-full shadow-lg shadow-warning/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
+                    className="hidden md:flex w-14 h-14 bg-warning hover:bg-yellow-500 text-black rounded-full shadow-lg shadow-warning/40 items-center justify-center transition-all hover:scale-110 active:scale-95 group"
                     title={t('dashboard.record_manual_downtime', 'Record Manual Downtime')}
                 >
                     <AlertTriangle size={24} className="group-hover:scale-110 transition-transform" />
