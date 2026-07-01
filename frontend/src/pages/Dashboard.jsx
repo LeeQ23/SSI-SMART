@@ -58,7 +58,7 @@ const Dashboard = () => {
             const res = await axios.get(`/api/dashboard?machine_id=${currentMachineId}`);
             return res.data;
         },
-        refetchInterval: false, // We rely on sockets for real-time
+        refetchInterval: 300000, // Sync every 5 minutes (ultra-lightweight) to ensure shift changes update
     });
 
     useEffect(() => {

@@ -62,6 +62,10 @@ const Overview = () => {
             fetchMachines();
         });
 
+        const syncInterval = setInterval(() => {
+            fetchMachines();
+        }, 300000);
+
         const retryInterval = setInterval(() => {
             if (errorRef.current) {
                 fetchMachines();
@@ -70,6 +74,7 @@ const Overview = () => {
 
         return () => {
             socket.close();
+            clearInterval(syncInterval);
             clearInterval(retryInterval);
         };
     }, []);
