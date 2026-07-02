@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Activity, CheckCircle, XCircle, Zap, LayoutGrid } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import ErrorToast from '../components/ErrorToast';
 
 import LogoLoader from '../components/LogoLoader';
@@ -18,6 +19,7 @@ const Overview = () => {
     const errorRef = useRef(null);
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const queryClient = useQueryClient();
 
     const fetchMachines = async () => {
         try {
@@ -79,6 +81,16 @@ const Overview = () => {
         };
     }, []);
 
+    const prefetchDashboard = (id) => {
+        queryClient.prefetchQuery({
+            queryKey: ['dashboard', String(id)],
+            queryFn: async () => {
+                const res = await axios.get(`/api/dashboard?machine_id=${id}`);
+                return res.data;
+            }
+        });
+    };
+
     if (loading && machines.length === 0) return <LogoLoader />;
     // Removed early error return
 
@@ -99,6 +111,7 @@ const Overview = () => {
                     <div
                         key={m.id}
                         onClick={() => navigate(`/dashboard/${m.id}`)}
+                        onMouseEnter={() => prefetchDashboard(m.id)}
                         className={`p-4 rounded-xl cursor-pointer hover:scale-[1.02] transition-all duration-300 group relative overflow-hidden border backdrop-blur-md ${
                             m.state === 'running' 
                                 ? 'bg-success/5 border-success/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
