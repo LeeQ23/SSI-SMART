@@ -118,9 +118,30 @@ const Layout = ({ children }) => {
     );
 
     return (
-        <div className="flex h-screen overflow-hidden bg-gradient-to-br from-primary to-black text-white relative">
+        <div className="flex h-screen overflow-hidden bg-gradient-to-br from-primary to-black text-white relative flex-col md:flex-row">
             {/* Global Connection Header Bar */}
             <div className={`absolute top-0 left-0 w-full h-[2px] z-50 ${isConnected ? 'bg-success shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-danger animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]'}`} />
+
+            {/* Mobile Top Header (Antigravity Style) */}
+            <header className="md:hidden flex items-center justify-between px-4 py-3 bg-primary/95 backdrop-blur-xl border-b border-white/10 z-40 shrink-0 shadow-md">
+                <div className="flex items-center gap-3">
+                    <img src="/logo.png" alt="SSI Logo" className="h-8 w-auto object-contain drop-shadow-[0_0_8px_rgba(0,116,217,0.3)]" />
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold text-white leading-tight">{user?.username}</span>
+                        <span className="text-[9px] text-accent uppercase tracking-wider font-semibold leading-none">{user?.role}</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <LanguageSwitcher mini />
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center justify-center w-9 h-9 rounded-xl bg-red-500/10 text-red-400 active:bg-red-500/20 transition-all border border-red-500/20 active:scale-95"
+                        title={t('nav.logout')}
+                    >
+                        <LogOut size={16} />
+                    </button>
+                </div>
+            </header>
 
             {/* Ultra-Slim Sidebar (Antigravity Style) - Desktop Only */}
             <aside className={`hidden md:flex w-20 glass-panel m-4 flex-col items-center py-6 shadow-2xl relative z-40 transition-all duration-500 ${isFullscreen ? 'border-accent/30 shadow-[0_0_30px_rgba(0,116,217,0.1)]' : 'border-white/5'}`}>
@@ -212,8 +233,8 @@ const Layout = ({ children }) => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden p-4 pb-24 md:pb-4">
-                <div className="flex-1 glass-panel p-6 overflow-y-auto mb-4 custom-scrollbar">
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden p-3 pb-24 md:p-4">
+                <div className="flex-1 glass-panel p-4 md:p-6 overflow-y-auto mb-4 custom-scrollbar">
                     {children}
                 </div>
 
