@@ -30,7 +30,8 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                 });
             }
         }
-    }, [isOpen, currentData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]); // Only run when modal opens, ignore live data updates while typing
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
