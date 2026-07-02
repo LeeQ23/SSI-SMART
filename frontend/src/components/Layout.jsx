@@ -3,11 +3,11 @@ import { useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
 import { LayoutDashboard, History, Users, LogOut, Clock, LineChart, LayoutGrid, Maximize, Minimize, AlertTriangle, Settings as SettingsIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
 import LanguageSwitcher from './LanguageSwitcher';
 import DowntimeModal from './DowntimeModal';
 import MobileBottomNav from './MobileBottomNav';
 import { ROUTES } from '../config/navigation';
+import { createSocketConnection } from '../utils/socket';
 
 const Layout = ({ children }) => {
     const { user, logout } = useAuth();
@@ -60,7 +60,7 @@ const Layout = ({ children }) => {
     }, [user, navigate]);
 
     useEffect(() => {
-        const socket = io();
+        const socket = createSocketConnection();
         
         socket.on('connect', () => setIsConnected(true));
         socket.on('disconnect', () => setIsConnected(false));

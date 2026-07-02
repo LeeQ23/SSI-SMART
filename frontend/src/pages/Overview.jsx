@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
-import { io } from 'socket.io-client';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Activity, CheckCircle, XCircle, Zap, LayoutGrid } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import ErrorToast from '../components/ErrorToast';
+import { createSocketConnection } from '../utils/socket';
 
 import LogoLoader from '../components/LogoLoader';
 
@@ -39,7 +39,7 @@ const Overview = () => {
     useEffect(() => {
         fetchMachines();
 
-        const socket = io();
+        const socket = createSocketConnection();
 
         socket.on('machine_update', (update) => {
             setMachines(prev => prev.map(m =>

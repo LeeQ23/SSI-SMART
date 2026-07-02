@@ -1,5 +1,4 @@
 import { useEffect, useState, useMemo } from 'react';
-import { io } from 'socket.io-client';
 import axios from 'axios';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -16,6 +15,7 @@ import DowntimeModal from '../components/DowntimeModal';
 import EditSessionModal from '../components/EditSessionModal';
 import AnimatedNumber from '../components/AnimatedNumber';
 import { useAuth } from '../context/AuthContext';
+import { createSocketConnection } from '../utils/socket';
 
 const DigitalClock = ({ formatDateDisplay }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -66,7 +66,7 @@ const Dashboard = () => {
             Notification.requestPermission();
         }
 
-        const newSocket = io();
+        const newSocket = createSocketConnection();
         setSocket(newSocket);
 
         newSocket.on('machine_update', (update) => {

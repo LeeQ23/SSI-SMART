@@ -97,29 +97,38 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/all', authenticateToken, async (req, res) => {
     try {
         const currentShift = await getShift();
-        const [rows] = await pool.query(`
-            SELECT 
-                m.id, m.code, m.type,
-                COUNT(CASE WHEN pe.signal_type = 'good' THEN 1 END) as good,
-                COUNT(CASE WHEN pe.signal_type = 'ng' THEN 1 END) as ng
+        
+        // 1. Fetch all machines and their active session start times
+        const [machines] = await pool.query(`
+            SELECT m.id, m.code, m.type, axs.start_time
             FROM machines m
             LEFT JOIN active_sessions axs ON m.id = axs.machine_id
-            LEFT JOIN production_events pe ON m.id = pe.machine_id AND pe.timestamp >= COALESCE(axs.start_time, ?)
-            GROUP BY m.id
-        `, [currentShift.start]);
+        `);
 
-        const results = rows.map(r => {
-            const mState = initMachineState(r.id);
-            return {
-                id: r.id,
-                code: r.code,
-                type: r.type,
-                good: parseInt(r.good) || 0,
-                ng: parseInt(r.ng) || 0,
+        // 2. Fetch counts for each machine individually using indexed queries
+        const results = [];
+        for (const machine of machines) {
+            const startTime = machine.start_time || currentShift.start;
+            const [counts] = await pool.query(`
+                SELECT 
+                    COUNT(CASE WHEN signal_type = 'good' THEN 1 END) as good,
+                    COUNT(CASE WHEN signal_type = 'ng' THEN 1 END) as ng
+                FROM production_events
+                WHERE machine_id = ? AND timestamp >= ?
+            `, [machine.id, startTime]);
+
+            const mState = initMachineState(machine.id);
+            results.push({
+                id: machine.id,
+                code: machine.code,
+                type: machine.type,
+                good: parseInt(counts[0].good) || 0,
+                ng: parseInt(counts[0].ng) || 0,
                 state: mState.state,
                 current: mState.current
-            };
-        });
+            });
+        }
+
         res.json(results);
     } catch (e) {
         console.error("Dashboard All Error", e);
