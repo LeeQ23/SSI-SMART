@@ -175,23 +175,23 @@ const Dashboard = () => {
         <div className="space-y-6">
             {/* Top Info Header Row */}
             <div className="grid grid-cols-2 md:grid-cols-3 xl:flex xl:flex-nowrap gap-3 md:gap-4">
-                <div className="glass-panel-raised p-3 md:p-4 border-l-4 border-l-accent flex flex-col justify-center col-span-1">
+                <div className="glass-panel-raised p-3 md:p-4 border-l-4 border-l-accent flex flex-col justify-center col-span-1 xl:flex-[1.5] xl:min-w-[140px]">
                     <h3 className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.product_id', 'PRODUCT ID')}</h3>
                     <div className="text-base md:text-xl font-black text-white">{data.product_id || '-'}</div>
                 </div>
-                <div className="glass-panel p-3 md:p-4 flex flex-col justify-center col-span-1">
+                <div className="glass-panel p-3 md:p-4 flex flex-col justify-center col-span-1 xl:flex-1 xl:min-w-[100px]">
                     <h3 className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.lot_number', 'LOT NUMBER')}</h3>
                     <div className="text-sm md:text-lg font-bold text-gray-200">{data.lot_number || '-'}</div>
                 </div>
-                <div className="glass-panel p-3 md:p-4 flex flex-col justify-center col-span-1">
+                <div className="glass-panel p-3 md:p-4 flex flex-col justify-center col-span-1 xl:flex-1 xl:min-w-[100px]">
                     <h3 className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.target', 'TARGET')}</h3>
                     <div className="text-sm md:text-lg font-bold text-accent tabular-nums">{data.target}</div>
                 </div>
-                <div className="glass-panel p-3 md:p-4 flex flex-col justify-center col-span-1">
+                <div className="glass-panel p-3 md:p-4 flex flex-col justify-center col-span-1 xl:flex-1 xl:min-w-[100px]">
                     <h3 className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.shift', 'SHIFT')}</h3>
                     <div className="text-sm md:text-lg font-bold text-gray-200">{data.shift}</div>
                 </div>
-                <div className="glass-panel p-3 md:p-4 flex flex-col justify-center relative overflow-hidden col-span-2 md:col-span-1 xl:col-span-auto">
+                <div className="glass-panel p-3 md:p-4 flex flex-col justify-center relative overflow-hidden col-span-2 md:col-span-1 xl:flex-[2.5] xl:min-w-[220px]">
                     <h3 className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.machine_id', 'MACHINE')}</h3>
                     <MachineSelector
                          selectedId={machineId || 1}
@@ -199,11 +199,11 @@ const Dashboard = () => {
                          className="bg-transparent border-none p-0 h-auto text-base md:text-xl font-bold text-white w-full outline-none focus:ring-0"
                     />
                 </div>
-                <div className="glass-panel p-3 md:p-4 flex flex-col justify-center col-span-1">
+                <div className="glass-panel p-3 md:p-4 flex flex-col justify-center col-span-1 xl:flex-[1.5] xl:min-w-[140px]">
                     <h3 className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.operator', 'OPERATOR')}</h3>
                     <div className="text-sm md:text-lg font-bold text-gray-200 truncate">{data.operator}</div>
                 </div>
-                <div className="glass-panel-recessed p-3 md:p-4 flex flex-col justify-center items-end bg-black/20 col-span-1 md:col-span-1 xl:col-span-auto shrink-0">
+                <div className="glass-panel-recessed p-3 md:p-4 flex flex-col justify-center items-end bg-black/20 col-span-1 md:col-span-1 xl:flex-[1.5] xl:min-w-[140px] xl:shrink-0">
                     <h3 className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t('dashboard.system_time', 'SYSTEM TIME')}</h3>
                     <DigitalClock formatDateDisplay={formatDateDisplay} />
                 </div>
