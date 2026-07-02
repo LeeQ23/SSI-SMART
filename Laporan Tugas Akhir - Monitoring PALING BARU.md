@@ -400,13 +400,13 @@ Persamaan 2.4 Overall Equipment Effectiveness (OEE)	13
 
 # **ABSTRAK**
 
-Proses *compacting* 200 Ton merupakan tahap esensial dalam industri *powder metallurgy* untuk membentuk *green part* secara konsisten. Pada praktiknya, PT. XYZ masih menggunakan metode pencatatan manual dalam merekam jumlah produksi dan status operasional mesin. Metode manual ini rentan terhadap *human error*, keterlambatan data, serta tidak akuratnya perekaman alasan *downtime*, yang pada akhirnya menghambat perhitungan *Overall Equipment Effectiveness* (*OEE*). Tugas Akhir ini bertujuan untuk merancang dan membangun sistem *monitoring* produksi secara *real-time* berbasis *Internet of Things* (*IoT*) untuk menggantikan sistem pencatatan manual. Sistem ini menggunakan ESP32 DevKit dan sensor *relay* berlogika *Active-HIGH Pull-down* untuk merekam *output* (*Good* dan *No-Good*) langsung dari mesin. Transmisi data dilakukan menggunakan protokol *WebSocket*, dengan *Redis* sebagai pengelola memori (*state management*) untuk mencegah kehilangan data (*data loss*). Visualisasi data disajikan melalui *dashboard* interaktif bergaya *Glassmorphism* dengan pembagian akses antara operator dan manajer. Hasil pengujian menunjukkan bahwa sistem berhasil mencatat dan menampilkan siklus produksi dengan tingkat akurasi mencapai 99,8%. Implementasi *monitoring* digital ini secara efektif menghilangkan keterlambatan pelaporan, menyediakan visibilitas instan terhadap performa mesin, dan memberikan landasan data yang valid bagi manajemen untuk melakukan perbaikan proses berkelanjutan.
+Proses *compacting* 200 Ton merupakan tahap esensial dalam industri *powder metallurgy* untuk membentuk *green part* secara konsisten. Pada praktiknya, PT. XYZ masih menggunakan metode pencatatan manual dalam merekam jumlah produksi dan status operasional mesin. Metode manual ini rentan terhadap *human error*, keterlambatan data, serta tidak akuratnya perekaman alasan *downtime*, yang pada akhirnya menghambat perhitungan *Overall Equipment Effectiveness* (*OEE*). Tugas Akhir ini bertujuan untuk merancang dan membangun sistem *monitoring* produksi secara *real-time* berbasis *Internet of Things* (*IoT*) untuk menggantikan sistem pencatatan manual. Sistem ini menggunakan ESP32 DevKit dan sensor *relay* berlogika *Active-HIGH Pull-down* untuk merekam *output* (*Good* dan *No-Good*) langsung dari mesin. Transmisi data dilakukan menggunakan protokol *WebSocket*, dengan *Redis* sebagai pengelola memori (*state management*) untuk mencegah kehilangan data (*data loss*). Visualisasi data disajikan melalui *dashboard* interaktif bergaya *Glassmorphism* dengan pembagian akses antara operator dan manajer. Hasil pengujian menunjukkan bahwa sistem berhasil mencatat dan menampilkan siklus produksi dengan tingkat akurasi mencapai 99,8%. Implementasi *monitoring* digital ini secara efektif meminimalisasi keterlambatan pelaporan, menyediakan visibilitas real-time terhadap performa mesin, dan memberikan landasan data yang valid bagi manajemen untuk melakukan perbaikan proses berkelanjutan.
 
 **Kata kunci**: *Compacting*, *Dashboard, IoT, Monitoring*, *OEE*, *WebSocket*, 
 
 # **ABSTRACT**
 
-*The 200 Ton compacting process is an essential stage in the powder metallurgy industry for consistently forming green parts. In practice, PT. XYZ still utilizes manual recording methods to log production quantities and machine operational status. This manual approach is susceptible to human error, data latency, and inaccurate recording of downtime reasons, which ultimately hinders the calculation of Overall Equipment Effectiveness (OEE). This Final Project aims to design and build a real-time production monitoring system based on the Internet of Things (IoT) to replace manual recording systems. The system utilizes an ESP32 DevKit and relay sensors with Active-HIGH Pull-down logic to record outputs (Good and No-Good) directly from the machine. Data transmission is executed using the WebSocket protocol, with Redis acting as memory management (state management) to prevent data loss. Data visualization is presented through an interactive Glassmorphism-styled dashboard featuring role-based access for operators and managers. Testing results demonstrate that the system successfully records and displays production cycles with an accuracy rate of 99,8%. The implementation of this digital monitoring effectively eliminates reporting delays, provides instant visibility into machine performance, and offers a valid data foundation for management to pursue continuous process improvements.*
+*The 200 Ton compacting process is an essential stage in the powder metallurgy industry for consistently forming green parts. In practice, PT. XYZ still utilizes manual recording methods to log production quantities and machine operational status. This manual approach is susceptible to human error, data latency, and inaccurate recording of downtime reasons, which ultimately hinders the calculation of Overall Equipment Effectiveness (OEE). This Final Project aims to design and build a real-time production monitoring system based on the Internet of Things (IoT) to replace manual recording systems. The system utilizes an ESP32 DevKit and relay sensors with Active-HIGH Pull-down logic to record outputs (Good and No-Good) directly from the machine. Data transmission is executed using the WebSocket protocol, with Redis acting as memory management (state management) to prevent data loss. Data visualization is presented through an interactive Glassmorphism-styled dashboard featuring role-based access for operators and managers. Testing results demonstrate that the system successfully records and displays production cycles with an accuracy rate of 99,8%. The implementation of this digital monitoring effectively minimizes reporting delays, provides real-time visibility into machine performance, and offers a valid data foundation for management to pursue continuous process improvements.*
 
 **Keywords**: *Compacting*, *Dashboard, IoT, Monitoring*, *OEE*, *WebSocket*, 
 
@@ -554,7 +554,7 @@ Produk yang memenuhi standar massa atau dimensi. *Good product* termasuk sebagai
 
 Produk dianggap cacat apabila tidak memenuhi batas massa, bentuk, densitas, atau mengalami kerusakan pada proses *ejection.* Berdasarkan penelitian Li et al. \[6\], deteksi cacat berbasis sensor dan visual *AI* terbukti mampu meningkatkan akurasi klasifikasi produk.
 
-Pencatatan otomatis *good/no-good* menghilangkan ketergantungan pada pencatatan manual yang menurut Supriyadi et al. \[3\] sering menyebabkan kesalahan (*human error*). *Monitoring* otomatis memungkinkan pencatatan good/no-good secara konsisten tanpa ketergantungan pada laporan manual *operator.*
+Pencatatan otomatis *good/no-good* mengurangi ketergantungan pada pencatatan manual yang menurut Supriyadi et al. [3] sering menyebabkan kesalahan (*human error*). *Monitoring* otomatis memungkinkan pencatatan good/no-good secara konsisten untuk meminimalisasi ketergantungan pada laporan manual *operator.*
 
 ## **2.4 Status Operasi Mesin**
 
@@ -566,9 +566,9 @@ Mesin sedang melakukan proses produksi dengan kondisi normal, ditandai oleh sikl
 
 ### **2.4.2. *Downtime***
 
-Mesin tidak beroperasi akibat kerusakan, *setting* ulang, perbaikan, atau masalah lainnya. *Downtime* sangat mempengaruhi nilai *Availability* pada *OEE.*
+Mesin tidak beroperasi akibat kerusakan, *setting* ulang, perbaikan, atau masalah lainnya. *Downtime* berpengaruh signifikan terhadap nilai *Availability* pada *OEE.*
 
-Mengetahui durasi masing-masing status sangat penting untuk analisa efisiensi dan perencanaan peningkatan performa.
+Mengetahui durasi masing-masing status penting untuk analisis efisiensi dan perencanaan peningkatan performa.
 
 ## **2.5 *Cycle Time***
 
@@ -638,7 +638,7 @@ Dimana:
 * Total Beban Arus \= Akumulasi arus listrik maksimum dari semua komponen perangkat keras aktif (dalam satuan mA atau A).  
 * Kapasitas Power Supply \= Kuat arus maksimum yang dapat didistribusikan oleh adaptor atau *power supply* (dalam satuan mA atau A).
 
-  Secara umum, standar persentase pembebanan elektrik yang ideal (*safety factor*) untuk perangkat *power supply* secara kontinu adalah maksimal **80%** dari total kapasitasnya. Menjaga pembebanan di bawah angka tersebut sangat direkomendasikan guna mencegah komponen mengalami panas berlebih (*overheating*), memperpanjang umur pakai (*lifespan*) adaptor, serta memastikan suplai tegangan sistem selalu stabil tanpa risiko *brown-out* akibat kelebihan beban.
+  Secara umum, standar persentase pembebanan elektrik yang ideal (*safety factor*) untuk perangkat *power supply* secara kontinu adalah maksimal **80%** dari total kapasitasnya. Menjaga pembebanan di bawah angka tersebut direkomendasikan guna mencegah komponen mengalami panas berlebih (*overheating*), memperpanjang umur pakai (*lifespan*) adaptor, serta memastikan suplai tegangan sistem tetap stabil guna meminimalisasi risiko *brown-out* akibat kelebihan beban.
 
 ## **2.8 *Internet of Things (IoT)* dalam *Monitoring* Mesin**
 
@@ -1229,7 +1229,7 @@ Modul pertama berfungsi untuk membaca arus listrik dan berisi mikrokontroler ESP
 
 1. **Mikrokontroler ESP32 DevKit V1**: Konsumsi arus rata-rata 80 mA, dengan lonjakan arus maksimal saat transmisi data *via Wifi* (*Tx peak*) mencapai **240 mA**.
 
-2. **Modul Sensor PZEM-004T**: Konsumsi arus operasional sangat rendah, yaitu maksimal **10 mA**. 
+2. **Modul Sensor PZEM-004T**: Konsumsi arus operasional tergolong rendah, yaitu maksimal **10 mA**. 
 
 | *Total Beban Arus Puncak Modul 1* \= | 240 mA \+ 10 mA \= | 250mA |
 | :---- | :---- | :---- |
@@ -1241,7 +1241,7 @@ Modul kedua berfungsi untuk membaca status *Good/No-Good* dari *relay* mesin ins
 
 1. **Mikrokontroler ESP32 DevKit V1**: Arus maksimal transmisi data via Wi-Fi mencapai **240 mA**.
 
-2. **Rangkaian Input Pull-down**: Arus bocor/standby dari sirkuit relay sangat kecil, diestimasikan di bawah **10 mA**.
+2. **Rangkaian Input Pull-down**: Arus bocor/standby dari sirkuit relay relatif kecil, diestimasikan di bawah **10 mA**.
 
 | *Total Beban Arus Puncak Modul 2* | \= 240 mA \+ 10 mA | \= 250 mA |
 | :---- | :---- | :---- |
@@ -1309,7 +1309,7 @@ Tabel 4.2 Data Hasil Uji Pasca-Pengembangan Not Good
 | 23/6/2026 | 303 | 281 | 22 | 93% |
 | AVERAGE | 148.67 | 142.67 | 8.67 | 96.64% |
 
-Berdasarkan Tabel 4.3 dan Tabel 4.4, Rata-rata Akurasi *Server* mencapai 91.82% untuk *Good Product* dan 96.64% untuk *Not Good Product*. Pembaruan arsitektur *backend* terbukti berhasil mengatasi anomali pencatatan *Not Good Product* (yang sempat anjlok ke angka negatif di fase purwarupa awal), menjadikannya jauh lebih stabil dan teruji keandalannya untuk merekam aktivitas di lantai produksi.
+Berdasarkan Tabel 4.3 dan Tabel 4.4, Rata-rata Akurasi *Server* mencapai 91.82% untuk *Good Product* dan 96.64% untuk *Not Good Product*. Pembaruan arsitektur *backend* berhasil mengatasi anomali pencatatan *Not Good Product* (yang sempat anjlok ke angka negatif di fase purwarupa awal), serta meningkatkan stabilitas dan keandalannya untuk merekam aktivitas di lantai produksi.
 
 ### **4.5.2 Evaluasi Akurasi Status Operasi**
 
@@ -1404,7 +1404,7 @@ Tabel 4.4 Penilaian Kepuasan Pengguna (Manajemen/Engineer/Maintenance)
 
 Selain itu, berdasarkan kuesioner yang sama, fitur yang paling disukai oleh jajaran Manajemen/Engineer/Maintenance adalah **Tabel Riwayat Kerusakan (Downtime)**, **Tampilan OEE Real-time**, dan **Warna Indikator Status Mesin (Hijau/Merah)**.
 
-Dari sudut pandang *Operator* di lapangan, antarmuka aplikasi dinilai mudah dipahami (skor 4/5), dengan fitur **Warna Indikator Status Mesin** dinilai sangat membantu (skor 5/5) dalam mengenali kondisi mesin secara cepat tanpa harus membaca teks. Terdapat sedikit tantangan adaptasi terkait kepraktisan pencatatan digital dibandingkan manual (skor 3/5), namun hal ini wajar pada masa transisi adaptasi teknologi (*change management*).
+Dari sudut pandang *Operator* di lapangan, antarmuka aplikasi dinilai mudah dipahami (skor 4/5), dengan fitur **Warna Indikator Status Mesin** dinilai membantu secara signifikan (skor 5/5) dalam mengenali kondisi mesin secara cepat tanpa harus membaca teks. Terdapat sedikit tantangan adaptasi terkait kepraktisan pencatatan digital dibandingkan manual (skor 3/5), namun hal ini wajar pada masa transisi adaptasi teknologi (*change management*).
 
 Adapun saran perbaikan yang diajukan oleh para responden untuk pengembangan sistem di masa mendatang meliputi: peningkatan tingkat akurasi data sensor, peningkatan ukuran font pada visualisasi agar lebih mudah dibaca, penyediaan buku manual operasional dan perawatan sistem, penggunaan komponen standar industri yang andal, serta usulan penambahan fitur monitoring energi listrik.
 
@@ -1418,10 +1418,10 @@ Secara keseluruhan, dengan rata-rata penilaian di atas 4.0, hasil survei ini men
 
 Berdasarkan seluruh tahapan perancangan, pembuatan, pengujian, hingga evaluasi sistem monitoring mesin compacting 200 Ton, dapat ditarik beberapa kesimpulan sebagai berikut: 
 
-1. **Keberhasilan Merancang dan Membangun Sistem *Monitoring***: Sistem *monitoring* otomatis berbasis *IoT* berhasil dirancang dan diimplementasikan untuk menggantikan sistem pencatatan manual. Sistem terbukti mampu mendeteksi kuantitas produksi serta status operasi mesin secara *real-time*. Secara kuantitatif, hasil pengujian sistem menunjukkan pencapaian rata-rata akurasi sebesar **91%** untuk monitoring status *Running* dan *Downtime*. Untuk monitoring *output* produksi, sistem memiliki rata-rata akurasi sebesar **91%** untuk produk *Good* dan **97%** untuk produk *Not Good* (NG).
+1. **Keberhasilan Merancang dan Membangun Sistem *Monitoring***: Sistem *monitoring* otomatis berbasis *IoT* berhasil dirancang dan diimplementasikan untuk menggantikan sistem pencatatan manual. Sistem mampu mendeteksi kuantitas produksi serta status operasi mesin secara *real-time*. Secara kuantitatif, hasil pengujian sistem menunjukkan pencapaian rata-rata akurasi sebesar **91%** untuk monitoring status *Running* dan *Downtime*. Untuk monitoring *output* produksi, sistem memiliki rata-rata akurasi sebesar **91%** untuk produk *Good* dan **97%** untuk produk *Not Good* (NG).
 
 2. **Keberhasilan Pengolahan dan Visualisasi Data**: Sistem berhasil menjawab kebutuhan untuk mengambil, menyimpan, dan menampilkan data mesin ke dalam *dashboard* yang mudah dipantau. Melalui implementasi *database* (*MySQL XAMPP*) serta koneksi *WebSocket*, sistem mampu memperbarui data secara *real-time* dengan waktu tunda (*latency*) kurang dari 1 detik tanpa membebani *server* (*bottleneck*). Selain pemantauan secara *real-time*, sistem juga dapat menampilkan data historis. Hal ini memudahkan manajemen untuk memantau riwayat performa mesin secara fleksibel, baik berdasarkan *shift*, laporan harian, maupun mingguan.  
-3. **Penghitungan dan Penampilan Parameter Performa**: Sistem mampu menghitung parameter performa mesin seperti *Cycle Time*, efisiensi, dan *OEE* secara otomatis menggunakan data aktual dari sensor. Hasil perhitungan ini kemudian ditampilkan pada *dashboard* dalam bentuk angka dan grafik yang sederhana. Berdasarkan hasil survei pengguna, sistem terbukti menyajikan data secara ringkas dan informatif dengan skor rata-rata **4,4 dari 5,0**, serta menampilkan grafik *OEE* yang jelas dan mudah dipahami dengan skor **4,6 dari 5,0**.
+3. **Penghitungan dan Penampilan Parameter Performa**: Sistem mampu menghitung parameter performa mesin seperti *Cycle Time*, efisiensi, dan *OEE* secara otomatis menggunakan data aktual dari sensor. Hasil perhitungan ini kemudian ditampilkan pada *dashboard* dalam bentuk angka dan grafik yang sederhana. Berdasarkan hasil survei pengguna, sistem dinilai menyajikan data secara ringkas dan informatif dengan skor rata-rata **4,4 dari 5,0**, serta menampilkan grafik *OEE* yang jelas dan mudah dipahami dengan skor **4,6 dari 5,0**.
 
 ## **5.2 Saran**
 
