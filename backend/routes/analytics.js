@@ -213,76 +213,17 @@ router.get('/history', authenticateToken, async (req, res) => {
             params.push(end_date);
         }
 
-        // Fetch a larger pool to allow for aggregation
-        query += ` ORDER BY ps.start_time DESC LIMIT 200 `;
-        
-        const [rows] = await pool.query(query, params);
-        
-        // Dynamically map and merge legacy 3-shifts into 2-shifts (12h split)
-        const aggregated = {};
-        rows.forEach(row => {
-            let newShift = row.shift_name;
-            if (newShift === 'Morning') newShift = 'Day Shift';
-            else if (newShift === 'Evening' || newShift === 'Night') newShift = 'Night Shift';
-            
-            // Logical work day: Night shift starting after midnight belongs to previous day's shift
-            const dateObj = new Date(row.start_time);
-            let workDate = dateObj.toISOString().split('T')[0];
-            if (newShift === 'Night Shift' && dateObj.getHours() < 12) {
-                 const prevDay = new Date(dateObj);
-                 prevDay.setDate(prevDay.getDate() - 1);
-                 workDate = prevDay.toISOString().split('T')[0];
-            }
-
-            const key = `${row.machine_id}_${workDate}_${newShift}`;
-            if (!aggregated[key]) {
-                aggregated[key] = { ...row, shift_name: newShift };
-            } else {
-                const existing = aggregated[key];
-                
-                // Calculate weighted OEE
-                const t1 = existing.running_duration_sec + existing.downtime_duration_sec;
-                const t2 = row.running_duration_sec + row.downtime_duration_sec;
-                if (t1 + t2 > 0) {
-                     existing.oee = ((Number(existing.oee) * t1 + Number(row.oee) * t2) / (t1 + t2)).toFixed(1);
-                }
-                
-                // Sum counts and durations
-                existing.good_count += row.good_count;
-                existing.ng_count += row.ng_count;
-                existing.running_duration_sec += row.running_duration_sec;
-                existing.downtime_duration_sec += row.downtime_duration_sec;
-                
-                // Expand start/end boundaries
-                if (new Date(row.start_time) < new Date(existing.start_time)) existing.start_time = row.start_time;
-                if (new Date(row.end_time) > new Date(existing.end_time)) existing.end_time = row.end_time;
-            }
-        });
-        
-        // Convert to array and sort dynamically based on user request
-        let finalRows = Object.values(aggregated);
-        
         const allowedSort = ['start_time', 'product_id', 'good_count', 'ng_count', 'oee'];
         const sortCol = allowedSort.includes(orderBy) ? orderBy : 'start_time';
         const isAsc = orderDir === 'ASC';
         
-        finalRows.sort((a, b) => {
-            let valA = a[sortCol];
-            let valB = b[sortCol];
-            if (sortCol === 'start_time') {
-                valA = new Date(valA).getTime();
-                valB = new Date(valB).getTime();
-            } else {
-                valA = Number(valA);
-                valB = Number(valB);
-            }
-            if (valA < valB) return isAsc ? -1 : 1;
-            if (valA > valB) return isAsc ? 1 : -1;
-            return 0;
-        });
-        
+        query += ` ORDER BY ps.${sortCol} ${isAsc ? 'ASC' : 'DESC'} LIMIT ? `;
         const finalLimit = limit ? parseInt(limit) : 25;
-        res.json(finalRows.slice(0, finalLimit));
+        params.push(finalLimit);
+        
+        const [rows] = await pool.query(query, params);
+        
+        res.json(rows);
     } catch (e) {
         console.error("History API Error", e);
         res.status(500).json({ error: e.message });
