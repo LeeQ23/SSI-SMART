@@ -418,8 +418,21 @@ const Dashboard = () => {
 
             {error && <ErrorToast message={error.message} />}
 
-            {/* Floating Action Buttons */}
-            <div className="fixed bottom-24 md:bottom-6 right-6 z-50 flex flex-col gap-3">
+            {/* Mobile Inline Actions (Elegant Placement) */}
+            <div className="md:hidden mt-8 mb-4">
+                {user?.role === 'manager' && (
+                    <button
+                        onClick={() => setIsEditModalOpen(true)}
+                        className="w-full py-4 bg-accent/10 border border-accent/30 text-accent hover:bg-accent/20 rounded-xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_15px_rgba(0,116,217,0.1)]"
+                    >
+                        <Settings size={20} />
+                        {t('dashboard.edit_session', 'Edit Current Session')}
+                    </button>
+                )}
+            </div>
+
+            {/* Floating Action Buttons - Desktop Only */}
+            <div className="fixed bottom-6 right-6 z-50 hidden md:flex flex-col gap-3">
                 {user?.role === 'manager' && (
                     <button
                         onClick={() => setIsEditModalOpen(true)}
@@ -431,7 +444,7 @@ const Dashboard = () => {
                 )}
                 <button
                     onClick={() => setIsDowntimeModalOpen(true)}
-                    className="hidden md:flex w-14 h-14 bg-warning hover:bg-yellow-500 text-black rounded-full shadow-lg shadow-warning/40 items-center justify-center transition-all hover:scale-110 active:scale-95 group"
+                    className="w-14 h-14 bg-warning hover:bg-yellow-500 text-black rounded-full shadow-lg shadow-warning/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
                     title={t('dashboard.record_manual_downtime', 'Record Manual Downtime')}
                 >
                     <AlertTriangle size={24} className="group-hover:scale-110 transition-transform" />
