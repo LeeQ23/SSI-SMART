@@ -70,7 +70,7 @@ const Overview = () => {
             if (errorRef.current) {
                 fetchMachines();
             }
-        }, 3000);
+        }, 300000);
 
         return () => {
             socket.close();
