@@ -78,7 +78,11 @@
         "shift_night": "Malam",
         "operator_nim": "NIM Operator",
         "updating": "MEMPERBARUI...",
-        "update_parameters_btn": "PERBARUI PARAMETER"
+        "update_parameters_btn": "PERBARUI PARAMETER",
+        "save_and_start_new": "Simpan & Mulai Sesi Baru",
+        "correct_typo": "Hanya Perbaiki Typo",
+        "saving_new_session": "MENYIMPAN SESI & MENGRESET...",
+        "updating_parameters": "MEMPERBARUI PARAMETER..."
     },
     "analytics": {
         "quick_filters": "Filter Cepat:",

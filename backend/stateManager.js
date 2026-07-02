@@ -31,13 +31,17 @@ const getAllMachineStates = () => {
 
 const checkAndResetShift = (currentShiftId) => {
     if (activeShiftId !== null && activeShiftId !== currentShiftId) {
-        for (const id in machinesState) {
-            machinesState[id].good = 0;
-            machinesState[id].ng = 0;
-        }
-        console.log(`State Manager: Shift changed from ${activeShiftId} to ${currentShiftId}. Resetting all in-memory counts to 0.`);
+        console.log(`State Manager: Shift changed from ${activeShiftId} to ${currentShiftId}. Counts are kept continuously (session-based).`);
     }
     activeShiftId = currentShiftId;
+};
+
+const resetMachineStateCounts = (id) => {
+    const mState = initMachineState(id);
+    mState.good = 0;
+    mState.ng = 0;
+    mState.lastSignalTime = 0;
+    console.log(`State Manager: Reset in-memory production counts for machine ID ${id} to 0.`);
 };
 
 const syncAllMachineStates = async () => {
@@ -47,20 +51,21 @@ const syncAllMachineStates = async () => {
         
         const [rows] = await pool.query(`
             SELECT 
-                machine_id,
-                COUNT(CASE WHEN signal_type = 'good' THEN 1 END) as good,
-                COUNT(CASE WHEN signal_type = 'ng' THEN 1 END) as ng
-            FROM production_events
-            WHERE timestamp >= ?
-            GROUP BY machine_id
-        `, [currentShift.start]);
+                m.id as machine_id,
+                COUNT(CASE WHEN pe.signal_type = 'good' THEN 1 END) as good,
+                COUNT(CASE WHEN pe.signal_type = 'ng' THEN 1 END) as ng
+            FROM machines m
+            LEFT JOIN active_sessions axs ON m.id = axs.machine_id
+            LEFT JOIN production_events pe ON m.id = pe.machine_id AND pe.timestamp >= COALESCE(axs.start_time, NOW())
+            GROUP BY m.id
+        `);
 
         rows.forEach(row => {
             const mState = initMachineState(row.machine_id);
-            mState.good = row.good;
-            mState.ng = row.ng;
+            mState.good = row.good || 0;
+            mState.ng = row.ng || 0;
         });
-        console.log("State Manager: Synced production counts from database.");
+        console.log("State Manager: Synced production counts from database (session-based).");
     } catch (e) {
         console.error("State Manager: Failed to sync counts.", e);
     }
@@ -71,5 +76,6 @@ module.exports = {
     getMachineState,
     getAllMachineStates,
     syncAllMachineStates,
-    checkAndResetShift
+    checkAndResetShift,
+    resetMachineStateCounts
 };

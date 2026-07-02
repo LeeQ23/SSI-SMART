@@ -78,7 +78,11 @@
         "shift_night": "夜",
         "operator_nim": "作業者NIM",
         "updating": "更新中...",
-        "update_parameters_btn": "パラメータを更新"
+        "update_parameters_btn": "パラメータを更新",
+        "save_and_start_new": "保存して新しいセッションを開始",
+        "correct_typo": "タイポ修正のみ",
+        "saving_new_session": "セッションを保存してリセット中...",
+        "updating_parameters": "パラメータ更新中..."
     },
     "analytics": {
         "quick_filters": "クイックフィルター:",

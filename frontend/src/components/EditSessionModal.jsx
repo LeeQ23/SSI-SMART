@@ -15,6 +15,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [submitAction, setSubmitAction] = useState(null); // 'save_and_reset' or 'edit_only'
 
     useEffect(() => {
         if (isOpen) {
@@ -33,8 +34,8 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]); // Only run when modal opens, ignore live data updates while typing
 
-    const handleFormSubmit = async (e) => {
-        e.preventDefault();
+    const handleFormSubmit = async (e, saveAndReset) => {
+        if (e) e.preventDefault();
         
         // Validation
         if (!formData.product_id || !formData.target_qty || !formData.shift_name || !formData.operator_name || !formData.operator_nim || !formData.lot_number) {
@@ -43,11 +44,13 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
         }
 
         setLoading(true);
+        setSubmitAction(saveAndReset ? 'save_and_reset' : 'edit_only');
         setError(null);
 
         try {
             await axios.post('/api/session/edit', {
                 machine_id: machineId,
+                save_and_reset: saveAndReset,
                 ...formData
             });
             onSessionCaptured();
@@ -56,6 +59,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
             setError(err.response?.data?.error || 'Failed to update session');
         } finally {
             setLoading(false);
+            setSubmitAction(null);
         }
     };
 
@@ -78,7 +82,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                     <h2 className="text-xl font-bold">{t('modals.update_parameters', 'Update Parameters')}</h2>
                 </div>
 
-                <form onSubmit={handleFormSubmit} className="space-y-4">
+                        <form onSubmit={(e) => handleFormSubmit(e, false)} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="group">
                                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">{t('dashboard.product_id', 'Product ID')}</label>
@@ -89,7 +93,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                                     autoFocus
                                     className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent"
                                     placeholder="e.g., SI-283"
-                                />
+                                  />
                             </div>
                             <div className="group">
                                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">{t('dashboard.lot_number', 'Lot Number')}</label>
@@ -99,7 +103,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                                     onChange={(e) => setFormData({...formData, lot_number: e.target.value})}
                                     className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent"
                                     placeholder="e.g., L-10293"
-                                />
+                                  />
                             </div>
                             <div className="group">
                                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">{t('dashboard.target', 'Target Qty')}</label>
@@ -109,7 +113,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                                     onChange={(e) => setFormData({...formData, target_qty: e.target.value})}
                                     className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent"
                                     placeholder="4320"
-                                />
+                                  />
                             </div>
                             <div className="group">
                                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">{t('dashboard.shift', 'Shift Name')}</label>
@@ -132,7 +136,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                                     onChange={(e) => setFormData({...formData, operator_name: e.target.value})}
                                     className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent"
                                     placeholder="Operator Name"
-                                />
+                                  />
                             </div>
                             <div className="col-span-2 group">
                                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 transition-colors group-focus-within:text-accent">{t('modals.operator_nim', 'Operator NIM')}</label>
@@ -142,7 +146,7 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                                     onChange={(e) => setFormData({...formData, operator_nim: e.target.value})}
                                     className="glass-input w-full px-4 py-3 rounded-lg focus:ring-1 focus:ring-accent"
                                     placeholder="NIM / ID"
-                                />
+                                  />
                             </div>
                         </div>
 
@@ -153,14 +157,31 @@ const EditSessionModal = ({ isOpen, onClose, currentData, machineId, onSessionCa
                             </div>
                         )}
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-success hover:bg-success/80 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] mt-2 disabled:opacity-50"
-                        >
-                            <Save size={18} />
-                            {loading ? t('modals.updating', 'UPDATING...') : t('modals.update_parameters_btn', 'UPDATE PARAMETERS')}
-                        </button>
+                        <div className="flex flex-col gap-3 mt-4">
+                            <button
+                                type="button"
+                                onClick={(e) => handleFormSubmit(e, true)}
+                                disabled={loading}
+                                className="w-full bg-success hover:bg-success/80 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 text-sm"
+                            >
+                                <Save size={18} />
+                                {loading && submitAction === 'save_and_reset' 
+                                    ? t('modals.saving_new_session', 'SAVING SESSION & RESETTING...') 
+                                    : t('modals.save_and_start_new', 'Save & Start New Session')}
+                            </button>
+                            
+                            <button
+                                type="button"
+                                onClick={(e) => handleFormSubmit(e, false)}
+                                disabled={loading}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 text-sm"
+                            >
+                                <ShieldCheck size={18} />
+                                {loading && submitAction === 'edit_only' 
+                                    ? t('modals.updating_parameters', 'UPDATING PARAMETERS...') 
+                                    : t('modals.correct_typo', 'Correct Typo Only')}
+                            </button>
+                        </div>
                 </form>
             </div>
         </div>

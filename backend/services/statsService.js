@@ -29,14 +29,25 @@ const calculateSessionStats = async (machine_id, start_time, end_time) => {
     let downtime = 0;
     const sTime = new Date(start_time);
     const eTime = new Date(end_time);
+
+    // Get the state prior to start_time to avoid incorrect downtime calculation when state is constant
+    const [prevStateRows] = await pool.query(`
+        SELECT state 
+        FROM machine_logs 
+        WHERE machine_id = ? AND timestamp < ?
+        ORDER BY timestamp DESC 
+        LIMIT 1
+    `, [machine_id, start_time]);
+    const prevState = prevStateRows.length > 0 ? prevStateRows[0].state : 'downtime';
     
     if (stateLogs.length > 0) {
         let prevTs = new Date(stateLogs[0].timestamp);
         
-        // Assume downtime from start_time until the first log
+        // Duration from start_time until the first log is assigned to prevState
         const initialDuration = (prevTs - sTime) / 1000;
         if (initialDuration > 0) {
-            downtime += initialDuration;
+            if (prevState === 'running') runningTime += initialDuration;
+            else downtime += initialDuration;
         }
         
         for (let i = 0; i < stateLogs.length - 1; i++) {
@@ -53,8 +64,10 @@ const calculateSessionStats = async (machine_id, start_time, end_time) => {
             else downtime += durationSinceLast;
         }
     } else {
-        // If no state logs exist at all, assume it's been in downtime the entire time
-        downtime = Math.max(0, (eTime - sTime) / 1000);
+        // If no state logs exist at all, the state was constant as prevState
+        const totalDuration = Math.max(0, (eTime - sTime) / 1000);
+        if (prevState === 'running') runningTime = totalDuration;
+        else downtime = totalDuration;
     }
 
     const queriedDurationSec = Math.max((eTime - sTime) / 1000, runningTime + downtime); // Ensure we don't divide by zero

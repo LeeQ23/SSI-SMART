@@ -78,7 +78,11 @@
         "shift_night": "Night",
         "operator_nim": "Operator NIM",
         "updating": "UPDATING...",
-        "update_parameters_btn": "UPDATE PARAMETERS"
+        "update_parameters_btn": "UPDATE PARAMETERS",
+        "save_and_start_new": "Save & Start New Session",
+        "correct_typo": "Correct Typo Only",
+        "saving_new_session": "SAVING SESSION & RESETTING...",
+        "updating_parameters": "UPDATING PARAMETERS..."
     },
     "analytics": {
         "quick_filters": "Quick Filters:",

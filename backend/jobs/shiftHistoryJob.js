@@ -43,10 +43,10 @@ const saveShiftHistory = async () => {
 };
 
 const initCronJobs = () => {
-    // Schedule history save based on shift times
-    cron.schedule('24 7 * * *', saveShiftHistory);
-    cron.schedule('25 19 * * *', saveShiftHistory);
-    console.log("Cron jobs initialized.");
+    // Schedule history save based on shift times - DISABLED for manual session saving
+    // cron.schedule('24 7 * * *', saveShiftHistory);
+    // cron.schedule('25 19 * * *', saveShiftHistory);
+    console.log("Cron jobs initialized (auto-save shift history is disabled).");
 };
 
 module.exports = {

@@ -16,8 +16,9 @@ router.get('/', authenticateToken, async (req, res) => {
         
         const now = new Date();
         const currentShift = await getShift();
+        const sessionStart = session ? session.start_time : currentShift.start;
         
-        const stats = await calculateSessionStats(machine_id, currentShift.start, now);
+        const stats = await calculateSessionStats(machine_id, sessionStart, now);
         const mState = initMachineState(machine_id);
         
         const [eventLogs] = await pool.query(`
@@ -25,7 +26,7 @@ router.get('/', authenticateToken, async (req, res) => {
             FROM production_events 
             WHERE machine_id = ? AND timestamp >= ?
             ORDER BY timestamp ASC
-        `, [machine_id, currentShift.start]);
+        `, [machine_id, sessionStart]);
 
         // Bucket events into 5-minute intervals to reduce payload
         const BUCKET_SIZE_MS = 5 * 60 * 1000;
@@ -60,7 +61,7 @@ router.get('/', authenticateToken, async (req, res) => {
             FROM machine_logs 
             WHERE machine_id = ? AND timestamp >= ?
             ORDER BY timestamp ASC
-        `, [machine_id, currentShift.start]);
+        `, [machine_id, sessionStart]);
 
         res.json({
             product_id: session ? session.product_id : '-',
@@ -84,7 +85,7 @@ router.get('/', authenticateToken, async (req, res) => {
             targetCycleTime: settingsManager.getSetting('IDEAL_CYCLE_TIME'),
             timeline: stateLogs,
             productionEvents: bucketedEvents,
-            session_start: session ? session.start_time : currentShift.start
+            session_start: sessionStart
         });
     } catch (e) {
         console.error("Dashboard Error", e);
@@ -102,7 +103,8 @@ router.get('/all', authenticateToken, async (req, res) => {
                 COUNT(CASE WHEN pe.signal_type = 'good' THEN 1 END) as good,
                 COUNT(CASE WHEN pe.signal_type = 'ng' THEN 1 END) as ng
             FROM machines m
-            LEFT JOIN production_events pe ON m.id = pe.machine_id AND pe.timestamp >= ?
+            LEFT JOIN active_sessions axs ON m.id = axs.machine_id
+            LEFT JOIN production_events pe ON m.id = pe.machine_id AND pe.timestamp >= COALESCE(axs.start_time, ?)
             GROUP BY m.id
         `, [currentShift.start]);
 
